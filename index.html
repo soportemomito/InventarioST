@@ -3,31 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inventario — Servicio Técnico</title>
+<title>SoyMomo — Panel</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
-.app{max-width:1200px;margin:0 auto;padding:1.5rem 1rem}
+
+/* LANDING */
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center}
+.brand-logo{font-size:52px;font-weight:800;letter-spacing:-2px;color:#1a1a2e;margin-bottom:6px}
+.brand-sub{font-size:13px;color:#aaa;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3rem}
+.landing-cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.landing-card{width:200px;padding:2rem 1.5rem;background:#fff;border:1.5px solid #e0e0e0;border-radius:18px;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.landing-card:hover:not(.disabled){transform:translateY(-5px);box-shadow:0 10px 28px rgba(0,0,0,.13);border-color:#1a1a2e}
+.landing-card.disabled{opacity:.4;cursor:not-allowed}
+.lcard-icon{font-size:38px;margin-bottom:14px}
+.lcard-title{font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+.lcard-desc{font-size:12px;color:#999;line-height:1.5}
+.coming-badge{display:inline-block;font-size:10px;padding:2px 9px;background:#f0f0f0;color:#999;border-radius:20px;margin-top:8px;font-weight:600;letter-spacing:.04em}
+
+/* AUTH WALL */
+#auth-wall{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center}
+.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:18px;padding:2.5rem 2rem;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.09)}
+.auth-card h2{font-size:20px;font-weight:700;margin-bottom:8px;color:#1a1a1a}
+.auth-card p{font-size:13px;color:#888;margin-bottom:1.5rem;line-height:1.6}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;background:#fff;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;color:#1a1a1a}
+.google-btn:hover{background:#f5f5f5;border-color:#aaa}
+.google-btn svg{width:20px;height:20px;flex-shrink:0}
+.pending-msg{display:none;margin-top:1rem;padding:12px 14px;background:#fff8e1;border-radius:8px;font-size:13px;color:#856404;border:1px solid #ffe082;line-height:1.5}
+.denied-msg{display:none;margin-top:1rem;padding:12px 14px;background:#ffebee;border-radius:8px;font-size:13px;color:#c62828;border:1px solid #ffcdd2;line-height:1.5}
+
+/* APP */
+#app{display:none}
+.app-inner{max-width:1200px;margin:0 auto;padding:1.5rem 1rem}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px}
-.topbar h1{font-size:20px;font-weight:600;color:#1a1a1a}
+.topbar h1{font-size:20px;font-weight:700;color:#1a1a1a}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}
 .tab{font-size:13px;padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;color:#666;font-weight:500;transition:all .15s}
 .tab:hover{background:#f0f0f0}
 .tab.active{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
-.card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8e8e8;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8e8e8}
 .card .lbl{font-size:12px;color:#888;margin-bottom:6px;font-weight:500}
 .card .val{font-size:24px;font-weight:700;color:#1a1a1a}
 .card .sub{font-size:11px;color:#aaa;margin-top:2px}
-.section{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.section{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1rem}
 .section-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
-.row input,.row select,input,select{padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none;transition:border .15s;font-family:inherit}
+input,select{padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none;transition:border .15s;font-family:inherit}
 input:focus,select:focus{border-color:#3266ad}
 button{padding:8px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:500;color:#1a1a1a;transition:all .15s;font-family:inherit}
 button:hover{background:#f0f0f0}
 button.primary{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
 button.primary:hover{background:#2a2a4e}
+button.danger-btn{background:#ffebee;color:#c62828;border-color:#ffcdd2;font-size:12px;padding:5px 12px}
+button.danger-btn:hover{background:#ffcdd2}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-weight:600;font-size:11px;color:#888;padding:8px 10px;border-bottom:1px solid #eee;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 td{padding:9px 10px;border-bottom:1px solid #f0f0f0;color:#1a1a1a;vertical-align:middle}
@@ -48,213 +77,347 @@ tr:hover td{background:#fafafa}
 .chip{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
 .chip.in{background:#e8f5e9;color:#1b5e20}
 .chip.out{background:#ffebee;color:#b71c1c}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:14px;border:1px solid #e0e0e0;padding:1.6rem;min-width:280px;max-width:440px;width:92%;box-shadow:0 8px 30px rgba(0,0,0,0.15)}
-.modal h2{font-size:17px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
+.modal{background:#fff;border-radius:14px;padding:1.6rem;min-width:280px;max-width:440px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal h2{font-size:17px;font-weight:600;margin-bottom:1rem}
 .field{margin-bottom:12px}
 .field label{display:block;font-size:12px;color:#666;margin-bottom:5px;font-weight:500}
 .field input,.field select{width:100%}
-.user-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e8e8e8;border-radius:10px;margin-bottom:1.2rem;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.avatar{width:30px;height:30px;border-radius:50%;background:#1D9E75;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.user-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e8e8e8;border-radius:10px;margin-bottom:1.2rem}
+.avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.avatar-initials{width:30px;height:30px;border-radius:50%;background:#1D9E75;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .export-btn{font-size:12px;padding:5px 12px;border:1px solid #ddd;border-radius:7px;background:#fff;cursor:pointer;color:#555;display:inline-flex;align-items:center;gap:5px;font-weight:500;transition:all .15s}
-.export-btn:hover{background:#f5f5f5;border-color:#bbb}
+.export-btn:hover{background:#f5f5f5}
 .tag{font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f0f0;color:#555;font-weight:500}
 .log-entry{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:13px;gap:8px}
 .log-entry:last-child{border-bottom:none}
 .alert-chip{font-size:11px;padding:2px 8px;border-radius:6px;background:#fff8e1;color:#f57f17;font-weight:500}
-.min-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8f8f8;border-radius:8px;margin-bottom:12px;font-size:13px;flex-wrap:wrap}
-@media(max-width:600px){.topbar{flex-direction:column;align-items:flex-start}.cards{grid-template-columns:1fr 1fr}.row{flex-direction:column}}
+.min-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8f8f8;border-radius:8px;margin-bottom:12px;flex-wrap:wrap}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:#aaa;font-size:14px}
+.empty-state div{font-size:32px;margin-bottom:8px}
+.loading-cell{text-align:center;padding:2rem;color:#aaa;font-size:13px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#1D9E75;display:inline-block;margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.admin-section{background:#fff8e1;border:1px solid #ffe082;border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1rem}
+.admin-section h3{font-size:14px;font-weight:600;color:#856404;margin-bottom:6px}
+.pending-user-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #fff3cd;font-size:13px}
+.pending-user-row:last-child{border-bottom:none}
+@media(max-width:640px){
+  .brand-logo{font-size:38px}
+  .landing-cards{flex-direction:column;align-items:center}
+  .tabs{flex-wrap:wrap}
+  .cards{grid-template-columns:1fr 1fr}
+  .row{flex-direction:column}
+  .row>div,.row>button{width:100%}
+}
 </style>
 </head>
 <body>
-<div class="app">
 
-<div id="user-bar" class="user-bar">
-  <div class="avatar" id="uavatar">?</div>
-  <div style="flex:1"><span id="uname" style="color:#888">Sin sesión — inicia sesión para registrar tus movimientos</span></div>
-  <button id="login-btn" onclick="openLogin()">Iniciar sesión</button>
-  <button id="logout-btn" class="act-btn danger" onclick="doLogout()" style="display:none">Cerrar sesión</button>
-</div>
-
-<div class="topbar">
-  <div>
-    <div style="font-size:11px;color:#aaa;margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em">Servicio Técnico</div>
-    <h1>Panel de Inventario</h1>
-  </div>
-  <div class="tabs">
-    <button class="tab active" onclick="showPage('dashboard',this)">Dashboard</button>
-    <button class="tab" onclick="showPage('inventario',this)">Stock</button>
-    <button class="tab" onclick="showPage('movimientos',this)">Movimientos</button>
-    <button class="tab" onclick="showPage('graficas',this)">Gráficas</button>
-  </div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="page-dashboard" class="page active">
-  <div class="cards" id="stat-cards"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-    <div class="section" style="min-width:0"><div class="section-title">Stock crítico</div><div id="critical-list"></div></div>
-    <div class="section" style="min-width:0"><div class="section-title">Últimos movimientos</div><div id="recent-log"></div></div>
-  </div>
-  <div class="section" style="margin-top:0">
-    <div class="section-title">Consumo semanal</div>
-    <div style="position:relative;width:100%;height:200px"><canvas id="weekChart"></canvas></div>
-  </div>
-</div>
-
-<!-- INVENTARIO -->
-<div id="page-inventario" class="page">
-  <div class="section">
-    <div class="section-title">Agregar / actualizar producto</div>
-    <div class="min-bar">
-      <span style="color:#666">Alerta mínima global:</span>
-      <input type="number" id="global-min" min="1" style="width:70px" value="10">
-      <button onclick="updateGlobalMin()">Actualizar todos</button>
-      <span style="font-size:12px;color:#1D9E75;font-weight:500" id="min-msg"></span>
+<!-- ═══════════ LANDING ═══════════ -->
+<div id="landing">
+  <div class="brand-logo">SoyMomo</div>
+  <div class="brand-sub">Plataforma de gestión</div>
+  <div class="landing-cards">
+    <div class="landing-card" onclick="enterInventory()">
+      <div class="lcard-icon">📦</div>
+      <div class="lcard-title">Inventario</div>
+      <div class="lcard-desc">Control de stock y trazabilidad en tiempo real</div>
     </div>
-    <div class="row" style="margin-bottom:10px">
-      <div style="flex:2;min-width:140px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Nombre del producto</div>
-        <input type="text" placeholder="Ej: Pantalla LCD, Batería…" id="inp-name" style="width:100%">
-      </div>
-      <div style="flex:2;min-width:150px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Modelo compatible</div>
-        <select id="inp-model" style="width:100%">
-          <option value="">— Seleccionar modelo —</option>
-          <option>Space 1</option><option>Space 2</option><option>Space 3</option><option>Space 4</option>
-          <option>Tablet Pro (MicroUsb)</option><option>Tablet Pro (Tipo C)</option><option>Tablet Pro 2.0</option>
-          <option>BM Lite (MicroUsb)</option><option>BM Lite (Tipo C)</option><option>BM Pro</option><option>BM Pro 2.0</option>
-          <option value="Universal / Todos">Universal / Todos</option>
-        </select>
-      </div>
-      <div style="flex:1.5;min-width:120px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Número de parte</div>
-        <input type="text" placeholder="Ej: PT-1042-A" id="inp-part" style="width:100%">
-      </div>
-      <div style="flex:1;min-width:90px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Stock inicial</div>
-        <input type="number" placeholder="0" id="inp-stock" min="0" style="width:100%">
-      </div>
-      <div style="align-self:flex-end"><button class="primary" onclick="addProduct()">+ Agregar</button></div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title">
-      <span>Inventario actual</span>
-      <div style="display:flex;gap:6px">
-        <button class="export-btn" onclick="exportInvExcel()">↓ Excel</button>
-        <button class="export-btn" onclick="exportInvPdf()">↓ PDF</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-    <table>
-      <thead><tr><th>Producto</th><th>Modelo</th><th>N° Parte</th><th>Stock</th><th>Mín.</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody id="inv-table"></tbody>
-    </table>
+    <div class="landing-card disabled">
+      <div class="lcard-icon">🔧</div>
+      <div class="lcard-title">Servicio Técnico</div>
+      <div class="lcard-desc">Gestión de órdenes y reparaciones</div>
+      <div class="coming-badge">Próximamente</div>
     </div>
   </div>
 </div>
 
-<!-- MOVIMIENTOS -->
-<div id="page-movimientos" class="page">
-  <div class="section">
-    <div class="section-title">Registrar movimiento</div>
-    <div class="row" style="margin-bottom:10px">
-      <div style="flex:2;min-width:150px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Producto</div>
-        <select id="mv-product" style="width:100%"><option value="">Selecciona producto</option></select>
-      </div>
-      <div style="flex:1;min-width:120px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Tipo</div>
-        <select id="mv-type" style="width:100%"><option value="out">Salida (uso)</option><option value="in">Entrada (reposición)</option></select>
-      </div>
-      <div style="flex:0.8;min-width:90px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Cantidad</div>
-        <input type="number" placeholder="1" id="mv-qty" min="1" style="width:100%">
-      </div>
-      <div style="flex:2;min-width:150px">
-        <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Nota / motivo</div>
-        <input type="text" placeholder="Ej: cambio pantalla OT-2041" id="mv-note" style="width:100%">
-      </div>
-      <div style="align-self:flex-end"><button class="primary" onclick="addMovement()">Registrar</button></div>
+<!-- ═══════════ AUTH WALL ═══════════ -->
+<div id="auth-wall">
+  <div class="auth-card">
+    <div style="font-size:34px;margin-bottom:12px">🔐</div>
+    <h2>Acceso restringido</h2>
+    <p>Este módulo es solo para personal autorizado de SoyMomo. Inicia sesión con tu cuenta Google para solicitar acceso.</p>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continuar con Google
+    </button>
+    <div class="pending-msg" id="pending-msg">
+      ⏳ Tu cuenta está <strong>pendiente de aprobación</strong>. El administrador revisará tu solicitud. Vuelve a intentar iniciar sesión una vez que seas aprobado.
     </div>
-    <div style="font-size:12px;color:#888;padding:7px 12px;background:#f8f8f8;border-radius:8px">
-      Registrando como: <strong id="mv-user-label" style="color:#1a1a1a">Sin sesión</strong>
+    <div class="denied-msg" id="denied-msg">
+      ❌ Tu cuenta no tiene acceso autorizado. Contacta al administrador de SoyMomo.
     </div>
-  </div>
-  <div class="section">
-    <div class="section-title">
-      <span>Historial de movimientos</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <select id="filter-user" onchange="renderMvTable()" style="font-size:12px;padding:4px 8px">
-          <option value="">Todos los usuarios</option>
-        </select>
-        <select id="filter-type" onchange="renderMvTable()" style="font-size:12px;padding:4px 8px">
-          <option value="">Todos los tipos</option>
-          <option value="in">Solo entradas</option>
-          <option value="out">Solo salidas</option>
-        </select>
-        <button class="export-btn" onclick="exportMvExcel()">↓ Excel</button>
-        <button class="export-btn" onclick="exportMvPdf()">↓ PDF</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-    <table>
-      <thead><tr><th>Fecha</th><th>Hora</th><th>Usuario</th><th>Producto</th><th>Modelo</th><th>Tipo</th><th>Cant.</th><th>Stock res.</th><th>Nota</th></tr></thead>
-      <tbody id="mv-table"></tbody>
-    </table>
+    <div style="margin-top:1rem">
+      <button onclick="backToLanding()" style="font-size:12px;color:#aaa;border:none;background:none;cursor:pointer">← Volver al inicio</button>
     </div>
   </div>
 </div>
 
-<!-- GRÁFICAS -->
-<div id="page-graficas" class="page">
-  <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-    <button class="export-btn" onclick="exportReportPdf()">↓ Informe PDF completo</button>
-    <button class="export-btn" onclick="exportChartsExcel()">↓ Datos Excel completo</button>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-    <div class="section" style="min-width:0">
-      <div class="section-title"><span>Consumo mensual</span><button class="export-btn" onclick="exportChartPng('monthChart','consumo_mensual')">↓ PNG</button></div>
-      <div style="position:relative;width:100%;height:240px"><canvas id="monthChart"></canvas></div>
-    </div>
-    <div class="section" style="min-width:0">
-      <div class="section-title"><span>Por modelo</span><button class="export-btn" onclick="exportChartPng('catChart','por_modelo')">↓ PNG</button></div>
-      <div style="position:relative;width:100%;height:240px"><canvas id="catChart"></canvas></div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title"><span>Consumo diario — últimos 14 días</span><button class="export-btn" onclick="exportChartPng('dailyChart','consumo_diario')">↓ PNG</button></div>
-    <div style="position:relative;width:100%;height:200px"><canvas id="dailyChart"></canvas></div>
-  </div>
-  <div class="section">
-    <div class="section-title"><span>Stock actual por producto</span><button class="export-btn" onclick="exportChartPng('stockChart','stock_actual')">↓ PNG</button></div>
-    <div style="position:relative;width:100%;height:260px" id="stockChartWrap"><canvas id="stockChart"></canvas></div>
-  </div>
-</div>
-</div>
+<!-- ═══════════ APP ═══════════ -->
+<div id="app">
+<div class="app-inner">
 
-<!-- MODAL LOGIN -->
-<div class="modal-bg" id="login-modal">
-  <div class="modal">
-    <h2>Identificación de usuario</h2>
-    <p style="font-size:13px;color:#888;margin-bottom:1.2rem">Ingresa tu nombre para registrar tus movimientos de inventario. Este nombre quedará guardado en este dispositivo.</p>
-    <div class="field"><label>Tu nombre</label><input type="text" id="login-input" placeholder="Ej: Carlos Muñoz" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
-      <button onclick="closeLogin()">Cancelar</button>
-      <button class="primary" onclick="doLogin()">Ingresar</button>
+  <!-- User bar -->
+  <div class="user-bar">
+    <img id="uavatar-img" class="avatar" src="" alt="" style="display:none">
+    <div class="avatar-initials" id="uavatar-init">?</div>
+    <div style="flex:1">
+      <span id="uname" style="font-weight:500;font-size:14px">—</span>
+      <span id="urole-badge" style="display:none;font-size:11px;padding:2px 8px;border-radius:20px;background:#e8f5e9;color:#2e7d32;font-weight:600;margin-left:8px">admin</span>
+      <span style="font-size:11px;color:#aaa;margin-left:6px"><span class="sync-dot"></span>sincronizado</span>
+    </div>
+    <button onclick="showPage('admin',null)" id="admin-btn" style="display:none;font-size:12px;padding:5px 12px;border-color:#ffe082;color:#856404;background:#fff8e1;border-radius:7px">⚙ Admin</button>
+    <button class="act-btn" onclick="backToLanding()">← Inicio</button>
+    <button class="act-btn danger" onclick="doSignOut()">Salir</button>
+  </div>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:2px;text-transform:uppercase;letter-spacing:.07em">SoyMomo · Inventario</div>
+      <h1>Panel de Inventario</h1>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="showPage('dashboard',this)">Dashboard</button>
+      <button class="tab" onclick="showPage('inventario',this)">Stock</button>
+      <button class="tab" onclick="showPage('movimientos',this)">Movimientos</button>
+      <button class="tab" onclick="showPage('graficas',this)">Gráficas</button>
     </div>
   </div>
-</div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="page-dashboard" class="page active">
+    <div class="cards" id="stat-cards">
+      <div class="card"><div class="lbl">Productos</div><div class="val" id="sc-total">—</div><div class="sub">en catálogo</div></div>
+      <div class="card"><div class="lbl">Stock bajo</div><div class="val" id="sc-low" style="color:#f57f17">—</div><div class="sub" id="sc-low-sub">bajo mínimo</div></div>
+      <div class="card"><div class="lbl">Sin stock</div><div class="val" id="sc-out" style="color:#c62828">—</div><div class="sub">agotados</div></div>
+      <div class="card"><div class="lbl">Uso hoy</div><div class="val" id="sc-today">—</div><div class="sub">unidades</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="section" style="min-width:0">
+        <div class="section-title">Stock crítico</div>
+        <div id="critical-list"><div class="loading-cell">Cargando...</div></div>
+      </div>
+      <div class="section" style="min-width:0">
+        <div class="section-title">Últimos movimientos</div>
+        <div id="recent-log"><div class="loading-cell">Cargando...</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Consumo semanal</div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="weekChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── INVENTARIO ── -->
+  <div id="page-inventario" class="page">
+    <div class="section">
+      <div class="section-title">Agregar producto</div>
+      <div class="min-bar">
+        <span style="color:#666;font-size:13px">Alerta mínima global:</span>
+        <input type="number" id="global-min" min="1" style="width:70px" value="10">
+        <button onclick="updateGlobalMin()">Actualizar todos</button>
+        <span style="font-size:12px;color:#1D9E75;font-weight:500" id="min-msg"></span>
+      </div>
+      <div class="row">
+        <div style="flex:2;min-width:140px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Nombre del producto</div>
+          <input type="text" placeholder="Ej: Pantalla LCD, Batería…" id="inp-name" style="width:100%">
+        </div>
+        <div style="flex:2;min-width:150px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Modelo compatible</div>
+          <select id="inp-model" style="width:100%">
+            <option value="">— Seleccionar modelo —</option>
+            <option>Space 1</option>
+            <option>Space 2</option>
+            <option>Space 3</option>
+            <option>Space 4</option>
+            <option>Tablet Pro (MicroUsb)</option>
+            <option>Tablet Pro (Tipo C)</option>
+            <option>Tablet Pro 2.0</option>
+            <option>BM Lite (MicroUsb)</option>
+            <option>BM Lite (Tipo C)</option>
+            <option>BM Pro</option>
+            <option>BM Pro 2.0</option>
+            <option value="Universal / Todos">Universal / Todos</option>
+          </select>
+        </div>
+        <div style="flex:1.5;min-width:120px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Número de parte</div>
+          <input type="text" placeholder="Ej: PT-1042-A" id="inp-part" style="width:100%">
+        </div>
+        <div style="flex:1;min-width:90px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Stock inicial</div>
+          <input type="number" placeholder="0" id="inp-stock" min="0" style="width:100%">
+        </div>
+        <div style="align-self:flex-end">
+          <button class="primary" onclick="addProduct()">+ Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        <span>Inventario actual</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="export-btn" onclick="exportInvExcel()">↓ Excel</button>
+          <button class="export-btn" onclick="exportInvPdf()">↓ PDF</button>
+          <button class="danger-btn" onclick="confirmReset()">⚠ Reset completo</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>Producto</th><th>Modelo</th><th>N° Parte</th><th>Stock</th><th>Mín.</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="inv-table">
+            <tr><td colspan="7" class="loading-cell">Cargando inventario...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MOVIMIENTOS ── -->
+  <div id="page-movimientos" class="page">
+    <div class="section">
+      <div class="section-title">Registrar movimiento</div>
+      <div class="row" style="margin-bottom:10px">
+        <div style="flex:2;min-width:150px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Producto</div>
+          <select id="mv-product" style="width:100%"><option value="">— Selecciona producto —</option></select>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Tipo</div>
+          <select id="mv-type" style="width:100%">
+            <option value="out">Salida (uso)</option>
+            <option value="in">Entrada (reposición)</option>
+          </select>
+        </div>
+        <div style="flex:0.8;min-width:90px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Cantidad</div>
+          <input type="number" placeholder="1" id="mv-qty" min="1" style="width:100%">
+        </div>
+        <div style="flex:2;min-width:150px">
+          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Nota / motivo</div>
+          <input type="text" placeholder="Ej: cambio pantalla OT-2041" id="mv-note" style="width:100%">
+        </div>
+        <div style="align-self:flex-end">
+          <button class="primary" onclick="addMovement()">Registrar</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#888;padding:7px 12px;background:#f8f8f8;border-radius:8px">
+        Registrando como: <strong id="mv-user-label" style="color:#1a1a1a">—</strong>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        <span>Historial de movimientos</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <select id="filter-user" onchange="renderMvTable()" style="font-size:12px;padding:4px 8px">
+            <option value="">Todos los usuarios</option>
+          </select>
+          <select id="filter-type" onchange="renderMvTable()" style="font-size:12px;padding:4px 8px">
+            <option value="">Todos los tipos</option>
+            <option value="in">Solo entradas</option>
+            <option value="out">Solo salidas</option>
+          </select>
+          <button class="export-btn" onclick="exportMvExcel()">↓ Excel</button>
+          <button class="export-btn" onclick="exportMvPdf()">↓ PDF</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Hora</th><th>Usuario</th><th>Producto</th><th>Modelo</th><th>Tipo</th><th>Cant.</th><th>Stock res.</th><th>Nota</th></tr>
+          </thead>
+          <tbody id="mv-table">
+            <tr><td colspan="9" class="loading-cell">Cargando movimientos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GRÁFICAS ── -->
+  <div id="page-graficas" class="page">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="export-btn" onclick="exportReportPdf()">↓ Informe PDF completo</button>
+      <button class="export-btn" onclick="exportChartsExcel()">↓ Excel completo</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="section" style="min-width:0">
+        <div class="section-title">
+          <span>Consumo mensual</span>
+          <button class="export-btn" onclick="exportChartPng('monthChart','consumo_mensual')">↓ PNG</button>
+        </div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="monthChart"></canvas></div>
+      </div>
+      <div class="section" style="min-width:0">
+        <div class="section-title">
+          <span>Por modelo</span>
+          <button class="export-btn" onclick="exportChartPng('catChart','por_modelo')">↓ PNG</button>
+        </div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="catChart"></canvas></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        <span>Consumo diario — últimos 14 días</span>
+        <button class="export-btn" onclick="exportChartPng('dailyChart','consumo_diario')">↓ PNG</button>
+      </div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="dailyChart"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        <span>Stock actual por producto</span>
+        <button class="export-btn" onclick="exportChartPng('stockChart','stock_actual')">↓ PNG</button>
+      </div>
+      <div style="position:relative;width:100%;height:260px" id="stockChartWrap">
+        <canvas id="stockChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN ── -->
+  <div id="page-admin" class="page">
+    <div class="admin-section">
+      <h3>⚙ Panel de administración — Control de accesos</h3>
+      <p style="font-size:13px;color:#856404;margin-bottom:12px">Aprueba o rechaza usuarios que solicitaron acceso al módulo de Inventario.</p>
+      <div id="pending-users-list"><div class="loading-cell">Cargando solicitudes...</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Usuarios con acceso aprobado</div>
+      <div id="approved-users-list"><div class="loading-cell">Cargando...</div></div>
+    </div>
+  </div>
+
+</div><!-- app-inner -->
+</div><!-- app -->
 
 <!-- MODAL EDITAR STOCK -->
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
     <h2>Ajustar stock</h2>
-    <div class="field"><label>Producto</label><div id="edit-name" style="font-weight:600;font-size:14px;color:#1a1a1a"></div></div>
-    <div class="field"><label>Nuevo stock</label><input type="number" id="edit-stock" min="0"></div>
-    <div class="field"><label>Nota</label><input type="text" id="edit-note" placeholder="Motivo del ajuste"></div>
+    <div class="field">
+      <label>Producto</label>
+      <div id="edit-name" style="font-weight:600;font-size:14px;color:#1a1a1a;padding:6px 0"></div>
+    </div>
+    <div class="field">
+      <label>Nuevo stock</label>
+      <input type="number" id="edit-stock" min="0">
+    </div>
+    <div class="field">
+      <label>Nota (motivo del ajuste)</label>
+      <input type="text" id="edit-note" placeholder="Ej: conteo físico, corrección...">
+    </div>
     <div style="display:flex;gap:8px;margin-top:1rem;justify-content:flex-end">
       <button onclick="closeModal('edit-modal')">Cancelar</button>
       <button class="primary" onclick="saveEdit()">Guardar</button>
@@ -262,278 +425,765 @@ tr:hover td{background:#fafafa}
   </div>
 </div>
 
+<!-- MODAL RESET -->
+<div class="modal-bg" id="reset-modal">
+  <div class="modal">
+    <h2 style="color:#c62828">⚠ Reset completo</h2>
+    <p style="font-size:14px;color:#555;margin-bottom:1rem;line-height:1.6">
+      Esto eliminará <strong>todo el inventario y el historial de movimientos</strong> de la base de datos de forma permanente. Esta acción <strong>no se puede deshacer</strong>.
+    </p>
+    <div class="field">
+      <label>Escribe <strong>RESET</strong> para confirmar</label>
+      <input type="text" id="reset-confirm-input" placeholder="RESET" style="width:100%">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
+      <button onclick="closeModal('reset-modal')">Cancelar</button>
+      <button class="danger-btn" style="padding:8px 16px" onclick="doReset()">Eliminar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts externos -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-const COLORS=['#3266ad','#1D9E75','#D85A30','#BA7517','#D4537E','#534AB7','#639922','#A32D2D','#0F6E56','#993556','#3C3489'];
-let globalMin=parseInt(localStorage.getItem('inv_gmin')||'10');
-let currentUser=localStorage.getItem('inv_user')||null;
-let editIdx=null;
-let charts={};
 
-const defaultProducts=[
-  {id:1,name:'Pantalla LCD',model:'Space 1',part:'SCR-SP1-001',stock:20,min:globalMin},
-  {id:2,name:'Batería 3200mAh',model:'Space 2',part:'BAT-SP2-010',stock:8,min:globalMin},
-  {id:3,name:'Cable flex carga',model:'Tablet Pro (Tipo C)',part:'CBL-TP-C02',stock:5,min:globalMin},
-  {id:4,name:'Módulo cámara',model:'BM Pro',part:'CAM-BMP-003',stock:3,min:globalMin},
-  {id:5,name:'Conector USB',model:'BM Lite (MicroUsb)',part:'CON-BML-M1',stock:12,min:globalMin},
-  {id:6,name:'Marco trasero',model:'BM Pro 2.0',part:'FRM-BP2-007',stock:0,min:globalMin},
-];
+<!-- Firebase como módulo ES -->
+<script type="module">
+import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc,
+         updateDoc, deleteDoc, onSnapshot, query, orderBy, writeBatch, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-function genMovements(prods){
-  const mv=[];let id=1;const now=new Date();
-  const users=['Carlos Muñoz','Ana Soto','Pedro Reyes'];
-  for(let d=13;d>=0;d--){
-    const date=new Date(now);date.setDate(now.getDate()-d);
-    const ds=date.toISOString().slice(0,10);
-    const daily=Math.floor(Math.random()*3)+1;
-    for(let i=0;i<daily;i++){
-      const p=prods[Math.floor(Math.random()*prods.length)];
-      const qty=Math.floor(Math.random()*2)+1;
-      const user=users[Math.floor(Math.random()*users.length)];
-      const hr=String(8+Math.floor(Math.random()*9)).padStart(2,'0')+':'+String(Math.floor(Math.random()*60)).padStart(2,'0');
-      mv.push({id:id++,date:ds,time:hr,productId:p.id,productName:p.name,model:p.model,part:p.part,type:'out',qty,note:'uso en reparación',stockAfter:Math.max(0,p.stock-1),user});
+// ════════════════════════════════════════════════════════
+//  🔥  REEMPLAZA ESTOS VALORES CON TU CONFIGURACIÓN FIREBASE
+// ════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDzCUE7t1T3oyM48jej8gWTRU_n2Cb1hec",
+  authDomain: "soymomo-inventario.firebaseapp.com",
+  projectId: "soymomo-inventario",
+  storageBucket: "soymomo-inventario.firebasestorage.app",
+  messagingSenderId: "807454155183",
+  appId: "1:807454155183:web:09b5211a01c2ea197d8f5a",
+};
+
+// Correos que tendrán rol de ADMINISTRADOR (pueden aprobar usuarios y hacer reset)
+const ADMIN_EMAILS = ["soporte@soymomo.com"];
+// ════════════════════════════════════════════════════════
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth        = getAuth(firebaseApp);
+const db          = getFirestore(firebaseApp);
+const provider    = new GoogleAuthProvider();
+
+// ── Estado global ──
+let currentUser    = null;
+let isAdmin        = false;
+let globalMin      = 10;
+let products       = [];
+let movements      = [];
+let editProductId  = null;
+let charts         = {};
+let unsubProducts  = null;
+let unsubMovements = null;
+
+const COLORS = ['#3266ad','#1D9E75','#D85A30','#BA7517','#D4537E','#534AB7','#639922','#A32D2D','#0F6E56','#993556','#3C3489'];
+
+// ════════════════════════════════════════════════════════
+//  NAVEGACIÓN
+// ════════════════════════════════════════════════════════
+window.enterInventory = () => {
+  document.getElementById('landing').style.display   = 'none';
+  document.getElementById('auth-wall').style.display = 'flex';
+};
+
+window.backToLanding = () => {
+  stopListeners();
+  document.getElementById('app').style.display       = 'none';
+  document.getElementById('auth-wall').style.display = 'none';
+  document.getElementById('landing').style.display   = 'flex';
+};
+
+// ════════════════════════════════════════════════════════
+//  AUTENTICACIÓN
+// ════════════════════════════════════════════════════════
+window.signInWithGoogle = async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') {
+      alert('Error al iniciar sesión: ' + e.message);
     }
   }
-  return mv.sort((a,b)=>b.id-a.id);
+};
+
+window.doSignOut = async () => {
+  stopListeners();
+  await fbSignOut(auth);
+  currentUser = null;
+  isAdmin     = false;
+  document.getElementById('app').style.display        = 'none';
+  document.getElementById('auth-wall').style.display  = 'flex';
+  document.getElementById('pending-msg').style.display = 'none';
+  document.getElementById('denied-msg').style.display  = 'none';
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  const userRef  = doc(db, 'users', user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    // Primera vez: crear solicitud pendiente
+    await setDoc(userRef, {
+      uid: user.uid, email: user.email,
+      name: user.displayName || user.email,
+      photo: user.photoURL || '',
+      status: 'pending',
+      requestedAt: serverTimestamp()
+    });
+    document.getElementById('pending-msg').style.display = 'block';
+    return;
+  }
+
+  const userData = userSnap.data();
+
+  if (userData.status === 'pending') {
+    document.getElementById('pending-msg').style.display = 'block';
+    return;
+  }
+  if (userData.status === 'denied') {
+    document.getElementById('denied-msg').style.display = 'block';
+    return;
+  }
+
+  // ── APROBADO: entrar a la app ──
+  currentUser = {
+    uid:   user.uid,
+    email: user.email,
+    name:  user.displayName || user.email,
+    photo: user.photoURL || ''
+  };
+  isAdmin = ADMIN_EMAILS.includes(user.email);
+
+  // Mostrar app
+  document.getElementById('auth-wall').style.display = 'none';
+  document.getElementById('landing').style.display   = 'none';
+  document.getElementById('app').style.display       = 'block';
+
+  // UI de usuario
+  document.getElementById('uname').textContent = currentUser.name;
+  document.getElementById('mv-user-label').textContent = currentUser.name;
+
+  if (currentUser.photo) {
+    document.getElementById('uavatar-img').src = currentUser.photo;
+    document.getElementById('uavatar-img').style.display  = '';
+    document.getElementById('uavatar-init').style.display = 'none';
+  } else {
+    const initials = currentUser.name.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0,2);
+    document.getElementById('uavatar-init').textContent = initials;
+  }
+
+  if (isAdmin) {
+    document.getElementById('urole-badge').style.display = '';
+    document.getElementById('admin-btn').style.display   = '';
+  }
+
+  // Cargar config global
+  const cfgSnap = await getDoc(doc(db, 'config', 'settings'));
+  if (cfgSnap.exists() && cfgSnap.data().globalMin) {
+    globalMin = cfgSnap.data().globalMin;
+    document.getElementById('global-min').value = globalMin;
+  }
+
+  startListeners();
+});
+
+// ════════════════════════════════════════════════════════
+//  LISTENERS EN TIEMPO REAL
+// ════════════════════════════════════════════════════════
+function startListeners() {
+  // Productos en tiempo real
+  unsubProducts = onSnapshot(collection(db, 'products'), snap => {
+    products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAll();
+  });
+
+  // Movimientos en tiempo real (ordenados por timestamp desc)
+  const mvQuery = query(collection(db, 'movements'), orderBy('timestamp', 'desc'));
+  unsubMovements = onSnapshot(mvQuery, snap => {
+    movements = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderAll();
+  });
 }
 
-let products=JSON.parse(localStorage.getItem('inv_products3')||'null')||defaultProducts;
-let movements=JSON.parse(localStorage.getItem('inv_movements3')||'null')||genMovements(products);
-
-function save(){
-  try{localStorage.setItem('inv_products3',JSON.stringify(products));localStorage.setItem('inv_movements3',JSON.stringify(movements));localStorage.setItem('inv_gmin',String(globalMin));}catch(e){}
+function stopListeners() {
+  if (unsubProducts)  { unsubProducts();  unsubProducts  = null; }
+  if (unsubMovements) { unsubMovements(); unsubMovements = null; }
 }
 
-function showPage(p,btn){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  if(btn)btn.classList.add('active');
-  setTimeout(()=>renderAll(),80);
+// ════════════════════════════════════════════════════════
+//  PRODUCTOS
+// ════════════════════════════════════════════════════════
+window.addProduct = async () => {
+  const name  = document.getElementById('inp-name').value.trim();
+  const model = document.getElementById('inp-model').value;
+  const part  = document.getElementById('inp-part').value.trim();
+  const stock = parseInt(document.getElementById('inp-stock').value) || 0;
+
+  if (!name)  return alert('Ingresa el nombre del producto');
+  if (!model) return alert('Selecciona un modelo compatible');
+
+  // Un producto es único por la combinación nombre + modelo + número de parte
+  const existing = products.find(p =>
+    p.name.toLowerCase()     === name.toLowerCase() &&
+    p.model                  === model &&
+    (p.part || '').toLowerCase() === part.toLowerCase()
+  );
+
+  if (existing) {
+    // Sumar stock al existente
+    const newStock = (existing.stock || 0) + stock;
+    await updateDoc(doc(db, 'products', existing.id), { stock: newStock });
+    if (stock > 0) await logMovement(existing, 'in', stock, 'reposición de stock', newStock);
+  } else {
+    // Crear producto nuevo
+    const ref = await addDoc(collection(db, 'products'), {
+      name, model, part, stock, min: globalMin, createdAt: serverTimestamp()
+    });
+    if (stock > 0) {
+      await logMovement({ id: ref.id, name, model, part }, 'in', stock, 'stock inicial', stock);
+    }
+  }
+
+  ['inp-name', 'inp-part', 'inp-stock'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inp-model').value = '';
+};
+
+window.delProduct = async (id) => {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm('¿Eliminar "' + p.name + ' — ' + p.model + '"?\nEsta acción no se puede deshacer.')) return;
+  await deleteDoc(doc(db, 'products', id));
+};
+
+window.openEdit = (id) => {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  editProductId = id;
+  document.getElementById('edit-name').textContent =
+    p.name + ' — ' + p.model + (p.part ? ' (' + p.part + ')' : '') + ' — Stock actual: ' + p.stock + ' uds';
+  document.getElementById('edit-stock').value = p.stock;
+  document.getElementById('edit-note').value  = '';
+  openModal('edit-modal');
+};
+
+window.saveEdit = async () => {
+  const p  = products.find(x => x.id === editProductId);
+  if (!p) return;
+  const ns   = parseInt(document.getElementById('edit-stock').value);
+  const note = document.getElementById('edit-note').value.trim() || 'ajuste manual';
+  if (isNaN(ns) || ns < 0) return alert('Ingresa un número válido');
+  const diff = ns - p.stock;
+  if (diff !== 0) {
+    await updateDoc(doc(db, 'products', editProductId), { stock: ns });
+    await logMovement(p, diff >= 0 ? 'in' : 'out', Math.abs(diff), note, ns);
+  }
+  closeModal('edit-modal');
+};
+
+window.updateGlobalMin = async () => {
+  const v = parseInt(document.getElementById('global-min').value) || 10;
+  globalMin = v;
+  await setDoc(doc(db, 'config', 'settings'), { globalMin: v }, { merge: true });
+  const batch = writeBatch(db);
+  products.forEach(p => batch.update(doc(db, 'products', p.id), { min: v }));
+  await batch.commit();
+  const msg = document.getElementById('min-msg');
+  msg.textContent = '✓ Actualizado a ' + v + ' uds para todos';
+  setTimeout(() => msg.textContent = '', 3000);
+};
+
+// ════════════════════════════════════════════════════════
+//  MOVIMIENTOS
+// ════════════════════════════════════════════════════════
+async function logMovement(p, type, qty, note, stockAfter) {
+  const sa = (stockAfter !== undefined) ? stockAfter
+    : (type === 'in' ? (p.stock || 0) + qty : (p.stock || 0) - qty);
+  await addDoc(collection(db, 'movements'), {
+    productId:  p.id,
+    productName: p.name,
+    model:      p.model || '',
+    part:       p.part  || '',
+    type, qty,
+    note:       note || '',
+    stockAfter: sa,
+    user:       currentUser ? currentUser.name  : 'Sistema',
+    userEmail:  currentUser ? currentUser.email : '',
+    date:       new Date().toISOString().slice(0, 10),
+    time:       new Date().toTimeString().slice(0, 5),
+    timestamp:  serverTimestamp()
+  });
 }
 
-function updateUserUI(){
-  const av=document.getElementById('uavatar');
-  const nm=document.getElementById('uname');
-  const lb=document.getElementById('login-btn');
-  const lo=document.getElementById('logout-btn');
-  const ml=document.getElementById('mv-user-label');
-  if(currentUser){
-    const initials=currentUser.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
-    av.textContent=initials;av.style.background='#1D9E75';
-    nm.textContent=currentUser;nm.style.color='#1a1a1a';nm.style.fontWeight='500';
-    lb.style.display='none';lo.style.display='';
-    if(ml)ml.textContent=currentUser;
-  }else{
-    av.textContent='?';av.style.background='#888';
-    nm.textContent='Sin sesión — inicia sesión para registrar tus movimientos';nm.style.color='#888';nm.style.fontWeight='400';
-    lb.style.display='';lo.style.display='none';
-    if(ml)ml.textContent='Sin sesión';
+window.addMovement = async () => {
+  const pid  = document.getElementById('mv-product').value;
+  const type = document.getElementById('mv-type').value;
+  const qty  = parseInt(document.getElementById('mv-qty').value) || 0;
+  const note = document.getElementById('mv-note').value.trim();
+
+  if (!pid || qty <= 0) return alert('Selecciona un producto y una cantidad válida');
+
+  const p = products.find(x => x.id === pid);
+  if (!p) return;
+  if (type === 'out' && p.stock < qty)
+    return alert('Stock insuficiente. Disponible: ' + p.stock + ' uds');
+
+  const newStock = type === 'in' ? p.stock + qty : p.stock - qty;
+  await updateDoc(doc(db, 'products', pid), { stock: newStock });
+  await logMovement(p, type, qty, note, newStock);
+
+  document.getElementById('mv-qty').value  = '';
+  document.getElementById('mv-note').value = '';
+};
+
+// ════════════════════════════════════════════════════════
+//  RESET
+// ════════════════════════════════════════════════════════
+window.confirmReset = () => {
+  if (!isAdmin) return alert('Solo el administrador puede hacer un reset completo.');
+  document.getElementById('reset-confirm-input').value = '';
+  openModal('reset-modal');
+};
+
+window.doReset = async () => {
+  if (document.getElementById('reset-confirm-input').value.trim() !== 'RESET')
+    return alert('Debes escribir exactamente RESET para confirmar.');
+  closeModal('reset-modal');
+  const batch = writeBatch(db);
+  products.forEach(p  => batch.delete(doc(db, 'products',  p.id)));
+  movements.forEach(m => batch.delete(doc(db, 'movements', m.id)));
+  await batch.commit();
+  alert('Reset completado. El inventario comenzó desde cero.');
+};
+
+// ════════════════════════════════════════════════════════
+//  PANEL ADMIN
+// ════════════════════════════════════════════════════════
+async function loadAdminPanel() {
+  if (!isAdmin) {
+    document.getElementById('pending-users-list').innerHTML =
+      '<p style="color:#c62828;font-size:13px">No tienes permisos de administrador.</p>';
+    return;
+  }
+  const snap  = await getDocs(collection(db, 'users'));
+  const users = snap.docs.map(d => d.data());
+  const pending  = users.filter(u => u.status === 'pending');
+  const approved = users.filter(u => u.status === 'approved');
+
+  const pl = document.getElementById('pending-users-list');
+  pl.innerHTML = pending.length
+    ? pending.map(u => `
+        <div class="pending-user-row">
+          <div>
+            <div style="font-weight:600;font-size:13px">${u.name || u.email}</div>
+            <div style="font-size:11px;color:#aaa">${u.email}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="act-btn" style="background:#e8f5e9;color:#2e7d32;border-color:#c8e6c9"
+              onclick="approveUser('${u.uid}')">✓ Aprobar</button>
+            <button class="act-btn danger" onclick="denyUser('${u.uid}')">✗ Denegar</button>
+          </div>
+        </div>`).join('')
+    : '<p style="color:#aaa;font-size:13px;padding:8px 0">Sin solicitudes pendientes ✓</p>';
+
+  const al = document.getElementById('approved-users-list');
+  al.innerHTML = approved.length
+    ? `<table>
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Acción</th></tr></thead>
+        <tbody>
+          ${approved.map(u => `
+            <tr>
+              <td style="font-weight:500">${u.name || '—'}</td>
+              <td style="color:#888;font-size:12px">${u.email}</td>
+              <td><button class="act-btn danger" onclick="denyUser('${u.uid}')">Revocar acceso</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`
+    : '<p style="color:#aaa;font-size:13px">Sin usuarios aprobados aún.</p>';
+}
+
+window.approveUser = async (uid) => {
+  await updateDoc(doc(db, 'users', uid), { status: 'approved', approvedAt: serverTimestamp() });
+  loadAdminPanel();
+};
+window.denyUser = async (uid) => {
+  await updateDoc(doc(db, 'users', uid), { status: 'denied', deniedAt: serverTimestamp() });
+  loadAdminPanel();
+};
+
+// ════════════════════════════════════════════════════════
+//  RENDER UI
+// ════════════════════════════════════════════════════════
+function renderAll() {
+  renderDashboard();
+  renderInvTable();
+  renderMvTable();
+  renderCharts();
+}
+
+window.showPage = (p, btn) => {
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (p === 'admin') loadAdminPanel();
+  setTimeout(renderCharts, 80);
+};
+
+function renderDashboard() {
+  const today    = new Date().toISOString().slice(0, 10);
+  const total    = products.length;
+  const low      = products.filter(p => p.stock > 0 && p.stock <= (p.min || globalMin)).length;
+  const out      = products.filter(p => p.stock === 0).length;
+  const todayUse = movements.filter(m => m.date === today && m.type === 'out')
+                            .reduce((a, b) => a + b.qty, 0);
+
+  document.getElementById('sc-total').textContent    = total;
+  document.getElementById('sc-low').textContent      = low;
+  document.getElementById('sc-low-sub').textContent  = 'bajo mínimo (' + globalMin + ')';
+  document.getElementById('sc-out').textContent      = out;
+  document.getElementById('sc-today').textContent    = todayUse;
+
+  // Stock crítico
+  const cl   = document.getElementById('critical-list');
+  const crit = products.filter(p => p.stock <= (p.min || globalMin));
+  cl.innerHTML = crit.length
+    ? crit.map(p => `
+        <div class="log-entry">
+          <div>
+            <div style="font-weight:600;font-size:13px">${p.name}</div>
+            <div style="font-size:11px;color:#aaa">${p.model || '—'}</div>
+          </div>
+          <span class="alert-chip">${p.stock} uds</span>
+        </div>`).join('')
+    : '<div style="color:#aaa;font-size:13px;padding:8px 0">Todo en orden ✓</div>';
+
+  // Últimos movimientos
+  const rl = document.getElementById('recent-log');
+  rl.innerHTML = movements.slice(0, 6).map(m => `
+    <div class="log-entry">
+      <div>
+        <div style="font-size:13px;font-weight:600">${m.productName}</div>
+        <div style="font-size:11px;color:#aaa">${m.user || '—'} · ${m.date || ''}</div>
+      </div>
+      <span class="chip ${m.type}">${m.type === 'in' ? '+' : '-'}${m.qty}</span>
+    </div>`).join('') ||
+    '<div class="empty-state"><div>📋</div>Sin movimientos aún</div>';
+}
+
+function statusBadge(stock, min) {
+  if (stock === 0)    return '<span class="badge out">Sin stock</span>';
+  if (stock <= min)   return '<span class="badge low">Bajo</span>';
+  return '<span class="badge ok">OK</span>';
+}
+
+function renderInvTable() {
+  const tb = document.getElementById('inv-table');
+  if (!tb) return;
+  if (!products.length) {
+    tb.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div>📦</div>Sin productos. Agrega el primero arriba.</div></td></tr>';
+    return;
+  }
+  tb.innerHTML = products.map(p => {
+    const min = p.min || globalMin;
+    return `<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td><span class="tag">${p.model || '—'}</span></td>
+      <td style="font-size:12px;color:#888;font-family:monospace">${p.part || '—'}</td>
+      <td style="font-weight:700;color:${p.stock <= min ? '#c62828' : '#1a1a1a'}">${p.stock}</td>
+      <td style="color:#888">${min}</td>
+      <td>${statusBadge(p.stock, min)}</td>
+      <td>
+        <button class="act-btn" onclick="openEdit('${p.id}')">Ajustar</button>
+        <button class="act-btn danger" onclick="delProduct('${p.id}')">Eliminar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderMvTable() {
+  const tb = document.getElementById('mv-table');
+  if (!tb) return;
+
+  const fu = document.getElementById('filter-user')?.value || '';
+  const ft = document.getElementById('filter-type')?.value || '';
+  let mv   = [...movements];
+  if (fu) mv = mv.filter(m => m.user === fu);
+  if (ft) mv = mv.filter(m => m.type === ft);
+
+  tb.innerHTML = mv.slice(0, 100).map(m => `
+    <tr>
+      <td style="white-space:nowrap;color:#888">${m.date || '—'}</td>
+      <td style="white-space:nowrap;color:#888">${m.time || '—'}</td>
+      <td style="font-weight:500">${m.user || '—'}</td>
+      <td style="font-weight:600">${m.productName}</td>
+      <td><span class="tag">${m.model || '—'}</span></td>
+      <td><span class="chip ${m.type}">${m.type === 'in' ? 'Entrada' : 'Salida'}</span></td>
+      <td class="${m.type === 'in' ? 'green' : 'red-t'}" style="font-weight:600">
+        ${m.type === 'in' ? '+' : '-'}${m.qty}
+      </td>
+      <td style="color:#888">${m.stockAfter}</td>
+      <td style="color:#aaa;font-size:12px;max-width:160px">${m.note || '—'}</td>
+    </tr>`).join('') ||
+    '<tr><td colspan="9"><div class="empty-state"><div>📋</div>Sin movimientos registrados</div></td></tr>';
+
+  // Poblar select de productos
+  const sel = document.getElementById('mv-product');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Selecciona producto —</option>' +
+      products.map(p => `<option value="${p.id}">${p.name} — ${p.model} (${p.stock} uds)</option>`).join('');
+  }
+
+  // Poblar filtro de usuarios
+  const fu2 = document.getElementById('filter-user');
+  if (fu2) {
+    const users = [...new Set(movements.map(m => m.user).filter(Boolean))];
+    const cur   = fu2.value;
+    fu2.innerHTML = '<option value="">Todos los usuarios</option>' +
+      users.map(u => `<option value="${u}"${u === cur ? ' selected' : ''}>${u}</option>`).join('');
   }
 }
 
-function openLogin(){document.getElementById('login-modal').classList.add('open');setTimeout(()=>document.getElementById('login-input').focus(),100);}
-function closeLogin(){document.getElementById('login-modal').classList.remove('open');}
-function doLogin(){const v=document.getElementById('login-input').value.trim();if(!v)return;currentUser=v;localStorage.setItem('inv_user',v);updateUserUI();closeLogin();}
-function doLogout(){currentUser=null;localStorage.removeItem('inv_user');updateUserUI();}
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-
-function updateGlobalMin(){
-  const v=parseInt(document.getElementById('global-min').value)||10;
-  globalMin=v;products.forEach(p=>p.min=v);save();renderAll();
-  document.getElementById('min-msg').textContent='✓ Actualizado a '+v+' uds';
-  setTimeout(()=>{document.getElementById('min-msg').textContent='';},2500);
+// ════════════════════════════════════════════════════════
+//  GRÁFICOS
+// ════════════════════════════════════════════════════════
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
 }
 
-function statusBadge(s,m){
-  if(s===0)return'<span class="badge out">Sin stock</span>';
-  if(s<=m)return'<span class="badge low">Bajo</span>';
-  return'<span class="badge ok">OK</span>';
+function renderCharts() {
+  const active = document.querySelector('.page.active');
+  if (!active) return;
+  const id = active.id;
+  if (id === 'page-dashboard') renderWeekChart();
+  if (id === 'page-graficas') {
+    renderMonthChart();
+    renderCatChart();
+    renderDailyChart();
+    renderStockChart();
+  }
 }
 
-function renderInvTable(){
-  const tb=document.getElementById('inv-table');if(!tb)return;
-  document.getElementById('global-min').value=globalMin;
-  tb.innerHTML=products.map((p,i)=>`
-    <tr>
-      <td style="font-weight:600">${p.name}</td>
-      <td><span class="tag">${p.model||'—'}</span></td>
-      <td style="font-size:12px;color:#888;font-family:monospace">${p.part||'—'}</td>
-      <td style="font-weight:700;color:${p.stock<=p.min?'#c62828':'#1a1a1a'}">${p.stock}</td>
-      <td style="color:#888">${p.min}</td>
-      <td>${statusBadge(p.stock,p.min)}</td>
-      <td><button class="act-btn" onclick="openEdit(${i})">Ajustar</button><button class="act-btn danger" onclick="delProduct(${i})">Eliminar</button></td>
-    </tr>`).join('');
+function renderWeekChart() {
+  const el = document.getElementById('weekChart'); if (!el) return;
+  destroyChart('week');
+  const days = [], vals = [];
+  for (let i = 6; i >= 0; i--) {
+    const d  = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    days.push(['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.getDay()]);
+    vals.push(movements.filter(m => m.date === ds && m.type === 'out').reduce((a,b) => a + b.qty, 0));
+  }
+  charts['week'] = new Chart(el, {
+    type: 'bar',
+    data: { labels: days, datasets: [{ label: 'Uds usadas', data: vals, backgroundColor: '#3266ad', borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
 }
 
-function renderMvTable(){
-  const tb=document.getElementById('mv-table');if(!tb)return;
-  const fu=document.getElementById('filter-user')?.value||'';
-  const ft=document.getElementById('filter-type')?.value||'';
-  let mv=[...movements];
-  if(fu)mv=mv.filter(m=>m.user===fu);
-  if(ft)mv=mv.filter(m=>m.type===ft);
-  tb.innerHTML=mv.slice(0,100).map(m=>`
-    <tr>
-      <td style="white-space:nowrap;color:#888">${m.date}</td>
-      <td style="white-space:nowrap;color:#888">${m.time||'—'}</td>
-      <td style="font-weight:500">${m.user||'Anónimo'}</td>
-      <td style="font-weight:600">${m.productName}</td>
-      <td><span class="tag">${m.model||'—'}</span></td>
-      <td><span class="chip ${m.type}">${m.type==='in'?'Entrada':'Salida'}</span></td>
-      <td class="${m.type==='in'?'green':'red-t'}" style="font-weight:600">${m.type==='in'?'+':'-'}${m.qty}</td>
-      <td style="color:#888">${m.stockAfter}</td>
-      <td style="color:#aaa;font-size:12px;max-width:150px">${m.note||'—'}</td>
-    </tr>`).join('');
-  const sel=document.getElementById('mv-product');
-  if(sel){sel.innerHTML='<option value="">Selecciona producto</option>'+products.map(p=>`<option value="${p.id}">${p.name} — ${p.model} (${p.stock} uds)</option>`).join('');}
-  const fu2=document.getElementById('filter-user');
-  if(fu2){const users=[...new Set(movements.map(m=>m.user).filter(Boolean))];const cur=fu2.value;fu2.innerHTML='<option value="">Todos los usuarios</option>'+users.map(u=>`<option value="${u}"${u===cur?' selected':''}>${u}</option>`).join('');}
+function renderMonthChart() {
+  const el = document.getElementById('monthChart'); if (!el) return;
+  destroyChart('month');
+  const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now = new Date(); const labels = [], vals = [];
+  for (let i = 5; i >= 0; i--) {
+    const d  = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const ym = d.toISOString().slice(0, 7);
+    labels.push(monthNames[d.getMonth()]);
+    vals.push(movements.filter(m => m.type === 'out' && (m.date || '').slice(0, 7) === ym).reduce((a,b) => a + b.qty, 0));
+  }
+  charts['month'] = new Chart(el, {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Consumo', data: vals, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#1D9E75', pointRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
 }
 
-function renderDashboard(){
-  const total=products.length,low=products.filter(p=>p.stock>0&&p.stock<=p.min).length,out=products.filter(p=>p.stock===0).length;
-  const today=new Date().toISOString().slice(0,10);
-  const todayUse=movements.filter(m=>m.date===today&&m.type==='out').reduce((a,b)=>a+b.qty,0);
-  document.getElementById('stat-cards').innerHTML=`
-    <div class="card"><div class="lbl">Productos</div><div class="val">${total}</div><div class="sub">en catálogo</div></div>
-    <div class="card"><div class="lbl">Stock bajo</div><div class="val" style="color:#f57f17">${low}</div><div class="sub">bajo mínimo (${globalMin})</div></div>
-    <div class="card"><div class="lbl">Sin stock</div><div class="val" style="color:#c62828">${out}</div><div class="sub">agotados</div></div>
-    <div class="card"><div class="lbl">Uso hoy</div><div class="val">${todayUse}</div><div class="sub">unidades</div></div>`;
-  const cl=document.getElementById('critical-list');
-  const crit=products.filter(p=>p.stock<=p.min);
-  cl.innerHTML=crit.length?crit.map(p=>`<div class="log-entry"><div><div style="font-weight:600;font-size:13px">${p.name}</div><div style="font-size:11px;color:#aaa">${p.model}</div></div><span class="alert-chip">${p.stock} uds</span></div>`).join(''):'<div style="color:#aaa;font-size:13px;padding:8px 0">Todo en orden ✓</div>';
-  const rl=document.getElementById('recent-log');
-  rl.innerHTML=movements.slice(0,6).map(m=>`<div class="log-entry"><div><div style="font-size:13px;font-weight:600">${m.productName}</div><div style="font-size:11px;color:#aaa">${m.user||'Anónimo'} · ${m.date}</div></div><span class="chip ${m.type}">${m.type==='in'?'+'+m.qty:'-'+m.qty}</span></div>`).join('');
+function renderCatChart() {
+  const el = document.getElementById('catChart'); if (!el) return;
+  destroyChart('cat');
+  const cats = {};
+  movements.filter(m => m.type === 'out').forEach(m => {
+    const k = m.model || 'Sin modelo'; cats[k] = (cats[k] || 0) + m.qty;
+  });
+  if (!Object.keys(cats).length) {
+    products.forEach(p => { const k = p.model || 'Sin modelo'; cats[k] = (cats[k] || 0) + p.stock; });
+  }
+  const labels = Object.keys(cats); const vals = Object.values(cats);
+  if (!labels.length) return;
+  charts['cat'] = new Chart(el, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: vals, backgroundColor: COLORS.slice(0, labels.length), borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10, padding: 8 } } } }
+  });
 }
 
-function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
-
-function renderWeekChart(){
-  const el=document.getElementById('weekChart');if(!el)return;destroyChart('week');
-  const days=[],vals=[];
-  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);days.push(['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.getDay()]);vals.push(movements.filter(m=>m.date===ds&&m.type==='out').reduce((a,b)=>a+b.qty,0));}
-  charts['week']=new Chart(el,{type:'bar',data:{labels:days,datasets:[{label:'Uds usadas',data:vals,backgroundColor:'#3266ad',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{ticks:{font:{size:12}}}}}});
+function renderDailyChart() {
+  const el = document.getElementById('dailyChart'); if (!el) return;
+  destroyChart('daily');
+  const labels = [], vals = [];
+  for (let i = 13; i >= 0; i--) {
+    const d  = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    labels.push(ds.slice(5));
+    vals.push(movements.filter(m => m.date === ds && m.type === 'out').reduce((a,b) => a + b.qty, 0));
+  }
+  charts['daily'] = new Chart(el, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Consumo diario', data: vals, backgroundColor: '#D85A30', borderRadius: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 45 } } } }
+  });
 }
 
-function renderMonthChart(){
-  const el=document.getElementById('monthChart');if(!el)return;destroyChart('month');
-  const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];const now=new Date();const labels=[],vals=[];
-  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);labels.push(months[d.getMonth()]);const ym=d.toISOString().slice(0,7);const real=movements.filter(m=>m.type==='out'&&m.date.slice(0,7)===ym).reduce((a,b)=>a+b.qty,0);vals.push(real||(Math.floor(Math.random()*25)+8));}
-  charts['month']=new Chart(el,{type:'line',data:{labels,datasets:[{label:'Consumo',data:vals,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#1D9E75',pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+function renderStockChart() {
+  const el = document.getElementById('stockChart'); if (!el) return;
+  destroyChart('stock');
+  const sorted = [...products].sort((a,b) => b.stock - a.stock);
+  if (!sorted.length) return;
+  const h = Math.max(220, sorted.length * 40 + 70);
+  document.getElementById('stockChartWrap').style.height = h + 'px';
+  charts['stock'] = new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(p => p.name),
+      datasets: [{ label: 'Stock', data: sorted.map(p => p.stock),
+        backgroundColor: sorted.map(p => p.stock <= (p.min || globalMin) ? '#e53935' : '#378ADD'), borderRadius: 3 }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+  });
 }
 
-function renderCatChart(){
-  const el=document.getElementById('catChart');if(!el)return;destroyChart('cat');
-  const cats={};movements.filter(m=>m.type==='out').forEach(m=>{const mod=m.model||'Otro';cats[mod]=(cats[mod]||0)+m.qty;});
-  if(!Object.keys(cats).length){products.forEach(p=>{cats[p.model||'Otro']=(cats[p.model||'Otro']||0)+p.stock;});}
-  charts['cat']=new Chart(el,{type:'doughnut',data:{labels:Object.keys(cats),datasets:[{data:Object.values(cats),backgroundColor:COLORS.slice(0,Object.keys(cats).length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:10,padding:8}}}}});
+// ════════════════════════════════════════════════════════
+//  MODALES
+// ════════════════════════════════════════════════════════
+window.openModal  = (id) => document.getElementById(id).classList.add('open');
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+// ════════════════════════════════════════════════════════
+//  EXPORTACIONES
+// ════════════════════════════════════════════════════════
+window.exportInvExcel = () => {
+  const rows = products.map(p => ({
+    'Producto': p.name, 'Modelo': p.model, 'N° Parte': p.part,
+    'Stock': p.stock, 'Mínimo': p.min || globalMin,
+    'Estado': p.stock === 0 ? 'Sin stock' : p.stock <= (p.min || globalMin) ? 'Bajo' : 'OK'
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+  XLSX.writeFile(wb, 'inventario_' + new Date().toISOString().slice(0,10) + '.xlsx');
+};
+
+window.exportMvExcel = () => {
+  const rows = movements.map(m => ({
+    'Fecha': m.date, 'Hora': m.time, 'Usuario': m.user,
+    'Producto': m.productName, 'Modelo': m.model, 'N° Parte': m.part || '',
+    'Tipo': m.type === 'in' ? 'Entrada' : 'Salida',
+    'Cantidad': m.qty, 'Stock resultante': m.stockAfter, 'Nota': m.note || ''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Movimientos');
+  XLSX.writeFile(wb, 'movimientos_' + new Date().toISOString().slice(0,10) + '.xlsx');
+};
+
+window.exportChartsExcel = () => {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.json_to_sheet(products.map(p => ({
+      'Producto': p.name, 'Modelo': p.model, 'N° Parte': p.part, 'Stock': p.stock, 'Mínimo': p.min || globalMin
+    }))), 'Inventario');
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.json_to_sheet(movements.map(m => ({
+      'Fecha': m.date, 'Hora': m.time, 'Usuario': m.user,
+      'Producto': m.productName, 'Modelo': m.model,
+      'Tipo': m.type === 'in' ? 'Entrada' : 'Salida',
+      'Cantidad': m.qty, 'Stock res.': m.stockAfter, 'Nota': m.note || ''
+    }))), 'Movimientos');
+  XLSX.writeFile(wb, 'informe_completo_' + new Date().toISOString().slice(0,10) + '.xlsx');
+};
+
+window.exportChartPng = (canvasId, name) => {
+  const c = document.getElementById(canvasId); if (!c) return;
+  const a = document.createElement('a');
+  a.download = name + '_' + new Date().toISOString().slice(0,10) + '.png';
+  a.href = c.toDataURL('image/png'); a.click();
+};
+
+window.exportInvPdf = () => {
+  const rows = products.map(p => [p.name, p.model||'—', p.part||'—', p.stock, p.min||globalMin,
+    p.stock===0?'Sin stock':p.stock<=(p.min||globalMin)?'Bajo':'OK']);
+  buildPdf('Inventario de Stock',
+    ['Producto','Modelo','N° Parte','Stock','Mínimo','Estado'], rows);
+};
+
+window.exportMvPdf = () => {
+  const rows = movements.slice(0,200).map(m =>
+    [m.date, m.time||'—', m.user||'—', m.productName, m.model||'—',
+     m.type==='in'?'Entrada':'Salida', m.qty, m.stockAfter, m.note||'—']);
+  buildPdf('Historial de Movimientos',
+    ['Fecha','Hora','Usuario','Producto','Modelo','Tipo','Cant.','Stock res.','Nota'], rows);
+};
+
+window.exportReportPdf = () => {
+  const inv = products.map(p => [p.name, p.model||'—', p.part||'—', p.stock, p.min||globalMin,
+    p.stock===0?'Sin stock':p.stock<=(p.min||globalMin)?'Bajo':'OK']);
+  const mv  = movements.slice(0,100).map(m =>
+    [m.date, m.time||'—', m.user||'—', m.productName, m.model||'—',
+     m.type==='in'?'Entrada':'Salida', m.qty, m.stockAfter]);
+  buildPdf('Informe Completo — SoyMomo Inventario',
+    ['Producto','Modelo','N° Parte','Stock','Mínimo','Estado'], inv,
+    true,
+    ['Fecha','Hora','Usuario','Producto','Modelo','Tipo','Cant.','Stock res.'], mv);
+};
+
+function buildPdf(title, headers, rows, twoTables, h2, r2) {
+  const now = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' });
+  const mkTable = (hdrs, rws, color) =>
+    `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:20px">
+      <thead><tr>${hdrs.map(h => `<th style="background:${color};color:#fff;padding:6px 8px;text-align:left">${h}</th>`).join('')}</tr></thead>
+      <tbody>${rws.map((r,i) => `<tr style="background:${i%2===0?'#f9f9f9':'#fff'}">${r.map(c => `<td style="padding:5px 8px;border-bottom:1px solid #eee">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+    <style>body{font-family:Arial,sans-serif;color:#1a1a1a;padding:30px}
+    h1{font-size:18px;margin-bottom:4px} h2{font-size:15px;margin:20px 0 8px;color:#1a1a2e}
+    .sub{font-size:12px;color:#888;margin-bottom:18px}
+    .summary{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+    .sc{background:#f5f5f5;border-radius:8px;padding:10px 18px;text-align:center}
+    .sc .v{font-size:22px;font-weight:700} .sc .l{font-size:10px;color:#888;margin-top:2px}</style>
+    </head><body>
+    <h1>${title}</h1>
+    <p class="sub">Generado el ${now} · Usuario: ${currentUser?.name || '—'} · Alerta mínima: ${globalMin} uds</p>
+    <div class="summary">
+      <div class="sc"><div class="v">${products.length}</div><div class="l">Productos</div></div>
+      <div class="sc"><div class="v" style="color:#f57f17">${products.filter(p=>p.stock>0&&p.stock<=(p.min||globalMin)).length}</div><div class="l">Stock bajo</div></div>
+      <div class="sc"><div class="v" style="color:#c62828">${products.filter(p=>p.stock===0).length}</div><div class="l">Sin stock</div></div>
+      <div class="sc"><div class="v">${movements.length}</div><div class="l">Movimientos totales</div></div>
+    </div>
+    ${mkTable(headers, rows, '#1a1a2e')}
+    ${twoTables ? '<h2>Historial de Movimientos</h2>' + mkTable(h2, r2, '#1D9E75') : ''}
+    </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (win) {
+    win.onload = () => { win.print(); setTimeout(() => URL.revokeObjectURL(url), 3000); };
+  }
 }
 
-function renderDailyChart(){
-  const el=document.getElementById('dailyChart');if(!el)return;destroyChart('daily');
-  const labels=[],vals=[];
-  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);labels.push(ds.slice(5));vals.push(movements.filter(m=>m.date===ds&&m.type==='out').reduce((a,b)=>a+b.qty,0));}
-  charts['daily']=new Chart(el,{type:'bar',data:{labels,datasets:[{label:'Consumo diario',data:vals,backgroundColor:'#D85A30',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{ticks:{font:{size:10},autoSkip:false,maxRotation:45}}}}});
-}
-
-function renderStockChart(){
-  const el=document.getElementById('stockChart');if(!el)return;destroyChart('stock');
-  const sorted=[...products].sort((a,b)=>b.stock-a.stock);
-  const h=Math.max(220,sorted.length*40+70);
-  document.getElementById('stockChartWrap').style.height=h+'px';
-  charts['stock']=new Chart(el,{type:'bar',data:{labels:sorted.map(p=>p.name),datasets:[{label:'Stock',data:sorted.map(p=>p.stock),backgroundColor:sorted.map(p=>p.stock<=p.min?'#e53935':'#378ADD'),borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
-}
-
-function renderAll(){
-  updateUserUI();renderDashboard();renderInvTable();renderMvTable();
-  renderWeekChart();renderMonthChart();renderCatChart();renderDailyChart();renderStockChart();
-}
-
-function addProduct(){
-  const name=document.getElementById('inp-name').value.trim(),model=document.getElementById('inp-model').value,part=document.getElementById('inp-part').value.trim(),stock=parseInt(document.getElementById('inp-stock').value)||0;
-  if(!name)return alert('Ingresa el nombre del producto');
-  const ex=products.find(p=>p.name.toLowerCase()===name.toLowerCase()&&p.model===model);
-  if(ex){ex.stock+=stock;ex.part=part||ex.part;}else{products.push({id:Date.now(),name,model,part,stock,min:globalMin});}
-  save();renderAll();['inp-name','inp-part','inp-stock'].forEach(id=>{document.getElementById(id).value='';});document.getElementById('inp-model').value='';
-}
-
-function delProduct(i){if(!confirm('¿Eliminar '+products[i].name+'?'))return;products.splice(i,1);save();renderAll();}
-
-function openEdit(i){
-  editIdx=i;const p=products[i];
-  document.getElementById('edit-name').textContent=p.name+' — '+p.model+' (actual: '+p.stock+' uds)';
-  document.getElementById('edit-stock').value=p.stock;document.getElementById('edit-note').value='';
-  openModal('edit-modal');
-}
-
-function saveEdit(){
-  const p=products[editIdx],ns=parseInt(document.getElementById('edit-stock').value);if(isNaN(ns))return;
-  const note=document.getElementById('edit-note').value.trim()||'ajuste manual',diff=ns-p.stock;
-  const now=new Date();
-  movements.unshift({id:Date.now(),date:now.toISOString().slice(0,10),time:now.toTimeString().slice(0,5),productId:p.id,productName:p.name,model:p.model,part:p.part,type:diff>=0?'in':'out',qty:Math.abs(diff),note,stockAfter:ns,user:currentUser||'Anónimo'});
-  p.stock=ns;save();closeModal('edit-modal');renderAll();
-}
-
-function addMovement(){
-  const pid=parseInt(document.getElementById('mv-product').value),type=document.getElementById('mv-type').value,qty=parseInt(document.getElementById('mv-qty').value)||0,note=document.getElementById('mv-note').value.trim();
-  if(!pid||qty<=0)return alert('Selecciona producto y cantidad válida');
-  const p=products.find(x=>x.id===pid);if(!p)return;
-  if(type==='out'&&p.stock<qty)return alert('Stock insuficiente (disponible: '+p.stock+')');
-  p.stock+=type==='in'?qty:-qty;
-  const now=new Date();
-  movements.unshift({id:Date.now(),date:now.toISOString().slice(0,10),time:now.toTimeString().slice(0,5),productId:p.id,productName:p.name,model:p.model||'',part:p.part||'',type,qty,note,stockAfter:p.stock,user:currentUser||'Anónimo'});
-  save();renderAll();document.getElementById('mv-qty').value='';document.getElementById('mv-note').value='';
-}
-
-function exportInvExcel(){
-  const ws=XLSX.utils.json_to_sheet(products.map(p=>({'Producto':p.name,'Modelo':p.model,'N° Parte':p.part,'Stock':p.stock,'Mínimo':p.min,'Estado':p.stock===0?'Sin stock':p.stock<=p.min?'Bajo':'OK'})));
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Inventario');XLSX.writeFile(wb,'inventario_'+new Date().toISOString().slice(0,10)+'.xlsx');
-}
-
-function exportMvExcel(){
-  const rows=movements.map(m=>({'Fecha':m.date,'Hora':m.time,'Usuario':m.user||'Anónimo','Producto':m.productName,'Modelo':m.model,'N° Parte':m.part||'','Tipo':m.type==='in'?'Entrada':'Salida','Cantidad':m.qty,'Stock resultante':m.stockAfter,'Nota':m.note||''}));
-  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Movimientos');XLSX.writeFile(wb,'movimientos_'+new Date().toISOString().slice(0,10)+'.xlsx');
-}
-
-function exportChartsExcel(){
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(products.map(p=>({'Producto':p.name,'Modelo':p.model,'N° Parte':p.part,'Stock':p.stock,'Mínimo':p.min}))),'Inventario');
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(movements.map(m=>({'Fecha':m.date,'Hora':m.time,'Usuario':m.user||'Anónimo','Producto':m.productName,'Modelo':m.model,'Tipo':m.type==='in'?'Entrada':'Salida','Cantidad':m.qty,'Stock resultante':m.stockAfter,'Nota':m.note||''}))),'Movimientos');
-  XLSX.writeFile(wb,'informe_completo_'+new Date().toISOString().slice(0,10)+'.xlsx');
-}
-
-function exportChartPng(canvasId,name){
-  const c=document.getElementById(canvasId);if(!c)return;const a=document.createElement('a');a.download=name+'_'+new Date().toISOString().slice(0,10)+'.png';a.href=c.toDataURL('image/png');a.click();
-}
-
-function exportInvPdf(){
-  const rows=products.map(p=>[p.name,p.model||'—',p.part||'—',p.stock,p.min,p.stock===0?'Sin stock':p.stock<=p.min?'Bajo':'OK']);
-  buildPdf('Inventario de Stock',['Producto','Modelo','N° Parte','Stock','Mínimo','Estado'],rows,'inventario');
-}
-
-function exportMvPdf(){
-  const rows=movements.slice(0,200).map(m=>[m.date,m.time||'—',m.user||'Anónimo',m.productName,m.model||'—',m.type==='in'?'Entrada':'Salida',m.qty,m.stockAfter,m.note||'—']);
-  buildPdf('Historial de Movimientos',['Fecha','Hora','Usuario','Producto','Modelo','Tipo','Cant.','Stock res.','Nota'],rows,'movimientos');
-}
-
-function exportReportPdf(){
-  const inv=products.map(p=>[p.name,p.model||'—',p.part||'—',p.stock,p.min,p.stock===0?'Sin stock':p.stock<=p.min?'Bajo':'OK']);
-  const mv=movements.slice(0,100).map(m=>[m.date,m.time||'—',m.user||'Anónimo',m.productName,m.model||'—',m.type==='in'?'Entrada':'Salida',m.qty,m.stockAfter]);
-  buildPdf('Informe Completo de Inventario',['Producto','Modelo','N° Parte','Stock','Mínimo','Estado'],inv,'informe',true,['Fecha','Hora','Usuario','Producto','Modelo','Tipo','Cant.','Stock res.'],mv);
-}
-
-function buildPdf(title,headers,rows,filename,twoTables,h2,r2){
-  const now=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
-  const t1=`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:20px"><thead><tr>${headers.map(h=>`<th style="background:#1a1a2e;color:#fff;padding:6px 8px;text-align:left">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr style="background:${i%2===0?'#f9f9f9':'#fff'}">${r.map(c=>`<td style="padding:5px 8px;border-bottom:1px solid #eee">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  const t2=twoTables?`<h2 style="font-size:14px;margin:20px 0 8px;color:#1a1a2e">Historial de Movimientos</h2><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${h2.map(h=>`<th style="background:#1D9E75;color:#fff;padding:5px 6px;text-align:left">${h}</th>`).join('')}</tr></thead><tbody>${r2.map((r,i)=>`<tr style="background:${i%2===0?'#f9f9f9':'#fff'}">${r.map(c=>`<td style="padding:4px 6px;border-bottom:1px solid #eee">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'';
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:Arial,sans-serif;color:#1a1a1a;padding:30px}h1{font-size:18px;margin-bottom:4px}.sub{font-size:12px;color:#888;margin-bottom:20px}.summary{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}.scard{background:#f5f5f5;border-radius:8px;padding:10px 18px;text-align:center}.scard .v{font-size:22px;font-weight:700}.scard .l{font-size:10px;color:#888;margin-top:2px}</style></head><body><h1>${title}</h1><p class="sub">Generado el ${now} · Alerta mínima global: ${globalMin} unidades</p><div class="summary"><div class="scard"><div class="v">${products.length}</div><div class="l">Productos</div></div><div class="scard"><div class="v" style="color:#f57f17">${products.filter(p=>p.stock>0&&p.stock<=p.min).length}</div><div class="l">Stock bajo</div></div><div class="scard"><div class="v" style="color:#c62828">${products.filter(p=>p.stock===0).length}</div><div class="l">Sin stock</div></div><div class="scard"><div class="v">${movements.length}</div><div class="l">Movimientos</div></div></div>${t1}${t2}</body></html>`;
-  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const win=window.open(url,'_blank');if(win){win.onload=()=>{win.print();setTimeout(()=>URL.revokeObjectURL(url),2000);};}
-}
-
-renderAll();
 </script>
 </body>
 </html>
