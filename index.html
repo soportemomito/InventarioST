@@ -226,7 +226,120 @@ document.addEventListener("DOMContentLoaded", () => {
 
   </div>
 </div>
+/* ===== AUTH WALL ===== */
+  #auth-wall {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #6d28e9, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
 
+/* Card */
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+  background: #f5edff;
+  border-radius: 16px;
+  padding: 35px 28px;
+  text-align: center;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+}
+
+/* Icono */
+.auth-icon {
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+/* Texto */
+.auth-card h2 {
+  color: #2b0a3d;
+  margin-bottom: 10px;
+}
+
+.auth-card p {
+  color: #5a3b6e;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Botón Google */
+.google-btn {
+  width: 100%;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  transition: 0.2s;
+}
+
+.google-btn:hover {
+  transform: translateY(-2px);
+  background: #6d28e9;
+}
+
+.google-btn svg {
+  width: 18px;
+}
+
+/* Mensajes */
+.pending-msg {
+  display: none;
+  margin-top: 15px;
+  background: #ede4ff;
+  border: 1px solid #d6c7ff;
+  color: #4c1d95;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.denied-msg {
+  display: none;
+  margin-top: 15px;
+  background: #ffe4e6;
+  border: 1px solid #fecdd3;
+  color: #9f1239;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* Botón volver */
+.auth-back-btn {
+  margin-top: 18px;
+  font-size: 12px;
+  color: #7c3aed;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-back-btn:hover {
+  text-decoration: underline;
+}
+  #auth-wall::before {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  top: 10%;
+  left: 10%;
+  filter: blur(80px);
+}
 <!-- ═══════════ APP ═══════════ -->
 <div id="app">
 <div class="app-inner">
