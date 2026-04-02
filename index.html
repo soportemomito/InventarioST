@@ -500,6 +500,11 @@ window.enterInventory = () => {
 };
 
 window.backToLanding = () => {
+  if (currentUser) {
+    goHome(); // si está logueado, no lo saques
+    return;
+  }
+
   stopListeners();
   document.getElementById('app').style.display       = 'none';
   document.getElementById('auth-wall').style.display = 'none';
