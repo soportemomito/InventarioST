@@ -190,156 +190,116 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <!-- ═══════════ AUTH WALL ═══════════ -->
-<div id="auth-wall">
-  <div class="auth-card">
+<div id="auth-wall" style="
+  min-height:100vh;
+  background: linear-gradient(135deg, #6d28e9, #7c3aed);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  font-family: Arial, sans-serif;
+">
 
-    <div class="auth-icon">🔐</div>
+  <!-- Glow decorativo -->
+  <div style="
+    position:absolute;
+    width:300px;
+    height:300px;
+    background:rgba(255,255,255,0.1);
+    border-radius:50%;
+    top:10%;
+    left:10%;
+    filter:blur(80px);
+    pointer-events:none;
+  "></div>
 
-    <h2>Acceso restringido</h2>
+  <div style="
+    max-width:420px;
+    width:100%;
+    background:#f5edff;
+    border-radius:16px;
+    padding:35px 28px;
+    text-align:center;
+    box-shadow:0 12px 35px rgba(0,0,0,0.25);
+    position:relative;
+    z-index:2;
+  ">
 
-    <p>
+    <div style="font-size:34px;margin-bottom:12px;">🔐</div>
+
+    <h2 style="color:#2b0a3d;margin-bottom:10px;">
+      Acceso restringido
+    </h2>
+
+    <p style="color:#5a3b6e;font-size:14px;margin-bottom:20px;">
       Este módulo es solo para personal autorizado de SoyMomo.
       Inicia sesión con tu cuenta Google para solicitar acceso.
     </p>
 
-    <button class="google-btn" onclick="signInWithGoogle()">
-      <svg viewBox="0 0 24 24">
-        <path d="M22.56 12.25..." fill="#4285F4"/>
-        <path d="M12 23..." fill="#34A853"/>
-        <path d="M5.84 14.09..." fill="#FBBC05"/>
-        <path d="M12 5.38..." fill="#EA4335"/>
+    <button onclick="signInWithGoogle()" style="
+      width:100%;
+      background:#7c3aed;
+      color:white;
+      border:none;
+      padding:14px;
+      border-radius:10px;
+      font-weight:bold;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      cursor:pointer;
+      box-shadow:0 6px 16px rgba(0,0,0,0.25);
+    ">
+      <svg viewBox="0 0 24 24" width="18">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
       Continuar con Google
     </button>
 
-    <div class="pending-msg" id="pending-msg">
-      ⏳ Tu cuenta está <strong>pendiente de aprobación</strong>.
+    <div id="pending-msg" style="
+      display:none;
+      margin-top:15px;
+      background:#ede4ff;
+      border:1px solid #d6c7ff;
+      color:#4c1d95;
+      padding:10px;
+      border-radius:8px;
+      font-size:13px;
+    ">
+      ⏳ Tu cuenta está <strong>pendiente de aprobación</strong>
     </div>
 
-    <div class="denied-msg" id="denied-msg">
-      ❌ Tu cuenta no tiene acceso autorizado.
+    <div id="denied-msg" style="
+      display:none;
+      margin-top:15px;
+      background:#ffe4e6;
+      border:1px solid #fecdd3;
+      color:#9f1239;
+      padding:10px;
+      border-radius:8px;
+      font-size:13px;
+    ">
+      ❌ Tu cuenta no tiene acceso autorizado
     </div>
 
-    <button onclick="backToLanding()" class="auth-back-btn">
+    <button onclick="backToLanding()" style="
+      margin-top:18px;
+      font-size:12px;
+      color:#7c3aed;
+      background:none;
+      border:none;
+      cursor:pointer;
+    ">
       ← Volver al inicio
     </button>
 
   </div>
 </div>
-/* ===== AUTH WALL ===== */
-  #auth-wall {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #6d28e9, #7c3aed);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
 
-/* Card */
-.auth-card {
-  max-width: 420px;
-  width: 100%;
-  background: #f5edff;
-  border-radius: 16px;
-  padding: 35px 28px;
-  text-align: center;
-  box-shadow: 0 12px 35px rgba(0,0,0,0.25);
-}
-
-/* Icono */
-.auth-icon {
-  font-size: 34px;
-  margin-bottom: 12px;
-}
-
-/* Texto */
-.auth-card h2 {
-  color: #2b0a3d;
-  margin-bottom: 10px;
-}
-
-.auth-card p {
-  color: #5a3b6e;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-/* Botón Google */
-.google-btn {
-  width: 100%;
-  background: #7c3aed;
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 10px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  transition: 0.2s;
-}
-
-.google-btn:hover {
-  transform: translateY(-2px);
-  background: #6d28e9;
-}
-
-.google-btn svg {
-  width: 18px;
-}
-
-/* Mensajes */
-.pending-msg {
-  display: none;
-  margin-top: 15px;
-  background: #ede4ff;
-  border: 1px solid #d6c7ff;
-  color: #4c1d95;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
-.denied-msg {
-  display: none;
-  margin-top: 15px;
-  background: #ffe4e6;
-  border: 1px solid #fecdd3;
-  color: #9f1239;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
-/* Botón volver */
-.auth-back-btn {
-  margin-top: 18px;
-  font-size: 12px;
-  color: #7c3aed;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.auth-back-btn:hover {
-  text-decoration: underline;
-}
-  #auth-wall::before {
-  content: "";
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 50%;
-  top: 10%;
-  left: 10%;
-  filter: blur(80px);
-}
 <!-- ═══════════ APP ═══════════ -->
 <div id="app">
 <div class="app-inner">
