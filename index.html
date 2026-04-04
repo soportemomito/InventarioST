@@ -90,7 +90,6 @@ tr:hover td{background:#fafafa}
 .mod-card.disabled{opacity:.55;cursor:not-allowed}
 .mod-card.disabled:hover{transform:none}
 /* ── ST APP ── */
-#st-app{display:none}
 .st-inner{max-width:1200px;margin:0 auto;padding:1.5rem 1rem}
 .st-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;padding-bottom:1rem;border-bottom:2px solid #e8e8e8}
 .st-topbar h1{font-size:20px;font-weight:700;color:#1a1a1a}
@@ -115,16 +114,6 @@ tr:hover td{background:#fafafa}
 .tipo-sin-garantia{background:#fff3e0;color:#e65100}
 .tipo-retail{background:#f3e5f5;color:#6a1b9a}
 /* PIN modal */
-#pin-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center}
-#pin-modal-bg.open{display:flex}
-.pin-modal{background:#fff;border-radius:16px;padding:2rem;width:320px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-.pin-dots{display:flex;justify-content:center;gap:12px;margin:1.5rem 0}
-.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #d1d5db;transition:.2s}
-.pin-dot.filled{background:#7c3aed;border-color:#7c3aed}
-.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto}
-.pin-key{padding:14px;border-radius:12px;border:1px solid #e5e7eb;background:#f9fafb;font-size:18px;font-weight:600;cursor:pointer;transition:.15s;color:#1a1a1a}
-.pin-key:hover{background:#ede4ff;border-color:#c4b5fd}
-.pin-key.del{background:#fee2e2;color:#dc2626;border-color:#fecaca}
 /* ST informe PDF preview */
 .informe-preview{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:10px;padding:1rem;font-size:12px;line-height:1.7}
 
@@ -193,7 +182,7 @@ tr:hover td{background:#fafafa}
 
     <!-- LOGO GIF -->
     <div style="margin-bottom:20px;">
-      <img id="landing-logo" src="" width="120" style="border-radius:12px;cursor:pointer;" title=""/>
+      <img id="landing-logo" src="" width="120" style="border-radius:12px;"/>
     </div>
 
     <h1 style="margin:0 0 6px 0; color:#2b0a3d; font-size:22px; font-weight:800;">
@@ -282,117 +271,155 @@ tr:hover td{background:#fafafa}
 <div id="auth-wall" style="display:none"></div>
 
 <!-- ═══════════ SELECTOR DE MÓDULO ═══════════ -->
-<div id="module-selector" style="display:none;min-height:100vh;background:linear-gradient(135deg,#6d28e9,#7c3aed);align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif;">
-  <div style="max-width:680px;width:100%;text-align:center;">
-    <div style="margin-bottom:20px;">
-      <img src="" id="mod-logo" width="80" style="border-radius:10px;opacity:.9;"/>
-    </div>
-    <h2 style="color:#fff;font-size:22px;font-weight:800;margin-bottom:6px;">¿Qué módulo necesitas?</h2>
-    <p style="color:rgba(255,255,255,.7);font-size:13px;margin-bottom:32px;">Selecciona el área de trabajo</p>
-    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;">
+<div id="module-selector" style="display:none;min-height:100vh;background:linear-gradient(135deg,#6d28e9,#7c3aed);align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif;position:relative;">
 
-      <div class="mod-card" id="mod-inv-btn">
+  <!-- Glows decorativos (igual que landing) -->
+  <div style="position:absolute;width:350px;height:350px;background:rgba(255,255,255,0.08);border-radius:50%;top:5%;left:5%;filter:blur(90px);pointer-events:none;"></div>
+  <div style="position:absolute;width:250px;height:250px;background:rgba(255,255,255,0.06);border-radius:50%;bottom:10%;right:8%;filter:blur(70px);pointer-events:none;"></div>
+
+  <!-- Box blanco igual que la landing -->
+  <div style="max-width:520px;width:100%;background:#f5edff;border-radius:20px;padding:36px 32px;box-shadow:0 16px 48px rgba(0,0,0,0.3);text-align:center;position:relative;z-index:2;">
+
+    <div style="margin-bottom:16px;">
+      <img src="" id="mod-logo" width="90" style="border-radius:12px;"/>
+    </div>
+
+    <h2 style="margin:0 0 6px 0;color:#2b0a3d;font-size:20px;font-weight:800;">
+      Servicio Técnico SoyMomo.
+    </h2>
+    <p style="color:#7c5c9a;font-size:13px;margin:0 0 28px 0;">
+      Escoge una opción.
+    </p>
+
+    <!-- Cards de módulos -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;">
+
+      <div class="mod-card" id="mod-inv-btn" style="background:#fff;border:2px solid #e9d5ff;">
         <div class="mod-icon">📦</div>
-        <div class="mod-title">Inventario</div>
+        <div class="mod-title" style="color:#2b0a3d;">Inventario</div>
         <div class="mod-sub">Control de stock y trazabilidad de repuestos</div>
       </div>
 
-      <div class="mod-card" id="mod-st-btn">
-        <div class="mod-icon">🔧</div>
-        <div class="mod-title">Servicio Técnico</div>
-        <div class="mod-sub">Órdenes de ingreso, seguimiento y salidas</div>
+      <div style="flex:1;min-width:220px;max-width:300px;background:#fff;border-radius:16px;padding:28px 24px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08);border:2px dashed #d8b4fe;opacity:0.6;cursor:default;user-select:none;">
+        <div style="font-size:40px;margin-bottom:12px;">🔧</div>
+        <div style="font-size:16px;font-weight:700;color:#2b0a3d;margin-bottom:6px;">Servicio Técnico</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">Órdenes de ingreso y seguimiento</div>
+        <div style="font-size:10px;font-weight:700;background:#7c3aed;color:#fff;padding:3px 12px;border-radius:20px;display:inline-block;">Próximamente</div>
       </div>
 
     </div>
-    <button onclick="doSignOut()" style="margin-top:28px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;">Cerrar sesión</button>
+
+    <!-- Info usuario + cerrar sesión -->
+    <div style="border-top:1px solid #ddd6f3;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="mod-avatar" style="width:30px;height:30px;border-radius:50%;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">?</div>
+        <span id="mod-username" style="font-size:13px;color:#5a3b6e;font-weight:500;">—</span>
+      </div>
+      <button onclick="doSignOut()" style="font-size:12px;color:#7c3aed;background:none;border:1px solid #c4b5fd;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:500;">
+        Cerrar sesión
+      </button>
+    </div>
+
   </div>
 </div>
 
-<!-- ═══════════ PIN MODAL ST ═══════════ -->
-<div id="pin-modal-bg">
-  <div class="pin-modal">
-    <div style="font-size:28px;margin-bottom:8px">🔒</div>
-    <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:4px">Acceso Servicio Técnico</h3>
-    <p style="font-size:12px;color:#888;margin-bottom:0">Ingresa el PIN de acceso</p>
-    <div class="pin-dots" id="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-      <div class="pin-dot" id="pd4"></div>
-      <div class="pin-dot" id="pd5"></div>
-      <div class="pin-dot" id="pd6"></div>
-      <div class="pin-dot" id="pd7"></div>
-    </div>
-    <div id="pin-error" style="display:none;font-size:12px;color:#c62828;margin-bottom:10px;background:#ffebee;padding:6px 12px;border-radius:6px;">PIN incorrecto. Intenta nuevamente.</div>
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pinKey('1')">1</button>
-      <button class="pin-key" onclick="pinKey('2')">2</button>
-      <button class="pin-key" onclick="pinKey('3')">3</button>
-      <button class="pin-key" onclick="pinKey('4')">4</button>
-      <button class="pin-key" onclick="pinKey('5')">5</button>
-      <button class="pin-key" onclick="pinKey('6')">6</button>
-      <button class="pin-key" onclick="pinKey('7')">7</button>
-      <button class="pin-key" onclick="pinKey('8')">8</button>
-      <button class="pin-key" onclick="pinKey('9')">9</button>
-      <button class="pin-key del" onclick="pinDel()" style="grid-column:1">⌫</button>
-      <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key" onclick="pinCancel()" style="background:#f0f0f0;font-size:13px;color:#555">✕</button>
-    </div>
-  </div>
-</div>
 
-<!-- ✅ LOGO + evento login -->
+<!-- ✅ Script normal — siempre ejecuta (no es módulo ES) -->
+<!-- ✅ Incluye: logos, botones, y bypass de debug (10 clicks en el logo) -->
 <script>
 const LOGO_URL = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif";
 
-document.addEventListener("DOMContentLoaded", () => {
+// ────────────────────────────── login para debuggear ───────────────────────────────────
+window._devLogin = function() {
+  // Guardamos un usuario falso para que el módulo Firebase lo use si carga después
+  window.__devUser  = { uid:'dev-001', email:'dev@soymomo.local', name:'Dev Local', photo:'' };
+  window.__devAdmin = true;
+
+  // Ocultar pantalla de login
+  var ids = ['landing','auth-wall','pending-msg','denied-msg'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Mostrar selector de módulo
+  var ms = document.getElementById('module-selector');
+  if (ms) ms.style.display = 'flex';
+
+  // Rellenar UI módulo selector
+  var ma = document.getElementById('mod-avatar');
+  var mu = document.getElementById('mod-username');
+  if (ma) ma.textContent = 'DV';
+  if (mu) mu.textContent = 'Dev Local (debug)';
+
+  // Rellenar UI inventario
+  ['uname','mv-user-label'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = 'Dev Local';
+  });
+  var ui = document.getElementById('uavatar-init'); if (ui) ui.textContent = 'DV';
+  var ur = document.getElementById('urole-badge');  if (ur) ur.style.display = '';
+  var ab = document.getElementById('admin-btn');    if (ab) ab.style.display = '';
+
+  // Arrancar Firestore si Firebase ya cargó; si no, lo notificamos con una flag
+  if (typeof startListeners === 'function') {
+    try { startListeners(); } catch(e) { console.warn('[DEV] startListeners:', e.message); }
+  } else {
+    window.__devPendingStart = true; // Firebase lo leerá cuando cargue
+  }
+
+  console.warn(
+    '%c[DEV MODE] Bypass activo — sin Firebase Auth',
+    'background:#7c3aed;color:#fff;padding:5px 14px;border-radius:4px;font-size:14px;font-weight:bold'
+  );
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+
   // Logos
-  ['landing-logo','mod-logo'].forEach(id => {
-    const el = document.getElementById(id);
+  ['landing-logo','mod-logo'].forEach(function(id) {
+    var el = document.getElementById(id);
     if (el) el.src = LOGO_URL;
   });
 
   // Botón Google
-  document.getElementById("btn-google-login").addEventListener("click", () => {
-    if (typeof window.signInWithGoogle === "function") window.signInWithGoogle();
+  var gBtn = document.getElementById('btn-google-login');
+  if (gBtn) gBtn.addEventListener('click', function() {
+    if (typeof window.signInWithGoogle === 'function') window.signInWithGoogle();
   });
 
   // Módulo selector
-  document.getElementById("mod-inv-btn").addEventListener("click", () => {
-    if (typeof window.switchModule === "function") window.switchModule('inventario');
-  });
-  document.getElementById("mod-st-btn").addEventListener("click", () => {
-    if (typeof window.switchModule === "function") window.switchModule('st');
+  var invBtn = document.getElementById('mod-inv-btn');
+  if (invBtn) invBtn.addEventListener('click', function() {
+    if (typeof window.switchModule === 'function') window.switchModule('inventario');
   });
 
-  // ── DEV BYPASS: 10 clicks en el logo activan modo debug ──
-  // No hay ninguna pista visible en la UI — solo quien sabe lo sabe.
-  let _devClicks = 0;
-  let _devTimer  = null;
-  document.getElementById("landing-logo").addEventListener("click", () => {
-    _devClicks++;
-    // Reset si pasan más de 3 segundos entre clicks
-    clearTimeout(_devTimer);
-    _devTimer = setTimeout(() => { _devClicks = 0; }, 3000);
+  // ── 10 clicks en el logo = activar bypass ──────────────────────
+  var logo   = document.getElementById('landing-logo');
+  var clicks = 0;
+  var timer  = null;
 
-    // Feedback sutil: pequeño pulso visual en el gif (sin texto)
-    if (_devClicks >= 5 && _devClicks < 10) {
-      const logo = document.getElementById("landing-logo");
-      logo.style.transition = "opacity .1s";
-      logo.style.opacity = "0.5";
-      setTimeout(() => { logo.style.opacity = "1"; }, 120);
-    }
+  if (logo) {
+    logo.style.cursor = 'pointer';
+    logo.addEventListener('click', function() {
+      clicks++;
+      clearTimeout(timer);
+      timer = setTimeout(function() { clicks = 0; }, 3000); // reset si pasan 3s
 
-    if (_devClicks >= 10) {
-      _devClicks = 0;
-      clearTimeout(_devTimer);
-      // Activar modo dev
-      if (typeof window._devLogin === "function") {
-        window._devLogin();
+      // Pulso visual sutil desde click 5 (feedback sin texto)
+      if (clicks >= 5 && clicks < 10) {
+        logo.style.opacity = '0.3';
+        setTimeout(function() { logo.style.opacity = '1'; }, 130);
       }
-    }
-  });
+
+      if (clicks >= 10) {
+        clicks = 0;
+        clearTimeout(timer);
+        window._devLogin(); // siempre disponible — no espera Firebase
+      }
+    });
+  }
+  // ───────────────────────────────────────────────────────────────
 });
 </script>
 
@@ -641,438 +668,8 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- ═══════════════════════════════════════════════════
      MÓDULO SERVICIO TÉCNICO
 ═══════════════════════════════════════════════════ -->
-<div id="st-app">
-<div class="st-inner">
 
-  <!-- ST user bar -->
-  <div class="user-bar">
-    <img id="st-uavatar-img" class="avatar" src="" alt="" style="display:none">
-    <div class="avatar-initials" id="st-uavatar-init" style="background:#7c3aed">?</div>
-    <div style="flex:1">
-      <span id="st-uname" style="font-weight:500;font-size:14px">—</span>
-      <span class="st-badge" style="margin-left:8px">Servicio Técnico</span>
-    </div>
-    <button onclick="switchModule('inventario')" style="font-size:12px;padding:5px 12px;border:1px solid #ddd;border-radius:7px;background:#fff;cursor:pointer;color:#555;margin-right:6px">← Inventario</button>
-    <button class="act-btn danger" onclick="doSignOut()">Salir</button>
-  </div>
 
-  <!-- ST top bar -->
-  <div class="st-topbar">
-    <div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:2px;text-transform:uppercase;letter-spacing:.07em">SoyMomo · Servicio Técnico</div>
-      <h1 id="st-page-title">Panel ST</h1>
-    </div>
-    <div class="tabs" id="st-tabs">
-      <button class="tab active" onclick="showSTPage('st-dashboard',this)">Dashboard</button>
-      <button class="tab" onclick="showSTPage('st-nueva-orden',this)">+ Nueva Orden</button>
-      <button class="tab" onclick="showSTPage('st-ordenes',this)">Órdenes</button>
-      <button class="tab" onclick="showSTPage('st-salidas',this)">Salidas / Cierre</button>
-    </div>
-  </div>
-
-  <!-- ── ST DASHBOARD ── -->
-  <div id="page-st-dashboard" class="page active">
-
-    <!-- CONFIG STATUS BANNER — desaparece cuando todo está configurado -->
-    <div id="st-config-banner" style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:1rem;font-size:13px">
-      <div style="font-weight:600;color:#92400e;margin-bottom:6px">⚙️ Integraciones pendientes de configurar</div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap">
-        <span id="cfg-drive-status" style="color:#c62828">❌ Google Drive</span>
-        <span id="cfg-email-status" style="color:#c62828">❌ EmailJS</span>
-        <span style="color:#888;font-size:12px">— Ve al código y rellena DRIVE_CONFIG y EMAIL_CONFIG con tus credenciales</span>
-      </div>
-    </div>
-
-    <div class="cards">
-      <div class="card"><div class="lbl">Órdenes hoy</div><div class="val" id="st-sc-today" style="color:#7c3aed">—</div><div class="sub">ingresadas</div></div>
-      <div class="card"><div class="lbl">En revisión</div><div class="val" id="st-sc-revision" style="color:#f57f17">—</div><div class="sub">en proceso</div></div>
-      <div class="card"><div class="lbl">Listas</div><div class="val" id="st-sc-listo" style="color:#2e7d32">—</div><div class="sub">para retiro/envío</div></div>
-      <div class="card"><div class="lbl">Total activas</div><div class="val" id="st-sc-total">—</div><div class="sub">sin entregar</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-      <div class="section" style="min-width:0">
-        <div class="section-title">Últimas órdenes ingresadas</div>
-        <div id="st-recent-orders"><div class="loading-cell">Cargando...</div></div>
-      </div>
-      <div class="section" style="min-width:0">
-        <div class="section-title">Listas para retiro/envío</div>
-        <div id="st-ready-orders"><div class="loading-cell">Cargando...</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── ST NUEVA ORDEN ── -->
-  <div id="page-st-nueva-orden" class="page">
-    <div class="section">
-      <div class="section-title" style="margin-bottom:1.2rem">
-        <span>Nueva Orden de Ingreso</span>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span style="font-size:12px;color:#888">Tipo:</span>
-          <select id="st-tipo-orden" onchange="stUpdateTipoOrden()" style="font-size:12px;padding:5px 10px;border-radius:7px">
-            <option value="recepcion">📍 Recepción (presencial)</option>
-            <option value="garantia">✅ Entrada Garantía (fuera Stgo)</option>
-            <option value="sin-garantia">🔧 Entrada Sin Garantía (fuera Stgo)</option>
-            <option value="retail">🏪 Retail (Falabella / Cencosud / Ripley…)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Búsqueda por solicitud (solo para garantía/sin garantía) -->
-      <div id="st-buscar-solicitud" style="display:none;margin-bottom:1rem;padding:12px 14px;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;">
-        <div style="font-size:13px;font-weight:600;color:#1e40af;margin-bottom:8px">🔍 Buscar datos por N° Solicitud (Spreadsheet)</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="text" id="st-solicitud-input" placeholder="Ej: 478034" style="flex:1;max-width:200px">
-          <button onclick="stBuscarSolicitud()" class="primary" style="font-size:12px;padding:7px 14px">Buscar</button>
-          <span id="st-solicitud-msg" style="font-size:12px;color:#888"></span>
-        </div>
-      </div>
-
-      <!-- Formulario principal -->
-      <div class="st-form-grid">
-
-        <div class="field">
-          <label>Nombre cliente *</label>
-          <input type="text" id="st-nombre" placeholder="Nombre completo">
-        </div>
-        <div class="field">
-          <label>Correo electrónico *</label>
-          <input type="email" id="st-correo" placeholder="cliente@mail.com">
-        </div>
-        <div class="field">
-          <label>RUT</label>
-          <input type="text" id="st-rut" placeholder="12.345.678-9">
-        </div>
-        <div class="field">
-          <label>Fecha boleta</label>
-          <input type="date" id="st-fecha-boleta">
-        </div>
-        <div class="field">
-          <label>N° Boleta / Solicitud</label>
-          <input type="text" id="st-boleta" placeholder="—">
-        </div>
-        <div class="field">
-          <label>Origen compra</label>
-          <select id="st-origen">
-            <option value="">— Seleccionar —</option>
-            <option>SoyMomo.com</option>
-            <option>Falabella</option>
-            <option>Cencosud / Paris</option>
-            <option>Ripley</option>
-            <option>Hites</option>
-            <option>Johnson's</option>
-            <option>Mercado Libre</option>
-            <option>Otro</option>
-          </select>
-        </div>
-
-      </div>
-      <div class="st-form-grid">
-
-        <div class="field">
-          <label>Producto *</label>
-          <select id="st-producto" onchange="stUpdateModelos()">
-            <option value="">— Seleccionar —</option>
-            <option value="Reloj">Reloj</option>
-            <option value="Tablet">Tablet</option>
-            <option value="Auricular">Auricular</option>
-            <option value="Cargador">Cargador</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Modelo *</label>
-          <select id="st-modelo">
-            <option value="">— Seleccionar producto —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Color</label>
-          <select id="st-color">
-            <option value="">— Seleccionar —</option>
-            <option>Negro</option><option>Blanco</option><option>Rosado</option>
-            <option>Azul</option><option>Verde</option><option>Gris</option>
-            <option>Morado</option><option>Rojo</option><option>Dorado</option><option>Otro</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Garantía</label>
-          <select id="st-garantia">
-            <option value="No">No</option>
-            <option value="Sí">Sí</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Solución esperada</label>
-          <select id="st-solucion">
-            <option value="Reparación">Reparación</option>
-            <option value="Informe">Informe</option>
-            <option value="Cambio">Cambio</option>
-            <option value="Diagnóstico">Diagnóstico</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>ID dispositivo</label>
-          <input type="text" id="st-id-dispositivo" placeholder="IMEI / S/N / ID">
-        </div>
-
-      </div>
-
-      <!-- Fallas -->
-      <div class="st-form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0.8rem">
-        <div class="field">
-          <label>Falla principal *</label>
-          <select id="st-falla1" onchange="stUpdateFalla()">
-            <option value="">— Seleccionar —</option>
-            <option>No enciende</option><option>Pantalla trizada</option>
-            <option>Pantalla sin imagen</option><option>Puerto de carga</option>
-            <option>Botón lateral</option><option>Firmware</option>
-            <option>Batería</option><option>Táctil</option>
-            <option>Micrófono / Altavoz</option><option>Conectividad</option>
-            <option>Correa rota</option><option>Otra</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Falla secundaria</label>
-          <select id="st-falla2">
-            <option value="">— Ninguna —</option>
-            <option>No enciende</option><option>Pantalla trizada</option>
-            <option>Pantalla sin imagen</option><option>Puerto de carga</option>
-            <option>Botón lateral</option><option>Firmware</option>
-            <option>Batería</option><option>Táctil</option>
-            <option>Micrófono / Altavoz</option><option>Conectividad</option>
-            <option>Correa rota</option><option>Otra</option>
-          </select>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:0.8rem">
-        <label>Descripción / Observaciones del cliente</label>
-        <input type="text" id="st-obs" placeholder="Descripción detallada del problema..." style="width:100%">
-      </div>
-      <div class="field" style="margin-bottom:1rem">
-        <label>Presupuesto estimado</label>
-        <input type="text" id="st-presupuesto" placeholder="Ej: $39.990 o Enviar diagnóstico" style="width:100%">
-      </div>
-
-      <!-- Checklist accesorios -->
-      <div style="background:#f8f8f8;border-radius:10px;padding:14px 16px;margin-bottom:1rem;">
-        <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:10px">📋 Estado del equipo al recibir</div>
-        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-carga" style="accent-color:#7c3aed"> Carga al enchufar</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-pantalla-ok" style="accent-color:#7c3aed"> Pantalla OK</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-botones-ok" style="accent-color:#7c3aed"> Botones OK</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-caja" style="accent-color:#7c3aed"> Caja</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-cable" style="accent-color:#7c3aed"> Cable</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-adaptador" style="accent-color:#7c3aed"> Adaptador</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-funda" style="accent-color:#7c3aed"> Funda / Correa</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="chk-mica" style="accent-color:#7c3aed"> Mica</label>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-          <div>
-            <label style="font-size:12px;color:#666;font-weight:500">SIM</label>
-            <select id="st-sim" style="margin-left:8px;font-size:12px;padding:4px 8px">
-              <option value="N/A">N/A</option><option>Entel</option><option>Movistar</option>
-              <option>Claro</option><option>WOM</option><option>Otro</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:12px;color:#666;font-weight:500">Plazo ST</label>
-            <select id="st-plazo" style="margin-left:8px;font-size:12px;padding:4px 8px">
-              <option>7 días hábiles</option>
-              <option>3 días hábiles</option>
-              <option>14 días hábiles</option>
-              <option>A convenir</option>
-            </select>
-          </div>
-          <div style="flex:1;min-width:180px">
-            <label style="font-size:12px;color:#666;font-weight:500">Obs. adicionales recepción</label>
-            <input type="text" id="st-obs2" placeholder="Ej: Solicitud 478034, rayones leve..." style="width:100%;margin-top:3px">
-          </div>
-        </div>
-      </div>
-
-      <!-- Acciones -->
-      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-        <button onclick="stLimpiarFormulario()" style="font-size:13px;padding:9px 18px">Limpiar</button>
-        <button class="primary" onclick="stCrearOrden()" style="font-size:13px;padding:9px 22px;background:#7c3aed;border-color:#7c3aed">
-          ✓ Crear Orden &amp; Generar PDF
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── ST ÓRDENES ── -->
-  <div id="page-st-ordenes" class="page">
-    <div class="section">
-      <div class="section-title">
-        <span>Órdenes de Ingreso</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="st-search" placeholder="Buscar orden, nombre…" style="font-size:12px;padding:5px 10px;width:180px" oninput="stRenderOrdenes()">
-          <select id="st-filter-estado" onchange="stRenderOrdenes()" style="font-size:12px;padding:5px 8px">
-            <option value="">Todos los estados</option>
-            <option value="ingresado">Ingresado</option>
-            <option value="revision">En revisión</option>
-            <option value="listo">Listo</option>
-            <option value="entregado">Entregado</option>
-            <option value="no-reparado">No reparado</option>
-          </select>
-          <select id="st-filter-tipo" onchange="stRenderOrdenes()" style="font-size:12px;padding:5px 8px">
-            <option value="">Todos los tipos</option>
-            <option value="recepcion">Recepción</option>
-            <option value="garantia">Garantía</option>
-            <option value="sin-garantia">Sin garantía</option>
-            <option value="retail">Retail</option>
-          </select>
-        </div>
-      </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Orden</th><th>Fecha</th><th>Tipo</th><th>Cliente</th>
-              <th>Producto</th><th>Falla</th><th>Estado</th><th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="st-ordenes-table">
-            <tr><td colspan="8" class="loading-cell">Cargando órdenes...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── ST SALIDAS / CIERRE ── -->
-  <div id="page-st-salidas" class="page">
-    <div class="section">
-      <div class="section-title">Registrar Informe de Salida</div>
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:flex-end">
-        <div style="flex:1;min-width:160px">
-          <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">Buscar por N° Orden</div>
-          <input type="text" id="st-salida-buscar" placeholder="Ej: 5042 o E3023">
-        </div>
-        <button onclick="stBuscarOrdenSalida()" class="primary" style="background:#7c3aed;border-color:#7c3aed">Buscar</button>
-      </div>
-
-      <div id="st-salida-form" style="display:none">
-        <div style="background:#e8f4e8;border:1px solid #c8e6c9;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px">
-          <strong id="st-salida-orden-info">—</strong>
-        </div>
-        <div class="st-form-grid">
-          <div class="field">
-            <label>Falla final diagnosticada</label>
-            <input type="text" id="st-salida-falla-final" placeholder="Descripción técnica de la falla">
-          </div>
-          <div class="field">
-            <label>Tipo de falla</label>
-            <select id="st-salida-tipo-falla">
-              <option>Hardware</option><option>Software / Firmware</option>
-              <option>Daño físico</option><option>Daño por líquido</option>
-              <option>Desgaste normal</option><option>Sin falla detectada</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Resultado / Solución</label>
-            <select id="st-salida-resultado">
-              <option>Reparado</option><option>No reparable</option>
-              <option>Cambio de unidad</option><option>Sin intervención</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Técnico responsable</label>
-            <input type="text" id="st-salida-tecnico" placeholder="Nombre del técnico">
-          </div>
-          <div class="field">
-            <label>Costo final ($)</label>
-            <input type="text" id="st-salida-costo" placeholder="Ej: 39990">
-          </div>
-          <div class="field">
-            <label>Nuevo estado</label>
-            <select id="st-salida-nuevo-estado">
-              <option value="listo">✅ Listo para retiro/envío</option>
-              <option value="no-reparado">❌ No reparado</option>
-              <option value="revision">🔄 Volver a revisión</option>
-            </select>
-          </div>
-        </div>
-        <div class="field" style="margin-bottom:.8rem">
-          <label>Repuestos utilizados</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <input type="text" id="st-repuesto1" placeholder="Repuesto 1" style="flex:1;min-width:140px">
-            <input type="text" id="st-repuesto2" placeholder="Repuesto 2" style="flex:1;min-width:140px">
-            <input type="text" id="st-repuesto3" placeholder="Repuesto 3" style="flex:1;min-width:140px">
-          </div>
-        </div>
-        <div class="field" style="margin-bottom:.8rem">
-          <label>Revisión técnica (detalle interno)</label>
-          <input type="text" id="st-salida-revision" placeholder="Qué se revisó, hallazgos internos..." style="width:100%">
-        </div>
-        <div class="field" style="margin-bottom:1rem">
-          <label>Descripción para el cliente</label>
-          <input type="text" id="st-salida-desc-cliente" placeholder="Lo que se le informa al cliente en el informe..." style="width:100%">
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-          <button onclick="stCerrarSalidaForm()">Cancelar</button>
-          <button class="primary" onclick="stGuardarSalida()" style="background:#7c3aed;border-color:#7c3aed">
-            💾 Guardar &amp; Generar Informe PDF
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Órdenes cerradas / con informe de salida</div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr><th>Orden</th><th>Cliente</th><th>Producto</th><th>Falla final</th><th>Resultado</th><th>Costo</th><th>Técnico</th><th>Acciones</th></tr>
-          </thead>
-          <tbody id="st-salidas-table">
-            <tr><td colspan="8" class="loading-cell">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-</div><!-- st-inner -->
-</div><!-- st-app -->
-
-<!-- MODAL DETALLE ORDEN ST -->
-<div class="modal-bg" id="st-detalle-modal" style="z-index:250">
-  <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <h2 style="margin:0">Detalle de Orden</h2>
-      <button onclick="closeModal('st-detalle-modal')" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button>
-    </div>
-    <div id="st-detalle-content">—</div>
-    <div style="display:flex;gap:8px;margin-top:1.2rem;justify-content:flex-end;flex-wrap:wrap">
-      <button onclick="stReimprimirOrden()" style="font-size:12px;padding:6px 14px">🖨 Reimprimir Entrada</button>
-      <button onclick="stCambiarEstado()" class="primary" style="font-size:12px;padding:6px 14px;background:#7c3aed;border-color:#7c3aed">✏ Cambiar estado</button>
-      <button onclick="closeModal('st-detalle-modal')">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CAMBIAR ESTADO ST -->
-<div class="modal-bg" id="st-estado-modal" style="z-index:260">
-  <div class="modal" style="max-width:360px">
-    <h2>Cambiar estado de orden</h2>
-    <div id="st-estado-orden-info" style="font-size:13px;color:#666;margin-bottom:1rem"></div>
-    <div class="field">
-      <label>Nuevo estado</label>
-      <select id="st-nuevo-estado" style="width:100%">
-        <option value="ingresado">🔵 Ingresado</option>
-        <option value="revision">🟡 En revisión</option>
-        <option value="listo">🟢 Listo para retiro/envío</option>
-        <option value="entregado">🟣 Entregado</option>
-        <option value="no-reparado">🔴 No reparado</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
-      <button onclick="closeModal('st-estado-modal')">Cancelar</button>
-      <button class="primary" onclick="stConfirmarCambioEstado()" style="background:#7c3aed;border-color:#7c3aed">Guardar</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL EDITAR STOCK -->
 <div class="modal-bg" id="edit-modal">
@@ -1118,7 +715,6 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- Scripts externos -->
 <!--
   📧 EMAILJS: Cuando tengas tu cuenta, descomenta esta línea:
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   📁 GOOGLE DRIVE: Cuando tengas tu Client ID, descomenta esta línea:
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 -->
@@ -1142,13 +738,7 @@ document.addEventListener("DOMContentLoaded", () => {
     'exportInvExcel','exportMvExcel','exportChartsExcel','exportChartPng',
     'exportInvPdf','exportMvPdf','exportReportPdf','renderMvTable',
     'approveUser','denyUser','switchModule',
-    // ST functions
-    'showSTPage','stUpdateTipoOrden','stUpdateModelos','stUpdateFalla',
-    'stCrearOrden','stLimpiarFormulario','stBuscarSolicitud',
-    'stRenderOrdenes','stVerDetalle','stCambiarEstado','stConfirmarCambioEstado',
-    'stReimprimirOrden','stBuscarOrdenSalida','stGuardarSalida',
-    'stCerrarSalidaForm','pinKey','pinDel','pinCancel',
-    'stSubirEvidencia','stReenviarCorreo'
+    'switchModule'
   ];
   fns.forEach(function(name) {
     if (!window[name]) {
@@ -1185,110 +775,12 @@ const firebaseConfig = {
 const ADMIN_EMAILS = ["soporte@soymomo.com",
                      "alvarovillena7@gmail.com"];
 
-// ════════════════════════════════════════════════════════
-//  📁  CONFIGURACIÓN GOOGLE DRIVE
-//  Cuando tengas los accesos, reemplaza los IDs aquí.
-//  Obtener folder_id: abre la carpeta en Drive → el ID está en la URL.
-//  Para la API: Google Cloud Console → Enable "Google Drive API"
-//  → Crear OAuth 2.0 Client ID (Web Application) → copiar Client ID.
-// ════════════════════════════════════════════════════════
-const DRIVE_CONFIG = {
-  CLIENT_ID:          'PENDIENTE_TU_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-  // Estructura automática en Drive:
-  //   SoyMomo_ST/
-  //     Entradas/  5043_Marcela_Garay/ → Orden_Entrada_5043.html
-  //     Salidas/   5042_Marcela_Garay/ → Informe_Salida_5042.html + fotos/videos
-  FOLDER_ROOT_ID:     'PENDIENTE_ID_CARPETA_RAIZ_DRIVE',
-  FOLDER_ENTRADAS_ID: 'PENDIENTE_ID_CARPETA_ENTRADAS',
-  FOLDER_SALIDAS_ID:  'PENDIENTE_ID_CARPETA_SALIDAS',
-  SCOPES: 'https://www.googleapis.com/auth/drive.file',
-  ENABLED: false  // <- cambiar a true cuando estén configurados los IDs
-};
-
-// ════════════════════════════════════════════════════════
-//  📧  CONFIGURACIÓN EMAILJS
-//  Servicio gratuito (200 emails/mes). Sin backend requerido.
-//  1. Registrarse en emailjs.com
-//  2. Conectar Gmail (soporte@soymomo.com) como servicio
-//  3. Crear 3 templates con las variables {{variable}} que se listan abajo
-//  4. Copiar Service ID, Public Key y Template IDs aquí
-//
-//  Variables en templates de ENTRADA:
-//    {{orden_id}} {{nombre}} {{correo}} {{producto}} {{modelo}}
-//    {{falla}} {{fecha}} {{presupuesto}} {{plazo}} {{agente}} {{tipo_orden}}
-//  Variables en template de SALIDA (adicionales):
-//    {{resultado}} {{costo}} {{tecnico}} {{tiene_evidencia}} {{link_evidencia}}
-//    {{link_seguimiento}} (QR futuro)
-// ════════════════════════════════════════════════════════
-const EMAIL_CONFIG = {
-  SERVICE_ID:   'PENDIENTE_TU_EMAILJS_SERVICE_ID',
-  PUBLIC_KEY:   'PENDIENTE_TU_EMAILJS_PUBLIC_KEY',
-  TEMPLATE_ENTRADA_RECEPCION: 'PENDIENTE_TEMPLATE_RECEPCION',
-  TEMPLATE_ENTRADA_GARANTIA:  'PENDIENTE_TEMPLATE_GARANTIA',
-  TEMPLATE_SALIDA:            'PENDIENTE_TEMPLATE_SALIDA',
-  ENABLED: false  // <- cambiar a true cuando estén configurados los IDs
-};
-
 const firebaseApp = initializeApp(firebaseConfig);
 const auth        = getAuth(firebaseApp);
 const db          = getFirestore(firebaseApp);
 const provider    = new GoogleAuthProvider();
 
-// Inicializar EmailJS si está configurado
-emailInit();
 
-// ════════════════════════════════════════════════════════
-//  🛠  DEV BYPASS — Solo debug local. Invisible en la UI.
-//  Activar: 10 clicks rápidos en el logo de la pantalla de login.
-//  Simula un usuario aprobado sin pasar por Firebase Auth.
-// ════════════════════════════════════════════════════════
-window._devLogin = () => {
-  currentUser = {
-    uid:   'dev-local-uid-001',
-    email: 'dev@soymomo.local',
-    name:  'Dev Local',
-    photo: ''
-  };
-  isAdmin = true;
-
-  // Ocultar pantallas de auth
-  ['landing','auth-wall','pending-msg','denied-msg'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-
-  // Mostrar selector de módulo
-  const ms = document.getElementById('module-selector');
-  if (ms) ms.style.display = 'flex';
-
-  // UI inventario
-  const els = {
-    uname:      document.getElementById('uname'),
-    mvLbl:      document.getElementById('mv-user-label'),
-    uinit:      document.getElementById('uavatar-init'),
-    uroleBadge: document.getElementById('urole-badge'),
-    adminBtn:   document.getElementById('admin-btn'),
-    stUname:    document.getElementById('st-uname'),
-    stUinit:    document.getElementById('st-uavatar-init'),
-  };
-  if (els.uname)      els.uname.textContent      = currentUser.name;
-  if (els.mvLbl)      els.mvLbl.textContent      = currentUser.name;
-  if (els.uinit)      els.uinit.textContent      = 'DV';
-  if (els.uroleBadge) els.uroleBadge.style.display = '';
-  if (els.adminBtn)   els.adminBtn.style.display   = '';
-  if (els.stUname)    els.stUname.textContent    = currentUser.name;
-  if (els.stUinit)    els.stUinit.textContent    = 'DV';
-
-  console.warn(
-    '%c[DEV MODE] Bypass activo — usuario ficticio, sin Firebase Auth',
-    'background:#7c3aed;color:#fff;padding:4px 8px;border-radius:4px;font-weight:bold'
-  );
-
-  // Arrancar listeners de Firestore (lee datos reales si Firebase está configurado)
-  try { startListeners(); } catch(e) {
-    console.warn('[DEV] startListeners:', e.message);
-  }
-};
 
 // ── Estado global ──
 let currentUser    = null;
@@ -1392,6 +884,18 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('auth-wall').style.display         = 'none';
   document.getElementById('landing').style.display           = 'none';
   document.getElementById('module-selector').style.display   = 'flex';
+
+  // Rellenar módulo selector
+  const _modAv = document.getElementById('mod-avatar');
+  const _modUn = document.getElementById('mod-username');
+  if (_modAv) {
+    if (currentUser.photo) {
+      _modAv.innerHTML = '<img src="' + currentUser.photo + '" style="width:30px;height:30px;border-radius:50%;object-fit:cover;">';
+    } else {
+      _modAv.textContent = currentUser.name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+    }
+  }
+  if (_modUn) _modUn.textContent = currentUser.name;
 
   // UI de usuario (inventario)
   document.getElementById('uname').textContent = currentUser.name;
@@ -2007,1171 +1511,31 @@ function buildPdf(title, headers, rows, twoTables, h2, r2) {
 // ════════════════════════════════════════════════════════
 //  MÓDULO SELECTOR & NAVEGACIÓN GLOBAL
 // ════════════════════════════════════════════════════════
-let currentModule = null; // 'inventario' | 'st'
-let pinBuffer      = '';
-const ST_PIN       = '20847589';
-let pinResolve     = null;
-
-function showModuleSelector() {
-  document.getElementById('app').style.display              = 'none';
-  document.getElementById('st-app').style.display           = 'none';
-  document.getElementById('module-selector').style.display  = 'flex';
-  document.getElementById('landing').style.display          = 'none';
-}
-
+// ════════════════════════════════════════════════════════
+//  MÓDULO SELECTOR — navegación limpia (sin PIN, sin ST)
+// ════════════════════════════════════════════════════════
 window.switchModule = (target) => {
   if (target === 'inventario') {
     document.getElementById('module-selector').style.display = 'none';
-    document.getElementById('st-app').style.display          = 'none';
     document.getElementById('app').style.display             = 'block';
-    currentModule = 'inventario';
-    // Iniciar listeners de inventario si no están activos
     if (!unsubProducts && !unsubMovements) startListeners();
-  } else if (target === 'st') {
-    openPinModal().then(ok => {
-      if (!ok) return;
-      document.getElementById('module-selector').style.display = 'none';
-      document.getElementById('app').style.display             = 'none';
-      document.getElementById('st-app').style.display          = 'block';
-      currentModule = 'st';
-      // Sync user info to ST bar
-      if (currentUser) {
-        document.getElementById('st-uname').textContent = currentUser.name;
-        if (currentUser.photo) {
-          document.getElementById('st-uavatar-img').src = currentUser.photo;
-          document.getElementById('st-uavatar-img').style.display  = '';
-          document.getElementById('st-uavatar-init').style.display = 'none';
-        } else {
-          const initials = currentUser.name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
-          document.getElementById('st-uavatar-init').textContent = initials;
-        }
-      }
-      stStartListeners();
-    });
   }
+  // ST card es solo visual — no hace nada al hacer click
 };
 
-// ── PIN modal ──
-function openPinModal() {
-  return new Promise(resolve => {
-    pinBuffer  = '';
-    pinResolve = resolve;
-    updatePinDots();
-    document.getElementById('pin-error').style.display = 'none';
-    document.getElementById('pin-modal-bg').classList.add('open');
-  });
-}
-
-window.pinKey = (k) => {
-  if (pinBuffer.length >= 8) return;
-  pinBuffer += k;
-  updatePinDots();
-  if (pinBuffer.length === 8) {
-    setTimeout(() => {
-      if (pinBuffer === ST_PIN) {
-        document.getElementById('pin-modal-bg').classList.remove('open');
-        if (pinResolve) { pinResolve(true); pinResolve = null; }
-      } else {
-        document.getElementById('pin-error').style.display = 'block';
-        pinBuffer = '';
-        updatePinDots();
-      }
-    }, 200);
-  }
-};
-window.pinDel = () => {
-  pinBuffer = pinBuffer.slice(0, -1);
-  document.getElementById('pin-error').style.display = 'none';
-  updatePinDots();
-};
-window.pinCancel = () => {
-  document.getElementById('pin-modal-bg').classList.remove('open');
-  if (pinResolve) { pinResolve(false); pinResolve = null; }
-};
-function updatePinDots() {
-  for (let i = 0; i < 8; i++) {
-    const d = document.getElementById('pd' + i);
-    if (d) d.classList.toggle('filled', i < pinBuffer.length);
-  }
-}
-
-// Patch doSignOut para volver a la pantalla inicial unificada
-const _origSignOut = window.doSignOut;
 window.doSignOut = async () => {
   stopListeners();
-  stStopListeners();
-  currentModule = null;
-  if (auth) await fbSignOut(auth).catch(()=>{});
+  if (auth) await fbSignOut(auth).catch(() => {});
   currentUser = null; isAdmin = false;
   document.getElementById('app').style.display              = 'none';
-  document.getElementById('st-app').style.display           = 'none';
   document.getElementById('module-selector').style.display  = 'none';
   document.getElementById('landing').style.display          = 'flex';
   document.getElementById('pending-msg').style.display = 'none';
   document.getElementById('denied-msg').style.display  = 'none';
 };
 
-// Patch onAuthStateChanged para mostrar selector de módulo
-// (ya está más arriba, pero necesitamos redirigir post-login al selector)
 
-// ════════════════════════════════════════════════════════
-//  ST — ESTADO GLOBAL
-// ════════════════════════════════════════════════════════
-let stOrdenes       = [];
-let unsubSTOrdenes  = null;
-let stOrdenActivaSalida = null;
-let stOrdenActivaEstado = null;
 
-const ST_MODELOS = {
-  'Reloj':    ['Space 1','Space 2','Space 3','Space 3.0','Space 4','Space Lite','Momo Dreams'],
-  'Tablet':   ['Tablet Lite','Tablet Pro (MicroUsb)','Tablet Pro (Tipo C)','Tablet Pro 2.0','BM Lite (MicroUsb)','BM Lite (Tipo C)','BM Pro','BM Pro 2.0'],
-  'Auricular':['Earbuds 1','Earbuds Pro','Otro'],
-  'Cargador': ['Cargador 5W','Cargador 10W','Cable USB','Otro'],
-  'Otro':     ['Otro']
-};
-
-const ST_TIPO_PREFIJO = {
-  'recepcion':    (n) => String(n).padStart(4,'0'),
-  'garantia':     (n) => 'P' + String(n).padStart(4,'0'),
-  'sin-garantia': (n) => 'E' + String(n).padStart(4,'0'),
-  'retail':       (n) => 'F' + String(n).padStart(4,'0'),
-};
-
-// ════════════════════════════════════════════════════════
-//  ST — LISTENERS FIRESTORE
-// ════════════════════════════════════════════════════════
-function stStartListeners() {
-  stStopListeners();
-  const q = query(collection(db,'st_ordenes'), orderBy('createdAt','desc'));
-  unsubSTOrdenes = onSnapshot(q, snap => {
-    stOrdenes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    stRenderDashboard();
-    stRenderOrdenes();
-    stRenderSalidasTable();
-  });
-}
-function stStopListeners() {
-  if (unsubSTOrdenes) { unsubSTOrdenes(); unsubSTOrdenes = null; }
-}
-
-// ════════════════════════════════════════════════════════
-//  ST — NAVEGACIÓN INTERNA
-// ════════════════════════════════════════════════════════
-window.showSTPage = (pageId, btn) => {
-  document.querySelectorAll('#st-app .page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#st-tabs .tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + pageId).classList.add('active');
-  if (btn) btn.classList.add('active');
-  const titles = {
-    'st-dashboard':   'Panel ST',
-    'st-nueva-orden': 'Nueva Orden de Ingreso',
-    'st-ordenes':     'Órdenes',
-    'st-salidas':     'Salidas / Cierre de Orden'
-  };
-  document.getElementById('st-page-title').textContent = titles[pageId] || 'ST';
-};
-
-// ════════════════════════════════════════════════════════
-//  ST — FORMULARIO NUEVA ORDEN
-// ════════════════════════════════════════════════════════
-window.stUpdateModelos = () => {
-  const prod  = document.getElementById('st-producto').value;
-  const sel   = document.getElementById('st-modelo');
-  sel.innerHTML = '<option value="">— Seleccionar —</option>';
-  (ST_MODELOS[prod] || []).forEach(m => {
-    const o = document.createElement('option'); o.value = o.textContent = m; sel.appendChild(o);
-  });
-};
-
-window.stUpdateTipoOrden = () => {
-  const tipo = document.getElementById('st-tipo-orden').value;
-  const mostrar = ['garantia','sin-garantia'].includes(tipo);
-  document.getElementById('st-buscar-solicitud').style.display = mostrar ? 'block' : 'none';
-};
-
-window.stUpdateFalla = () => {};
-
-window.stBuscarSolicitud = () => {
-  const sol = document.getElementById('st-solicitud-input').value.trim();
-  if (!sol) return;
-  const msg = document.getElementById('st-solicitud-msg');
-  msg.textContent = '🔍 Función disponible cuando conectes el spreadsheet. ID: ' + sol;
-  msg.style.color = '#f57f17';
-};
-
-window.stLimpiarFormulario = () => {
-  ['st-nombre','st-correo','st-rut','st-boleta','st-id-dispositivo',
-   'st-obs','st-presupuesto','st-obs2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  ['st-garantia','st-solucion','st-producto','st-modelo','st-color',
-   'st-origen','st-falla1','st-falla2','st-sim','st-plazo'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.selectedIndex = 0;
-  });
-  ['chk-carga','chk-pantalla-ok','chk-botones-ok','chk-caja',
-   'chk-cable','chk-adaptador','chk-funda','chk-mica'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.checked = false;
-  });
-  document.getElementById('st-fecha-boleta').value = '';
-  stUpdateModelos();
-};
-
-async function stGetNextNumero(tipo) {
-  const cfgRef  = doc(db, 'st_config', 'contadores');
-  const cfgSnap = await getDoc(cfgRef);
-  const data    = cfgSnap.exists() ? cfgSnap.data() : {};
-  const campo   = 'contador_' + tipo;
-  const actual  = (data[campo] || 5000) + 1;
-  await setDoc(cfgRef, { [campo]: actual }, { merge: true });
-  return actual;
-}
-
-// ════════════════════════════════════════════════════════
-//  📁  GOOGLE DRIVE — Autenticación y subida de archivos
-// ════════════════════════════════════════════════════════
-let driveTokenClient = null;
-let driveAccessToken = null;
-
-async function driveInit() {
-  if (!DRIVE_CONFIG.ENABLED) return false;
-  if (driveAccessToken) return true;
-  return new Promise((resolve) => {
-    if (!window.google?.accounts?.oauth2) {
-      console.warn('[Drive] Google Identity Services no cargado. Agrega el script en el <head>.');
-      resolve(false); return;
-    }
-    driveTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: DRIVE_CONFIG.CLIENT_ID,
-      scope: DRIVE_CONFIG.SCOPES,
-      callback: (resp) => {
-        if (resp.error) { console.error('[Drive]', resp); resolve(false); return; }
-        driveAccessToken = resp.access_token;
-        resolve(true);
-      }
-    });
-    driveTokenClient.requestAccessToken({ prompt: 'none' });
-  });
-}
-
-async function driveRequestToken() {
-  // Pide token mostrando popup de Google si es necesario
-  return new Promise((resolve) => {
-    if (!DRIVE_CONFIG.ENABLED) { resolve(false); return; }
-    if (!window.google?.accounts?.oauth2) { resolve(false); return; }
-    if (!driveTokenClient) {
-      driveTokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: DRIVE_CONFIG.CLIENT_ID,
-        scope: DRIVE_CONFIG.SCOPES,
-        callback: (resp) => {
-          driveAccessToken = resp.error ? null : resp.access_token;
-          resolve(!resp.error);
-        }
-      });
-    }
-    driveTokenClient.requestAccessToken({});
-  });
-}
-
-// Crea una carpeta en Drive dentro de un padre dado. Retorna el ID.
-async function driveCrearCarpeta(nombre, parentId) {
-  if (!driveAccessToken) return null;
-  const res = await fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + driveAccessToken,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      name: nombre,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentId]
-    })
-  });
-  if (!res.ok) { console.error('[Drive] Error creando carpeta', await res.text()); return null; }
-  const data = await res.json();
-  return data.id;
-}
-
-// Busca una subcarpeta por nombre dentro de un padre. Retorna ID o null.
-async function driveBuscarCarpeta(nombre, parentId) {
-  if (!driveAccessToken) return null;
-  const q = encodeURIComponent(
-    `name='${nombre}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
-  );
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`, {
-    headers: { 'Authorization': 'Bearer ' + driveAccessToken }
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.files.length ? data.files[0].id : null;
-}
-
-// Obtiene o crea la carpeta de una orden (Entradas o Salidas)
-async function driveGetOrCreateOrdenFolder(ordenId, nombre, tipo) {
-  const parentId = tipo === 'entrada' ? DRIVE_CONFIG.FOLDER_ENTRADAS_ID : DRIVE_CONFIG.FOLDER_SALIDAS_ID;
-  const folderName = ordenId + '_' + nombre.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g, '').trim().slice(0, 30);
-  let folderId = await driveBuscarCarpeta(folderName, parentId);
-  if (!folderId) folderId = await driveCrearCarpeta(folderName, parentId);
-  return folderId;
-}
-
-// Sube un archivo HTML (texto) a Drive
-async function driveSubirHTML(contenidoHTML, nombreArchivo, folderId) {
-  if (!driveAccessToken || !folderId) return null;
-  const metadata = { name: nombreArchivo, parents: [folderId] };
-  const blob     = new Blob([contenidoHTML], { type: 'text/html' });
-  const form     = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', blob);
-  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + driveAccessToken },
-    body: form
-  });
-  if (!res.ok) { console.error('[Drive] Error subiendo archivo', await res.text()); return null; }
-  const data = await res.json();
-  // Hacer el archivo público (para que el cliente pueda ver el link)
-  await driveHacerPublico(data.id);
-  return { id: data.id, link: data.webViewLink };
-}
-
-// Hace un archivo público (lectura para cualquiera con el link)
-async function driveHacerPublico(fileId) {
-  if (!driveAccessToken || !fileId) return;
-  await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + driveAccessToken,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ role: 'reader', type: 'anyone' })
-  });
-}
-
-// Sube un archivo multimedia (imagen/video) desde un File object a Drive
-async function driveSubirMedia(file, folderId) {
-  if (!driveAccessToken || !folderId) return null;
-  const metadata = { name: file.name, parents: [folderId] };
-  const form     = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', file);
-  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + driveAccessToken },
-    body: form
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  await driveHacerPublico(data.id);
-  return { id: data.id, link: data.webViewLink };
-}
-
-// Función principal: guarda PDF de entrada en Drive
-async function driveSavePDFEntrada(htmlContent, ordenData) {
-  if (!DRIVE_CONFIG.ENABLED) return null;
-  const ok = driveAccessToken ? true : await driveRequestToken();
-  if (!ok) return null;
-  try {
-    const folderId = await driveGetOrCreateOrdenFolder(ordenData.ordenId, ordenData.nombre, 'entrada');
-    const archivo  = await driveSubirHTML(htmlContent, `Orden_Entrada_${ordenData.ordenId}.html`, folderId);
-    if (archivo) {
-      // Guardar el link en Firestore para referencia futura
-      await updateDoc(doc(db, 'st_ordenes', ordenData.ordenId), {
-        driveLinkEntrada: archivo.link,
-        driveFolderEntrada: folderId
-      }).catch(() => {});
-      console.log('[Drive] Entrada guardada:', archivo.link);
-    }
-    return archivo;
-  } catch(e) { console.error('[Drive] Error guardando entrada:', e); return null; }
-}
-
-// Función principal: guarda PDF de salida en Drive
-async function driveSavePDFSalida(htmlContent, ordenData) {
-  if (!DRIVE_CONFIG.ENABLED) return null;
-  const ok = driveAccessToken ? true : await driveRequestToken();
-  if (!ok) return null;
-  try {
-    const folderId = await driveGetOrCreateOrdenFolder(ordenData.ordenId, ordenData.nombre, 'salida');
-    const archivo  = await driveSubirHTML(htmlContent, `Informe_Salida_${ordenData.ordenId}.html`, folderId);
-    if (archivo) {
-      await updateDoc(doc(db, 'st_ordenes', ordenData.ordenId), {
-        driveLinkSalida: archivo.link,
-        driveFolderSalida: folderId
-      }).catch(() => {});
-      console.log('[Drive] Salida guardada:', archivo.link);
-    }
-    return archivo;
-  } catch(e) { console.error('[Drive] Error guardando salida:', e); return null; }
-}
-
-// Subida de evidencia multimedia desde celular
-window.stSubirEvidencia = async (ordenId) => {
-  const orden = stOrdenes.find(o => o.id === ordenId);
-  if (!orden) return;
-  if (!DRIVE_CONFIG.ENABLED) {
-    alert('Drive no configurado aún. Agrega tus credenciales en DRIVE_CONFIG.');
-    return;
-  }
-  const ok = driveAccessToken ? true : await driveRequestToken();
-  if (!ok) { alert('No se pudo autenticar con Google Drive.'); return; }
-
-  // Crear input de archivo dinámico
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.multiple = true;
-  input.accept = 'image/*,video/*';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-
-  input.onchange = async () => {
-    const files = Array.from(input.files);
-    if (!files.length) return;
-    document.body.removeChild(input);
-
-    // Obtener/crear carpeta de salida de la orden
-    const folderId = orden.driveFolderSalida
-      || await driveGetOrCreateOrdenFolder(orden.ordenId, orden.nombre, 'salida');
-
-    const links = [];
-    for (const file of files) {
-      const resultado = await driveSubirMedia(file, folderId);
-      if (resultado) links.push(resultado.link);
-    }
-
-    // Guardar los links de evidencia en Firestore
-    const evidenciaAnterior = orden.evidenciaLinks || [];
-    await updateDoc(doc(db, 'st_ordenes', orden.id), {
-      evidenciaLinks:  [...evidenciaAnterior, ...links],
-      driveFolderSalida: folderId
-    });
-
-    alert(`✅ ${links.length} archivo(s) subidos a Drive correctamente.`);
-  };
-  input.click();
-};
-
-// ════════════════════════════════════════════════════════
-//  📧  EMAILJS — Envío de correos automáticos
-// ════════════════════════════════════════════════════════
-function emailInit() {
-  if (!EMAIL_CONFIG.ENABLED) return;
-  if (!window.emailjs) {
-    console.warn('[Email] EmailJS no cargado. Agrega el script en el <head>.');
-    return;
-  }
-  emailjs.init(EMAIL_CONFIG.PUBLIC_KEY);
-}
-
-// Envía correo de orden de entrada (recepción presencial)
-async function emailEnviarEntradaRecepcion(orden, driveLinkPDF) {
-  if (!EMAIL_CONFIG.ENABLED) {
-    console.log('[Email] Simulado (no configurado): correo entrada recepción a', orden.correo);
-    return;
-  }
-  if (!window.emailjs) return;
-  try {
-    await emailjs.send(EMAIL_CONFIG.SERVICE_ID, EMAIL_CONFIG.TEMPLATE_ENTRADA_RECEPCION, {
-      orden_id:     orden.ordenId,
-      nombre:       orden.nombre,
-      correo:       orden.correo,
-      producto:     orden.producto,
-      modelo:       orden.modelo,
-      color:        orden.color,
-      falla:        orden.falla1 + (orden.falla2 && orden.falla2 !== '—' ? ' + ' + orden.falla2 : ''),
-      observaciones: orden.observaciones,
-      fecha:        orden.fecha,
-      presupuesto:  orden.presupuesto,
-      plazo:        orden.plazo,
-      agente:       orden.agente,
-      tipo_orden:   stTipoLabelText(orden.tipo),
-      link_pdf:     driveLinkPDF || 'No disponible',
-      tiene_pdf:    driveLinkPDF ? 'sí' : 'no'
-    });
-    console.log('[Email] Correo entrada enviado a', orden.correo);
-  } catch(e) { console.error('[Email] Error enviando entrada:', e); }
-}
-
-// Envía correo para órdenes de entrada garantía/sin garantía (lo envías tú manualmente)
-async function emailEnviarEntradaGarantia(orden, driveLinkPDF) {
-  if (!EMAIL_CONFIG.ENABLED) {
-    console.log('[Email] Simulado (no configurado): correo entrada garantía/sin garantía a', orden.correo);
-    return;
-  }
-  if (!window.emailjs) return;
-  try {
-    await emailjs.send(EMAIL_CONFIG.SERVICE_ID, EMAIL_CONFIG.TEMPLATE_ENTRADA_GARANTIA, {
-      orden_id:     orden.ordenId,
-      nombre:       orden.nombre,
-      correo:       orden.correo,
-      producto:     orden.producto,
-      modelo:       orden.modelo,
-      color:        orden.color,
-      falla:        orden.falla1 + (orden.falla2 && orden.falla2 !== '—' ? ' + ' + orden.falla2 : ''),
-      observaciones: orden.observaciones,
-      fecha:        orden.fecha,
-      presupuesto:  orden.presupuesto,
-      plazo:        orden.plazo,
-      agente:       orden.agente,
-      tipo_orden:   stTipoLabelText(orden.tipo),
-      garantia:     orden.garantia,
-      origen:       orden.origen,
-      boleta:       orden.boleta,
-      link_pdf:     driveLinkPDF || 'No disponible',
-      tiene_pdf:    driveLinkPDF ? 'sí' : 'no'
-    });
-    console.log('[Email] Correo entrada garantía enviado a', orden.correo);
-  } catch(e) { console.error('[Email] Error enviando entrada garantía:', e); }
-}
-
-// Envía correo de salida al cliente con link a evidencias
-async function emailEnviarSalida(orden, driveLinkPDF) {
-  if (!EMAIL_CONFIG.ENABLED) {
-    console.log('[Email] Simulado (no configurado): correo salida a', orden.correo);
-    return;
-  }
-  if (!window.emailjs) return;
-  const evidencias = orden.evidenciaLinks || [];
-  try {
-    await emailjs.send(EMAIL_CONFIG.SERVICE_ID, EMAIL_CONFIG.TEMPLATE_SALIDA, {
-      orden_id:        orden.ordenId,
-      nombre:          orden.nombre,
-      correo:          orden.correo,
-      producto:        orden.producto,
-      modelo:          orden.modelo,
-      color:           orden.color,
-      falla_original:  orden.falla1,
-      falla_final:     orden.salida?.fallaFinal || '—',
-      resultado:       orden.salida?.resultado  || '—',
-      costo:           orden.salida?.costo      || '—',
-      tecnico:         orden.salida?.tecnico    || '—',
-      fecha_salida:    orden.salida?.fecha      || orden.fecha,
-      link_pdf:        driveLinkPDF             || 'No disponible',
-      tiene_evidencia: evidencias.length > 0 ? 'sí' : 'no',
-      // Si hay evidencias, el primer link va directo. Si hay más, el cliente los ve en la carpeta.
-      link_evidencia:  evidencias.length > 0 ? evidencias[0] : '',
-      cantidad_evidencia: String(evidencias.length),
-      // Link a la carpeta completa de Drive (con todas las evidencias)
-      link_carpeta:    orden.driveFolderSalida
-        ? `https://drive.google.com/drive/folders/${orden.driveFolderSalida}`
-        : ''
-    });
-    console.log('[Email] Correo salida enviado a', orden.correo);
-  } catch(e) { console.error('[Email] Error enviando salida:', e); }
-}
-
-// Reenvío manual de cualquier correo desde la interfaz
-window.stReenviarCorreo = async (id, tipo) => {
-  const orden = stOrdenes.find(o => o.id === id);
-  if (!orden) return;
-  if (!EMAIL_CONFIG.ENABLED) {
-    alert('EmailJS no está configurado aún. Agrega tus credenciales en EMAIL_CONFIG para habilitar el envío.');
-    return;
-  }
-  if (tipo === 'entrada') {
-    await emailEnviarEntradaRecepcion(orden, orden.driveLinkEntrada || null);
-    alert('Correo de entrada reenviado a ' + orden.correo);
-  } else if (tipo === 'salida') {
-    await emailEnviarSalida(orden, orden.driveLinkSalida || null);
-    alert('Correo de salida reenviado a ' + orden.correo);
-  }
-};
-
-window.stCrearOrden = async () => {
-
-  const nombre  = document.getElementById('st-nombre').value.trim();
-  const correo  = document.getElementById('st-correo').value.trim();
-  const falla1  = document.getElementById('st-falla1').value;
-  const producto= document.getElementById('st-producto').value;
-  const modelo  = document.getElementById('st-modelo').value;
-
-  if (!nombre)   return alert('El nombre del cliente es obligatorio');
-  if (!correo)   return alert('El correo del cliente es obligatorio');
-  if (!falla1)   return alert('Selecciona la falla principal');
-  if (!producto) return alert('Selecciona el producto');
-  if (!modelo)   return alert('Selecciona el modelo');
-
-  const tipo     = document.getElementById('st-tipo-orden').value;
-  const numero   = await stGetNextNumero(tipo);
-  const prefijo  = ST_TIPO_PREFIJO[tipo] || (n => String(n));
-  const ordenId  = prefijo(numero);
-  const hoy      = new Date().toISOString().slice(0, 10);
-
-  const datos = {
-    ordenId,
-    tipo,
-    numero,
-    fecha:         hoy,
-    fechaCreacion: serverTimestamp(),
-    createdAt:     serverTimestamp(),
-    agente:        currentUser?.name || '—',
-    // Cliente
-    nombre,
-    correo,
-    rut:           document.getElementById('st-rut').value.trim() || '—',
-    fechaBoleta:   document.getElementById('st-fecha-boleta').value || '—',
-    boleta:        document.getElementById('st-boleta').value.trim() || '—',
-    origen:        document.getElementById('st-origen').value || '—',
-    // Producto
-    producto,
-    modelo,
-    color:         document.getElementById('st-color').value || '—',
-    idDispositivo: document.getElementById('st-id-dispositivo').value.trim() || '—',
-    // Falla
-    garantia:      document.getElementById('st-garantia').value,
-    solucion:      document.getElementById('st-solucion').value,
-    falla1,
-    falla2:        document.getElementById('st-falla2').value || '—',
-    observaciones: document.getElementById('st-obs').value.trim() || '—',
-    presupuesto:   document.getElementById('st-presupuesto').value.trim() || '—',
-    // Checklist
-    cargaOk:       document.getElementById('chk-carga').checked,
-    pantallaOk:    document.getElementById('chk-pantalla-ok').checked,
-    botonesOk:     document.getElementById('chk-botones-ok').checked,
-    tieneCaja:     document.getElementById('chk-caja').checked,
-    tieneCable:    document.getElementById('chk-cable').checked,
-    tieneAdaptador:document.getElementById('chk-adaptador').checked,
-    tieneFunda:    document.getElementById('chk-funda').checked,
-    tieneMica:     document.getElementById('chk-mica').checked,
-    sim:           document.getElementById('st-sim').value,
-    plazo:         document.getElementById('st-plazo').value,
-    obs2:          document.getElementById('st-obs2').value.trim() || '—',
-    // Estado
-    estado:        'ingresado',
-    // Salida (vacío hasta cierre)
-    salida:        null
-  };
-
-  await setDoc(doc(db, 'st_ordenes', ordenId), datos);
-
-  // Generar HTML del PDF de entrada para Drive
-  const htmlEntrada = stBuildHTMLEntrada(datos);
-
-  // Abrir PDF para impresión local (siempre)
-  stAbrirVentanaPDF(htmlEntrada);
-
-  // Guardar en Drive (si está configurado) y enviar correo
-  if (DRIVE_CONFIG.ENABLED) {
-    const driveRes = await driveSavePDFEntrada(htmlEntrada, datos);
-    const pdfLink  = driveRes?.link || null;
-
-    // Correo automático para recepción presencial
-    if (tipo === 'recepcion') {
-      await emailEnviarEntradaRecepcion(datos, pdfLink);
-    } else {
-      // Para garantía/sin garantía/retail: tú lo envías manualmente desde Órdenes
-      console.log('[Email] Orden tipo "' + tipo + '" → envía el correo manualmente desde la pestaña Órdenes.');
-    }
-  } else {
-    // Drive no configurado: mostrar aviso suave en consola (no bloquear flujo)
-    console.log('[Drive/Email] No configurados aún. PDF generado solo localmente.');
-  }
-
-  stLimpiarFormulario();
-  alert('✅ Orden ' + ordenId + ' creada.' + (DRIVE_CONFIG.ENABLED ? ' PDF guardado en Drive y correo enviado.' : ' (Drive y Email pendientes de configuración)'));
-  const tabBtn = document.querySelector('#st-tabs .tab:nth-child(3)');
-  showSTPage('st-ordenes', tabBtn);
-};
-
-// ════════════════════════════════════════════════════════
-//  ST — RENDER DASHBOARD
-// ════════════════════════════════════════════════════════
-function stRenderDashboard() {
-  const hoy     = new Date().toISOString().slice(0,10);
-  // Config status banner
-  const driveOk = DRIVE_CONFIG.ENABLED && DRIVE_CONFIG.CLIENT_ID !== 'PENDIENTE_TU_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-  const emailOk = EMAIL_CONFIG.ENABLED && EMAIL_CONFIG.PUBLIC_KEY !== 'PENDIENTE_TU_EMAILJS_PUBLIC_KEY';
-  const driveEl = document.getElementById('cfg-drive-status');
-  const emailEl = document.getElementById('cfg-email-status');
-  const banner  = document.getElementById('st-config-banner');
-  if (driveEl) driveEl.innerHTML = driveOk ? '<span style="color:#2e7d32">✅ Google Drive conectado</span>' : '<span style="color:#c62828">❌ Google Drive (pendiente)</span>';
-  if (emailEl) emailEl.innerHTML = emailOk ? '<span style="color:#2e7d32">✅ EmailJS conectado</span>'   : '<span style="color:#c62828">❌ EmailJS (pendiente)</span>';
-  if (banner)  banner.style.display = (driveOk && emailOk) ? 'none' : 'block';
-  const activas = stOrdenes.filter(o => !['entregado'].includes(o.estado));
-  document.getElementById('st-sc-today').textContent    = stOrdenes.filter(o => o.fecha === hoy).length;
-  document.getElementById('st-sc-revision').textContent = stOrdenes.filter(o => o.estado === 'revision').length;
-  document.getElementById('st-sc-listo').textContent    = stOrdenes.filter(o => o.estado === 'listo').length;
-  document.getElementById('st-sc-total').textContent    = activas.length;
-
-  const recientes = stOrdenes.slice(0, 6);
-  document.getElementById('st-recent-orders').innerHTML = recientes.length
-    ? recientes.map(o => `
-        <div class="log-entry">
-          <div>
-            <strong style="font-size:13px">${o.ordenId}</strong>
-            <span style="font-size:11px;color:#888;margin-left:6px">${o.nombre}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:11px;color:#aaa">${o.fecha||''}</span>
-            ${stStatusChip(o.estado)}
-          </div>
-        </div>`).join('')
-    : '<div class="empty-state"><div>📋</div>Sin órdenes aún</div>';
-
-  const listas = stOrdenes.filter(o => o.estado === 'listo');
-  document.getElementById('st-ready-orders').innerHTML = listas.length
-    ? listas.map(o => `
-        <div class="log-entry">
-          <div>
-            <strong style="font-size:13px">${o.ordenId}</strong>
-            <span style="font-size:11px;color:#888;margin-left:6px">${o.nombre}</span>
-          </div>
-          <span style="font-size:11px;color:#888">${o.producto} ${o.modelo}</span>
-        </div>`).join('')
-    : '<div class="empty-state"><div>✅</div>Sin órdenes listas</div>';
-}
-
-// ════════════════════════════════════════════════════════
-//  ST — RENDER TABLA ÓRDENES
-// ════════════════════════════════════════════════════════
-function stStatusChip(estado) {
-  const map = {
-    ingresado:   ['ingresado',  '🔵 Ingresado'],
-    revision:    ['revision',   '🟡 En revisión'],
-    listo:       ['listo',      '🟢 Listo'],
-    entregado:   ['entregado',  '🟣 Entregado'],
-    'no-reparado':['no-reparado','🔴 No reparado']
-  };
-  const [cls, label] = map[estado] || ['ingresado', estado];
-  return `<span class="st-status ${cls}">${label}</span>`;
-}
-
-function stTipoLabel(tipo) {
-  const map = {
-    recepcion:    ['tipo-recepcion',    'Recepción'],
-    garantia:     ['tipo-garantia',     'Garantía'],
-    'sin-garantia':['tipo-sin-garantia','Sin garantía'],
-    retail:       ['tipo-retail',       'Retail']
-  };
-  const [cls, label] = map[tipo] || ['tipo-recepcion', tipo];
-  return `<span class="orden-tipo ${cls}">${label}</span>`;
-}
-
-window.stRenderOrdenes = () => {
-  const busq   = (document.getElementById('st-search')?.value || '').toLowerCase();
-  const estado = document.getElementById('st-filter-estado')?.value || '';
-  const tipo   = document.getElementById('st-filter-tipo')?.value   || '';
-
-  let lista = stOrdenes;
-  if (estado) lista = lista.filter(o => o.estado === estado);
-  if (tipo)   lista = lista.filter(o => o.tipo   === tipo);
-  if (busq)   lista = lista.filter(o =>
-    (o.ordenId||'').toLowerCase().includes(busq) ||
-    (o.nombre||'').toLowerCase().includes(busq)  ||
-    (o.correo||'').toLowerCase().includes(busq)
-  );
-
-  const tbody = document.getElementById('st-ordenes-table');
-  if (!lista.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state" style="padding:2rem">Sin órdenes que coincidan</td></tr>';
-    return;
-  }
-  tbody.innerHTML = lista.map(o => `
-    <tr>
-      <td><strong>${o.ordenId}</strong><br><span style="font-size:10px;color:#aaa">${o.fecha||''}</span></td>
-      <td>${o.fecha||'—'}</td>
-      <td>${stTipoLabel(o.tipo)}</td>
-      <td>${o.nombre}<br><span style="font-size:11px;color:#aaa">${o.correo||''}</span></td>
-      <td>${o.producto||'—'}<br><span style="font-size:11px;color:#888">${o.modelo||''}</span></td>
-      <td>${o.falla1||'—'}</td>
-      <td>${stStatusChip(o.estado)}</td>
-      <td>
-        <div class="st-actions">
-          <button class="act-btn" onclick="stVerDetalle('${o.id}')">Ver</button>
-          <button class="act-btn" onclick="stAbrirSalida('${o.id}')">Salida</button>
-          <button class="act-btn" onclick="stReimprimirEntrada('${o.id}')">PDF</button>
-          <button class="act-btn" onclick="stSubirEvidencia('${o.id}')" title="Subir fotos/videos a Drive">📷</button>
-          <button class="act-btn" onclick="stReenviarCorreo('${o.id}','entrada')" title="Reenviar correo de entrada">✉</button>
-        </div>
-      </td>
-    </tr>`).join('');
-};
-
-// ════════════════════════════════════════════════════════
-//  ST — DETALLE ORDEN
-// ════════════════════════════════════════════════════════
-window.stVerDetalle = (id) => {
-  const o = stOrdenes.find(x => x.id === id);
-  if (!o) return;
-  stOrdenActivaEstado = o;
-  const chk = (v) => v ? '✅' : '❌';
-  document.getElementById('st-detalle-content').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:1rem">
-      <div><span style="color:#888">Orden:</span> <strong>${o.ordenId}</strong></div>
-      <div><span style="color:#888">Fecha:</span> ${o.fecha}</div>
-      <div><span style="color:#888">Estado:</span> ${stStatusChip(o.estado)}</div>
-      <div><span style="color:#888">Tipo:</span> ${stTipoLabel(o.tipo)}</div>
-      <div><span style="color:#888">Cliente:</span> ${o.nombre}</div>
-      <div><span style="color:#888">Correo:</span> ${o.correo}</div>
-      <div><span style="color:#888">Producto:</span> ${o.producto}</div>
-      <div><span style="color:#888">Modelo:</span> ${o.modelo}</div>
-      <div><span style="color:#888">Color:</span> ${o.color}</div>
-      <div><span style="color:#888">Garantía:</span> ${o.garantia}</div>
-      <div style="grid-column:1/-1"><span style="color:#888">Falla:</span> ${o.falla1}${o.falla2&&o.falla2!=='—'?' + '+o.falla2:''}</div>
-      <div style="grid-column:1/-1"><span style="color:#888">Observaciones:</span> ${o.observaciones}</div>
-      <div style="grid-column:1/-1"><span style="color:#888">Presupuesto:</span> <strong>${o.presupuesto}</strong></div>
-    </div>
-    <div style="background:#f8f8f8;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:.8rem">
-      <strong>Accesorios:</strong>
-      Carga:${chk(o.cargaOk)} Pantalla:${chk(o.pantallaOk)} Botones:${chk(o.botonesOk)}
-      Caja:${chk(o.tieneCaja)} Cable:${chk(o.tieneCable)} Adaptador:${chk(o.tieneAdaptador)}
-      Funda:${chk(o.tieneFunda)} Mica:${chk(o.tieneMica)} · SIM: ${o.sim} · Plazo: ${o.plazo}
-    </div>
-    ${o.salida ? `
-    <div style="background:#e8f5e9;border-radius:8px;padding:10px 12px;font-size:12px">
-      <strong>Informe de salida:</strong><br>
-      Falla final: ${o.salida.fallaFinal} · Resultado: ${o.salida.resultado} · Costo: $${o.salida.costo}<br>
-      Técnico: ${o.salida.tecnico} · Repuestos: ${[o.salida.repuesto1,o.salida.repuesto2,o.salida.repuesto3].filter(Boolean).join(', ')||'—'}
-    </div>` : ''}
-  `;
-  document.getElementById('st-estado-orden-info').textContent =
-    'Orden ' + o.ordenId + ' — ' + o.nombre + ' — Estado actual: ' + o.estado;
-  openModal('st-detalle-modal');
-};
-
-window.stCambiarEstado = () => {
-  if (!stOrdenActivaEstado) return;
-  document.getElementById('st-nuevo-estado').value = stOrdenActivaEstado.estado || 'ingresado';
-  closeModal('st-detalle-modal');
-  openModal('st-estado-modal');
-};
-
-window.stConfirmarCambioEstado = async () => {
-  if (!stOrdenActivaEstado) return;
-  const nuevoEstado = document.getElementById('st-nuevo-estado').value;
-  await updateDoc(doc(db,'st_ordenes', stOrdenActivaEstado.id), {
-    estado: nuevoEstado,
-    ultimaActualizacion: serverTimestamp()
-  });
-  closeModal('st-estado-modal');
-  alert('Estado actualizado a: ' + nuevoEstado);
-};
-
-// ════════════════════════════════════════════════════════
-//  ST — SALIDAS / CIERRE
-// ════════════════════════════════════════════════════════
-window.stBuscarOrdenSalida = () => {
-  const busq  = document.getElementById('st-salida-buscar').value.trim().toLowerCase();
-  const orden = stOrdenes.find(o => o.ordenId.toLowerCase() === busq || o.id.toLowerCase() === busq);
-  if (!orden) { alert('No se encontró la orden "' + busq + '"'); return; }
-  stOrdenActivaSalida = orden;
-  document.getElementById('st-salida-orden-info').innerHTML =
-    `<strong>${orden.ordenId}</strong> — ${orden.nombre} — ${orden.producto} ${orden.modelo} — Estado: ${orden.estado}`;
-  document.getElementById('st-salida-form').style.display = 'block';
-  if (orden.salida) {
-    document.getElementById('st-salida-falla-final').value     = orden.salida.fallaFinal   || '';
-    document.getElementById('st-salida-tipo-falla').value      = orden.salida.tipoFalla    || '';
-    document.getElementById('st-salida-resultado').value       = orden.salida.resultado    || '';
-    document.getElementById('st-salida-tecnico').value         = orden.salida.tecnico      || '';
-    document.getElementById('st-salida-costo').value           = orden.salida.costo        || '';
-    document.getElementById('st-repuesto1').value              = orden.salida.repuesto1    || '';
-    document.getElementById('st-repuesto2').value              = orden.salida.repuesto2    || '';
-    document.getElementById('st-repuesto3').value              = orden.salida.repuesto3    || '';
-    document.getElementById('st-salida-revision').value        = orden.salida.revision     || '';
-    document.getElementById('st-salida-desc-cliente').value    = orden.salida.descCliente  || '';
-  }
-};
-
-window.stAbrirSalida = (id) => {
-  const o = stOrdenes.find(x => x.id === id);
-  if (!o) return;
-  showSTPage('st-salidas', document.querySelector('#st-tabs .tab:nth-child(4)'));
-  document.getElementById('st-salida-buscar').value = o.ordenId;
-  stOrdenActivaSalida = o;
-  document.getElementById('st-salida-orden-info').innerHTML =
-    `<strong>${o.ordenId}</strong> — ${o.nombre} — ${o.producto} ${o.modelo} — Estado: ${o.estado}`;
-  document.getElementById('st-salida-form').style.display = 'block';
-};
-
-window.stCerrarSalidaForm = () => {
-  document.getElementById('st-salida-form').style.display = 'none';
-  stOrdenActivaSalida = null;
-};
-
-window.stGuardarSalida = async () => {
-  if (!stOrdenActivaSalida) return;
-  const fallaFinal  = document.getElementById('st-salida-falla-final').value.trim();
-  const resultado   = document.getElementById('st-salida-resultado').value;
-  if (!fallaFinal) return alert('Ingresa la falla final diagnosticada');
-
-  const salidaData = {
-    fallaFinal,
-    tipoFalla:   document.getElementById('st-salida-tipo-falla').value,
-    resultado,
-    tecnico:     document.getElementById('st-salida-tecnico').value.trim() || currentUser?.name || '—',
-    costo:       document.getElementById('st-salida-costo').value.trim()   || '—',
-    repuesto1:   document.getElementById('st-repuesto1').value.trim()       || '',
-    repuesto2:   document.getElementById('st-repuesto2').value.trim()       || '',
-    repuesto3:   document.getElementById('st-repuesto3').value.trim()       || '',
-    revision:    document.getElementById('st-salida-revision').value.trim() || '—',
-    descCliente: document.getElementById('st-salida-desc-cliente').value.trim() || '—',
-    fecha:       new Date().toISOString().slice(0,10),
-    creadoPor:   currentUser?.name || '—'
-  };
-
-  const nuevoEstado = document.getElementById('st-salida-nuevo-estado').value;
-  await updateDoc(doc(db,'st_ordenes', stOrdenActivaSalida.id), {
-    salida:              salidaData,
-    estado:              nuevoEstado,
-    ultimaActualizacion: serverTimestamp()
-  });
-
-  const ordenCompleta = { ...stOrdenActivaSalida, salida: salidaData, estado: nuevoEstado };
-
-  // Generar HTML del informe de salida
-  const htmlSalida = stBuildHTMLSalida(ordenCompleta);
-
-  // Abrir PDF para impresión local (siempre)
-  stAbrirVentanaPDF(htmlSalida);
-
-  // Guardar en Drive + enviar correo con link a evidencias
-  if (DRIVE_CONFIG.ENABLED) {
-    const driveRes = await driveSavePDFSalida(htmlSalida, ordenCompleta);
-    const pdfLink  = driveRes?.link || null;
-    // Recargar la orden desde el estado local para tener los links de evidencia actualizados
-    const ordenActual = stOrdenes.find(o => o.id === stOrdenActivaSalida.id) || ordenCompleta;
-    await emailEnviarSalida({ ...ordenActual, salida: salidaData }, pdfLink);
-  } else {
-    console.log('[Drive/Email] No configurados aún. PDF generado solo localmente.');
-  }
-
-  stCerrarSalidaForm();
-  alert('✅ Informe de salida guardado.' + (DRIVE_CONFIG.ENABLED ? ' PDF en Drive y correo enviado al cliente.' : ' (Drive y Email pendientes de configuración)'));
-};
-
-function stRenderSalidasTable() {
-  const conSalida = stOrdenes.filter(o => o.salida);
-  const tbody = document.getElementById('st-salidas-table');
-  if (!tbody) return;
-  if (!conSalida.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state" style="padding:2rem">Sin informes de salida aún</td></tr>';
-    return;
-  }
-  tbody.innerHTML = conSalida.map(o => `
-    <tr>
-      <td><strong>${o.ordenId}</strong><br><span style="font-size:10px;color:#aaa">${o.salida?.fecha||''}</span></td>
-      <td>${o.nombre}</td>
-      <td>${o.producto} ${o.modelo}</td>
-      <td>${o.salida?.fallaFinal||'—'}</td>
-      <td>${o.salida?.resultado||'—'}</td>
-      <td>${o.salida?.costo ? '$'+Number(o.salida.costo.replace(/[^0-9]/g,'')).toLocaleString('es-CL') : '—'}</td>
-      <td>${o.salida?.tecnico||'—'}</td>
-      <td>
-        <div class="st-actions">
-          <button class="act-btn" onclick="stReimprimirSalida('${o.id}')">PDF Salida</button>
-          <button class="act-btn" onclick="stReimprimirEntrada('${o.id}')">PDF Entrada</button>
-          <button class="act-btn" onclick="stSubirEvidencia('${o.id}')" title="Subir fotos/videos a Drive">📷</button>
-          <button class="act-btn" onclick="stReenviarCorreo('${o.id}','salida')" title="Reenviar correo de salida al cliente">✉ Salida</button>
-        </div>
-      </td>
-    </tr>`).join('');
-}
-
-// ════════════════════════════════════════════════════════
-//  ST — GENERACIÓN PDFs
-// ════════════════════════════════════════════════════════
-function stCheckYes(v) { return v ? 'sí' : 'no'; }
-function stItemChk(label, val) {
-  return `<tr>
-    <td style="padding:5px 10px;color:#555;font-size:12px">${label}</td>
-    <td style="padding:5px 10px;font-size:12px;font-weight:600;color:${val?'#2e7d32':'#c62828'}">${val?'sí':'no'}</td>
-  </tr>`;
-}
-
-function stBuildHTMLEntrada(o) {
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Orden de Ingreso ${o.ordenId}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#1a1a1a;padding:30px;font-size:12px}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:2px solid #1a1a2e;padding-bottom:14px}
-    .header h1{font-size:20px;font-weight:700;color:#1a1a2e;text-transform:uppercase}
-    .header .fecha{font-size:13px;font-weight:600;color:#555;border:1px solid #ccc;padding:6px 14px;border-radius:4px}
-    .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#1a1a2e;padding:7px 12px;margin:16px 0 8px;border-radius:4px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #ddd;border-radius:4px;overflow:hidden}
-    .grid-item{padding:7px 12px;border-bottom:1px solid #eee;font-size:12px}
-    .grid-item:nth-child(odd){background:#fafafa}
-    .grid-item label{color:#888;font-size:11px;display:block;margin-bottom:2px}
-    .grid-item strong{color:#1a1a1a}
-    .chk-table{width:100%;border-collapse:collapse;border:1px solid #ddd;border-radius:4px;overflow:hidden}
-    .chk-table td{border-bottom:1px solid #eee}
-    .chk-table tr:last-child td{border-bottom:none}
-    .footer{margin-top:28px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px}
-    .orden-badge{display:inline-block;background:#7c3aed;color:#fff;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;margin-bottom:4px}
-  </style>
-  </head><body>
-  <div class="header">
-    <div>
-      <div class="orden-badge">${stTipoLabelText(o.tipo)}</div>
-      <h1>Orden de Ingreso</h1>
-    </div>
-    <div class="fecha">${o.fecha}</div>
-  </div>
-
-  <div class="section-title">Datos del Cliente</div>
-  <div class="grid">
-    <div class="grid-item"><label>N° Orden</label><strong>${o.ordenId}</strong></div>
-    <div class="grid-item"><label>Nombre</label><strong>${o.nombre}</strong></div>
-    <div class="grid-item"><label>RUT</label>${o.rut}</div>
-    <div class="grid-item"><label>Correo</label>${o.correo}</div>
-    <div class="grid-item"><label>Fecha Boleta</label>${o.fechaBoleta}</div>
-    <div class="grid-item"><label>N° Boleta</label>${o.boleta}</div>
-    <div class="grid-item"><label>Origen Compra</label>${o.origen}</div>
-    <div class="grid-item"><label>ID Dispositivo</label>${o.idDispositivo}</div>
-  </div>
-
-  <div class="section-title">Producto</div>
-  <div class="grid">
-    <div class="grid-item"><label>Producto</label><strong>${o.producto}</strong></div>
-    <div class="grid-item"><label>Modelo</label><strong>${o.modelo}</strong></div>
-    <div class="grid-item"><label>Color</label>${o.color}</div>
-    <div class="grid-item"><label>Garantía / Solución</label>${o.garantia} / ${o.solucion}</div>
-  </div>
-
-  <div class="section-title">Falla(s) Presentada(s)</div>
-  <div style="padding:10px 14px;border:1px solid #ddd;border-radius:4px;font-size:12px">
-    <div><strong>Falla principal:</strong> ${o.falla1}</div>
-    ${o.falla2 && o.falla2 !== '—' ? `<div style="margin-top:4px"><strong>Falla secundaria:</strong> ${o.falla2}</div>` : ''}
-    <div style="margin-top:6px;padding-top:6px;border-top:1px solid #eee"><strong>Observaciones:</strong> ${o.observaciones}</div>
-  </div>
-
-  <div class="section-title">Observaciones al Recibir (exclusivo SoyMomo)</div>
-  <table class="chk-table" style="width:100%">
-    <tbody>
-      <tr>
-        <td style="width:50%;vertical-align:top">
-          <table style="width:100%">
-            ${stItemChk('Carga al enchufar', o.cargaOk)}
-            ${stItemChk('Pantalla OK', o.pantallaOk)}
-            ${stItemChk('Botones OK', o.botonesOk)}
-            <tr><td style="padding:5px 10px;color:#555;font-size:12px">SIM</td>
-            <td style="padding:5px 10px;font-size:12px;font-weight:600">${o.sim}</td></tr>
-          </table>
-        </td>
-        <td style="width:50%;vertical-align:top">
-          <table style="width:100%">
-            ${stItemChk('Caja', o.tieneCaja)}
-            ${stItemChk('Cable', o.tieneCable)}
-            ${stItemChk('Adaptador', o.tieneAdaptador)}
-            ${stItemChk('Funda / Correa', o.tieneFunda)}
-            ${stItemChk('Mica', o.tieneMica)}
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2" style="padding:7px 10px;font-size:12px">
-          <strong>Plazo ST:</strong> ${o.plazo} &nbsp;&nbsp; <strong>Presupuesto:</strong> ${o.presupuesto}
-        </td>
-      </tr>
-      ${o.obs2 && o.obs2 !== '—' ? `<tr><td colspan="2" style="padding:5px 10px;font-size:12px"><strong>Observaciones adicionales:</strong> ${o.obs2}</td></tr>` : ''}
-    </tbody>
-  </table>
-
-  <div class="footer">
-    La presente ficha corresponde al aviso del ingreso del equipo a nuestro servicio técnico. No pretende dar ningún tipo de solución, solo informar el estado de recepción del producto. · Agente: ${o.agente}
-  </div>
-  </body></html>`;
-  return html;
-}
-function stGenerarPDFEntrada(o) { stAbrirVentanaPDF(stBuildHTMLEntrada(o)); }
-
-function stBuildHTMLSalida(o) {
-  const s = o.salida || {};
-  const repuestos = [s.repuesto1, s.repuesto2, s.repuesto3].filter(Boolean);
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Informe de Salida ${o.ordenId}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#1a1a1a;padding:30px;font-size:12px}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:2px solid #1a1a2e;padding-bottom:14px}
-    .header h1{font-size:20px;font-weight:700;color:#1a1a2e;text-transform:uppercase}
-    .header .fecha{font-size:13px;font-weight:600;color:#555;border:1px solid #ccc;padding:6px 14px;border-radius:4px}
-    .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#1a1a2e;padding:7px 12px;margin:16px 0 8px;border-radius:4px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #ddd;border-radius:4px;overflow:hidden}
-    .grid-item{padding:7px 12px;border-bottom:1px solid #eee;font-size:12px}
-    .grid-item:nth-child(odd){background:#fafafa}
-    .grid-item label{color:#888;font-size:11px;display:block;margin-bottom:2px}
-    .texto-block{padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:12px;line-height:1.7}
-    .costo-box{text-align:center;font-size:24px;font-weight:700;color:#1a1a2e;padding:16px;border:2px solid #1a1a2e;border-radius:8px;margin:16px 0}
-    .tnc{font-size:10px;color:#888;line-height:1.6;margin-top:20px;padding-top:14px;border-top:1px solid #eee}
-  </style>
-  </head><body>
-  <div class="header">
-    <h1>Respuesta de Servicio Técnico</h1>
-    <div class="fecha">${s.fecha || o.fecha}</div>
-  </div>
-
-  <div class="section-title">Datos</div>
-  <div class="grid">
-    <div class="grid-item"><label>Orden</label><strong>${o.ordenId}</strong></div>
-    <div class="grid-item"><label>Nombre</label>${o.nombre}</div>
-    <div class="grid-item"><label>Correo</label>${o.correo}</div>
-    <div class="grid-item"><label>Fecha ingreso</label>${o.fecha}</div>
-    <div class="grid-item"><label>Modelo / Color</label>${o.modelo} / ${o.color}</div>
-    <div class="grid-item"><label>Técnico</label>${s.tecnico||'—'}</div>
-  </div>
-
-  <div class="section-title">Motivo del Servicio Técnico</div>
-  <div class="texto-block">
-    <strong>Falla reportada:</strong> ${o.falla1}${o.falla2&&o.falla2!=='—'?' + '+o.falla2:''}<br>
-    ${o.observaciones && o.observaciones !== '—' ? o.observaciones : ''}
-  </div>
-
-  <div class="section-title">Revisión</div>
-  <div class="texto-block">${s.revision||'—'}</div>
-
-  <div class="section-title">Resultado</div>
-  <div class="texto-block">
-    ${s.descCliente||'—'}
-    ${repuestos.length ? `<br><br><strong>Repuestos utilizados:</strong> ${repuestos.join(', ')}` : ''}
-    <br><br><strong>Falla final:</strong> ${s.fallaFinal} &nbsp;·&nbsp; <strong>Tipo:</strong> ${s.tipoFalla} &nbsp;·&nbsp; <strong>Resultado:</strong> ${s.resultado}
-  </div>
-
-  <div class="costo-box">COSTO: $${s.costo ? Number(String(s.costo).replace(/[^0-9]/g,'')).toLocaleString('es-CL') : '—'}</div>
-
-  <div class="tnc">
-    <strong>Términos y Condiciones de Servicio Técnico.</strong><br>
-    La garantía otorgada por el servicio técnico realizado aplica única y exclusivamente sobre el trabajo detallado en el presente informe y/o los componentes específicamente intervenidos o reemplazados, y tiene una vigencia de 3 meses.<br><br>
-    En caso de que el equipo se encuentre en garantía, el presente informe corresponde únicamente a una revisión técnica de funcionamiento, tanto a nivel físico como de software, realizada sobre un equipo que se encuentra dentro de su período de garantía legal.
-  </div>
-  </body></html>`;
-
-  return html;
-}
-function stGenerarPDFSalida(o) { stAbrirVentanaPDF(stBuildHTMLSalida(o)); }
-
-function stTipoLabelText(tipo) {
-  return { recepcion:'Recepción', garantia:'Garantía', 'sin-garantia':'Sin Garantía', retail:'Retail' }[tipo] || tipo;
-}
-
-function stAbrirVentanaPDF(html) {
-  const blob = new Blob([html], { type:'text/html' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank');
-  if (win) win.onload = () => { win.print(); setTimeout(() => URL.revokeObjectURL(url), 4000); };
-}
-
-window.stReimprimirEntrada = (id) => {
-  const o = stOrdenes.find(x => x.id === id);
-  if (o) stGenerarPDFEntrada(o);
-};
-window.stReimprimirSalida = (id) => {
-  const o = stOrdenes.find(x => x.id === id);
-  if (o && o.salida) stGenerarPDFSalida(o);
-  else alert('Esta orden no tiene informe de salida aún.');
-};
-window.stReimprimirOrden = () => {
-  if (stOrdenActivaEstado) {
-    closeModal('st-detalle-modal');
-    stReimprimirEntrada(stOrdenActivaEstado.id);
-  }
-};
-
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
