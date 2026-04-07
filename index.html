@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div style="flex:1;min-width:0">
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.3">
       <span id="uname">—</span>
-      <span id="urole-badge" style="display:none">👑 Admin</span>
+      <span id="urole-badge" style="display:none">👑 administradorpan>
     </div>
     <span class="status-text">
       <span class="status-dot"></span>Conectado
@@ -1862,26 +1862,6 @@ function renderAll() {
   renderMvTable();
   renderCharts();
   maybeNotifyLowStock();
-  updateBarStockChip();
-}
-
-function updateBarStockChip() {
-  const chip = document.getElementById('bar-stock-chip');
-  if (!chip) return;
-  const outCount  = products.filter(p => (p.stock ?? 0) === 0).length;
-  const lowCount  = products.filter(p => (p.stock ?? 0) > 0 && (p.stock ?? 0) < (p.min ?? globalMin)).length;
-
-  let html = '';
-  if (outCount > 0) {
-    html = `<button class="bar-alert-chip crit" onclick="showPage('dashboard',null)">🚨 ${outCount} sin stock</button>`;
-  } else if (lowCount > 0) {
-    html = `<button class="bar-alert-chip warn" onclick="showPage('dashboard',null)">⚠ ${lowCount} bajo mínimo</button>`;
-  } else if (products.length > 0) {
-    html = `<span class="bar-alert-chip ok">✓ Stock OK</span>`;
-  }
-
-  chip.innerHTML = html;
-  chip.style.display = html ? '' : 'none';
 }
 
 window.showPage = (p, btn) => {
