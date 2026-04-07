@@ -100,11 +100,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* Badge Admin */
 #urole-badge{
-  font-size:10px;padding:2px 8px;
-  border-radius:20px;
-  background:#7c3aed;color:#fff;font-weight:700;
+  font-size:9px;padding:2px 8px;
+  border-radius:4px;
+  background:linear-gradient(135deg,#7c3aed,#5b21b6);
+  color:#fff;font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  box-shadow:0 1px 4px rgba(109,40,233,0.35);
   vertical-align:middle;
-  letter-spacing:.02em;
+}
+
+/* Botón Servicio Técnico (próximamente) */
+.st-soon-wrap{position:relative;display:inline-block;}
+.st-soon-btn{
+  font-size:12px;padding:5px 13px;
+  border-radius:9px;
+  background:#f3f4f6;color:#9ca3af;
+  border:1.5px dashed #d1d5db !important;
+  cursor:not-allowed !important;
+  font-weight:500;
+  transition:none !important;
+  transform:none !important;
+}
+.st-soon-btn:hover{
+  background:#f3f4f6 !important;
+  border-color:#d1d5db !important;
+  transform:none !important;
+  box-shadow:none !important;
+}
+.soon-tag{
+  position:absolute;
+  top:-8px;right:-4px;
+  font-size:9px;padding:1px 6px;
+  border-radius:20px;
+  background:#f59e0b;color:#fff;
+  font-weight:800;
+  white-space:nowrap;
+  pointer-events:none;
+  letter-spacing:.03em;
 }
 
 /* Punto de estado animado */
@@ -804,10 +837,10 @@ document.addEventListener('DOMContentLoaded', function() {
   <img id="uavatar-img" class="avatar" src="" alt="" style="display:none;">
   <div class="avatar-initials" id="uavatar-init">?</div>
 
-  <div style="flex:1;min-width:0">
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.3">
+  <div style="min-width:0">
+    <div style="display:flex;align-items:center;gap:6px;line-height:1.3">
       <span id="uname">—</span>
-      <span id="urole-badge" style="display:none">👑 Administrador</span>
+      <span id="urole-badge" style="display:none">ADMIN</span>
     </div>
     <span class="status-text">
       <span class="status-dot"></span>Conectado
@@ -816,6 +849,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- Chip de estado de stock (se actualiza en tiempo real) -->
   <div id="bar-stock-chip" style="display:none"></div>
+
+  <!-- Botón Servicio Técnico (próximamente) -->
+  <div class="st-soon-wrap">
+    <button class="st-soon-btn" disabled>🔧 Serv. Técnico</button>
+    <span class="soon-tag">Próximamente</span>
+  </div>
 
   <button onclick="showPage('admin',null)" id="admin-btn">⚙ Admin</button>
   <button onclick="doSignOut()">⛔ Salir</button>
