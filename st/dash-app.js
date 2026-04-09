@@ -75,9 +75,9 @@ function inventarioLoginUrl() {
 const PAGE_SIZE = 30;
 /** Web Apps Apps Script por canal (implementación “Cualquiera” o según tu política) */
 const SHEETS_EXEC_URL_P =
-  'https://script.google.com/macros/s/AKfycbxptmP7UHvbz7WLp-YwYS9lSr07T50ilJYPF1CvAXgtUW8HoYC-Y8hQl8lxmrkZvwo/exec';
+  'https://script.google.com/macros/s/AKfycbwJmraai9m-VScNtLWQ3MfZQUZPwfB1HgD146V_tPosbkOxjXJ5noelr6lhtCdMGgQ/exec';
 const SHEETS_EXEC_URL_E =
-  'https://script.google.com/macros/s/AKfycbwShQzop13Ep_FtBGYbApB3Jw4leitEKcQSVzyn3fbxUBAbHZR3iax6YuSf0vcPiE3j/exec';
+  'https://script.google.com/macros/s/AKfycbz-mgcXFwp0Zh17HXRkdzi48JScwnJCPym-nCebuV_TiMHT0Oi6RKtOKo5WsUoq1k2V/exec';
 const LS_CAMBIOS = 'st_cambios_garantia_v1';
 const LOGO_URL_CAMBIOS_ST =
   'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
@@ -153,8 +153,31 @@ async function fetchSolicitudFromSheets(num, tipo) {
   const res = await fetch(url, { method: 'GET' });
   if (!res.ok) throw new Error(`Sheets: HTTP ${res.status}`);
   const data = await res.json().catch(() => ({}));
-  if (data && data.error) return null;
-  if (!data || (!data.nombre && !data.correo)) return null;
+  if (data && data.error) {
+    const err = String(data.error);
+    // "No encontrado" → seguir buscando en Firestore; el resto son errores de configuración/hoja
+    if (err === 'No encontrado') return null;
+    throw new Error(`Sheets: ${err}`);
+  }
+  const useful =
+    data &&
+    (data.nombre ||
+      data.correo ||
+      data.rut ||
+      data.producto ||
+      data.modelo ||
+      data.falla1 ||
+      data.falla ||
+      data.imei);
+  if (!useful) {
+    const extra = data ? Object.keys(data).filter((k) => k !== 'canal' && k !== 'falla') : [];
+    if (data && data.canal != null && extra.length === 0) {
+      throw new Error(
+        'Sheets: El N° existe en la hoja pero no se mapeó ningún dato. Actualiza Apps Script con st/google-apps-script-solicitud-lookup.gs (FIELD_BY_HEADER / email de formulario) y vuelve a implementar.'
+      );
+    }
+    return null;
+  }
   return data;
 }
 
@@ -163,7 +186,7 @@ function setFirestoreHint() {
   if (!el) return;
   el.style.display = '';
   el.innerHTML =
-    '<span title="Firestore y búsqueda por N° solicitud en Google Sheets (Apps Script)">Datos: <strong>Firebase</strong><code style="font-size:10px;margin:0 4px;">st_*</code>' +
+    '<span title="ST usa Firestore: st_validaciones (ingreso) y st_ordenes (dash). No son products/movements. Colecciones st_* solo aparecen en la consola tras el primer documento.">Datos: <strong>Firebase</strong><code style="font-size:10px;margin:0 4px;">st_validaciones · st_ordenes</code>' +
     ' · Sheets <span style="color:#64748b;">P/E</span></span>';
 }
 
@@ -1261,8 +1284,11 @@ async function cargarSolicitud() {
         const msg = err && err.message ? String(err.message) : '';
         if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
           toast('No se pudo contactar Sheets (CORS o red). Revisa URL o usa un proxy.', 'warning');
+        } else if (msg.startsWith('Sheets:')) {
+          toast(msg, 'error');
+          return;
         }
-        /* si es otro error, seguimos a Firestore */
+        /* otro error HTTP, etc. → intentar Firestore */
       }
     }
 
