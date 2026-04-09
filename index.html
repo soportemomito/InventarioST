@@ -703,11 +703,10 @@ tr:hover td{background:#faf5ff;}
         <div class="mod-sub">Control de stock y trazabilidad de repuestos</div>
       </div>
 
-      <div style="flex:1;min-width:220px;max-width:300px;background:#fff;border-radius:16px;padding:28px 24px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08);border:2px dashed #d8b4fe;opacity:0.6;cursor:default;user-select:none;">
-        <div style="font-size:40px;margin-bottom:12px;">🔧</div>
-        <div style="font-size:16px;font-weight:700;color:#2b0a3d;margin-bottom:6px;">Servicio Técnico</div>
-        <div style="font-size:12px;color:#888;margin-bottom:10px;">Órdenes de ingreso y seguimiento</div>
-        <div style="font-size:10px;font-weight:700;background:#7c3aed;color:#fff;padding:3px 12px;border-radius:20px;display:inline-block;">Próximamente</div>
+      <div class="mod-card" onclick="switchModule('st')" style="background:#fff;border:2px solid #e9d5ff;cursor:pointer;">
+        <div class="mod-icon">🔧</div>
+        <div class="mod-title" style="color:#2b0a3d;">Servicio Técnico</div>
+        <div class="mod-sub">Órdenes de ingreso y seguimiento</div>
       </div>
 
     </div>
@@ -849,11 +848,8 @@ document.addEventListener('DOMContentLoaded', function() {
   <!-- Chip de estado de stock (se actualiza en tiempo real) -->
   <div id="bar-stock-chip" style="display:none"></div>
 
-  <!-- Botón Servicio Técnico (próximamente) -->
-  <div class="st-soon-wrap">
-    <button class="st-soon-btn" disabled>🔧 Serv. Técnico</button>
-    <span class="soon-tag">Próximamente</span>
-  </div>
+  <!-- Botón Servicio Técnico -->
+  <button onclick="switchModule('st')" style="font-size:12px;padding:5px 13px;border-radius:9px;background:#ede9fe;color:#5b21b6;border:1.5px solid #c4b5fd;font-weight:600;cursor:pointer;transition:0.2s;" onmouseover="this.style.background='#ddd6fe'" onmouseout="this.style.background='#ede9fe'">🔧 Serv. Técnico</button>
 
   <button onclick="showPage('admin',null)" id="admin-btn">⚙ Admin</button>
   <button onclick="doSignOut()">⛔ Salir</button>
@@ -2337,13 +2333,21 @@ function buildPdf(title, headers, rows, twoTables, h2, r2) {
 }
 
 
-window.switchModule = (target) => {
+window.switchModule = async (target) => {
   if (target === 'inventario') {
     document.getElementById('module-selector').style.display = 'none';
     document.getElementById('app').style.display             = 'block';
     if (!unsubProducts && !unsubMovements) startListeners();
   }
-
+  if (target === 'st') {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      sessionStorage.setItem('st_token', token);
+      window.location.href = './st/dash.html';
+    } catch(e) {
+      console.error('Error obteniendo token para ST:', e);
+    }
+  }
 };
 
 window.doSignOut = async () => {
