@@ -456,6 +456,50 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
   </div>
 </div>
 
+<!-- Modal: fila Cambios ST -->
+<div class="modal-backdrop" id="cambioModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title" id="cambioModalTitle">Cambio ST</span>
+      <button class="modal-close" onclick="closeModal('cambioModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>N° orden ST *</label>
+          <input class="form-control" id="cm_orden" placeholder="Ej: P12345"/>
+        </div>
+        <div class="form-group">
+          <label>Cliente *</label>
+          <input class="form-control" id="cm_cliente" placeholder="Nombre"/>
+        </div>
+        <div class="form-group span2">
+          <label>Correo *</label>
+          <input class="form-control" id="cm_correo" type="email" placeholder="correo@ejemplo.cl"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('cambioModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCambioRow()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: preview correo cambio -->
+<div class="modal-backdrop" id="cambioPreviewModal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <span class="modal-title">Vista previa correo</span>
+      <button class="modal-close" onclick="closeModal('cambioPreviewModal')">×</button>
+    </div>
+    <div class="modal-body" id="cambioPreviewBody" style="max-height:70vh;overflow:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('cambioPreviewModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── APP ── -->
 <div class="app">
   <!-- SIDEBAR -->
@@ -486,10 +530,26 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
         <span class="nav-icon">📋</span>
         <span>Órdenes</span>
       </div>
+      <div class="nav-item" data-view="cambios" onclick="switchView('cambios')">
+        <span class="nav-icon">🔄</span>
+        <span>Cambios garantía ST</span>
+      </div>
       <div class="nav-item" data-view="nueva" onclick="abrirNuevaOrden()">
         <span class="nav-icon">➕</span>
         <span>Nueva orden</span>
       </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Herramientas</div>
+      <a class="nav-item" href="../index.html" style="text-decoration:none;">
+        <span class="nav-icon">📦</span>
+        <span>Inventario repuestos</span>
+      </a>
+      <a class="nav-item" href="ingreso.html" target="_blank" rel="noopener" style="text-decoration:none;">
+        <span class="nav-icon">📝</span>
+        <span>Formulario ingreso (piloto)</span>
+      </a>
     </div>
 
     <div class="sidebar-bottom">
@@ -509,6 +569,7 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div id="api-hint" style="font-size:11px;color:#9ca3af;max-width:280px;display:none;" title="El filtro por solicitud y el resto del ST necesitan el servidor API activo"></div>
       <div class="topbar-search" id="topbarSearchWrap" style="display:none;">
         <span style="color:#9ca3af;font-size:14px;">🔍</span>
         <input type="text" id="topbarSearch" placeholder="Buscar orden, cliente, IMEI…" oninput="debouncedSearch()"/>
@@ -625,6 +686,39 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
         <div id="ordenesPager" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"></div>
       </div>
 
+      <!-- ── VIEW: CAMBIOS GARANTÍA ST (tabla local — piloto) ── -->
+      <div class="view" id="view-cambios">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Cambios garantía ST</div>
+            <div class="page-sub">Vista tipo hoja «Mail Pendientes» — datos en este navegador hasta conectar API/Firebase</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="loadCambiosST()">↺ Actualizar</button>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalCambio()">+ Agregar fila</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px;padding:14px 18px;font-size:12px;color:#6b7280;line-height:1.5;">
+          <strong style="color:#374151;">Referencia Excel:</strong>
+          <a href="https://docs.google.com/spreadsheets/d/1G0BgG84J0OJiJ7SWZyMfGxgMjJsFg56JuwpKuWznjQ4/edit?usp=sharing" target="_blank" rel="noopener" style="color:var(--p600);">hoja de cambios</a>.
+          El envío real de correo quedará en backend (mismo criterio que Apps Script). Aquí puedes marcar «Listo» y previsualizar el HTML del mail.
+        </div>
+        <div class="card">
+          <div class="card-body table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Orden ST</th><th>Cliente</th><th>Correo</th><th>Estado</th><th>Correo enviado</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="cambiosTbody">
+                <tr class="loading-row"><td colspan="6"><span class="spinner spinner-dark"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -635,8 +729,42 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 /* ─────────────────────────────────────
    CONFIG
 ───────────────────────────────────── */
-const API_BASE = 'http://localhost:3000';
 const PAGE_SIZE = 30;
+const DEFAULT_API_BASE = 'http://localhost:3000';
+const LS_API_BASE = 'st_api_base_v1';
+const LS_CAMBIOS = 'st_cambios_garantia_v1';
+
+function getApiBase() {
+  try {
+    const qp = new URLSearchParams(location.search).get('api');
+    if (qp) return qp.replace(/\/$/, '');
+  } catch (_) {}
+  try {
+    const s = localStorage.getItem(LS_API_BASE);
+    if (s) return s.replace(/\/$/, '');
+  } catch (_) {}
+  return DEFAULT_API_BASE;
+}
+
+function setApiBaseHint() {
+  const el = document.getElementById('api-hint');
+  if (!el) return;
+  const base = getApiBase();
+  el.style.display = '';
+  el.innerHTML = `API ST: <code style="font-size:10px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">${base}</code>
+    <button type="button" class="btn btn-ghost btn-sm" style="margin-left:6px;height:24px;padding:0 8px;font-size:11px;" onclick="promptApiBase()">Cambiar</button>`;
+}
+
+window.promptApiBase = function() {
+  const cur = getApiBase();
+  const n = prompt('URL base del API de Servicio Técnico (sin barra final):\nEj: http://localhost:3000 o https://tu-api.vercel.app', cur);
+  if (n === null) return;
+  const t = n.trim().replace(/\/$/, '');
+  if (!t) return;
+  try { localStorage.setItem(LS_API_BASE, t); } catch (_) {}
+  toast('API base guardada. Recargando…', 'success');
+  location.reload();
+};
 
 /* ─────────────────────────────────────
    AUTH
@@ -681,13 +809,19 @@ function salir() {
    FETCH HELPER
 ───────────────────────────────────── */
 async function apiFetch(path, opts = {}) {
-  const res = await fetch(API_BASE + path, {
-    ...opts,
-    headers: { ...authHeaders(), ...(opts.headers || {}) }
-  });
+  let res;
+  try {
+    res = await fetch(getApiBase() + path, {
+      ...opts,
+      headers: { ...authHeaders(), ...(opts.headers || {}) }
+    });
+  } catch (err) {
+    const base = getApiBase();
+    throw new Error(`Sin conexión con el API (${base}). ¿Servidor encendido? Ajusta la URL con el botón «Cambiar» en la barra.`);
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || `HTTP ${res.status}`);
+    throw new Error(err.message || err.error || `HTTP ${res.status}`);
   }
   return res.json();
 }
@@ -716,15 +850,16 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 const VIEW_TITLES = {
   dashboard: 'Dashboard',
   validacion: 'Proceso de validación',
-  ordenes: 'Órdenes'
+  ordenes: 'Órdenes',
+  cambios: 'Cambios garantía ST'
 };
 
 function switchView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-view]').forEach(n => n.classList.remove('active'));
   const view = document.getElementById(`view-${name}`);
   if (view) view.classList.add('active');
-  const navItem = document.querySelector(`[data-view="${name}"]`);
+  const navItem = document.querySelector(`.nav-item[data-view="${name}"]`);
   if (navItem) navItem.classList.add('active');
   document.getElementById('topbarTitle').textContent = VIEW_TITLES[name] || name;
   const searchViews = ['ordenes'];
@@ -732,6 +867,7 @@ function switchView(name) {
   if (name === 'dashboard') loadDashboard();
   if (name === 'validacion') loadValidacion();
   if (name === 'ordenes') loadOrdenes();
+  if (name === 'cambios') loadCambiosST();
 }
 
 /* ─────────────────────────────────────
@@ -756,6 +892,40 @@ function canalPill(c) {
 function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function formatPlazoOrden(o) {
+  if (!o) return '—';
+  if (o.plazo_dias_habiles) {
+    const base = o.plazo_dias_habiles === 'otro'
+      ? (o.plazo_otro || 'Otro')
+      : (`${o.plazo_dias_habiles} días hábiles`);
+    if (o.plazo && String(o.plazo).trim()) return `${base} · ${o.plazo}`;
+    return base;
+  }
+  if (o.plazo) {
+    const tryFmt = fmtDate(o.plazo);
+    return tryFmt !== '—' ? tryFmt : String(o.plazo);
+  }
+  return '—';
+}
+
+async function guardarBoletaOrden(id) {
+  const numero_boleta = document.getElementById('edit_numero_boleta')?.value.trim() || null;
+  const fecha_boleta = document.getElementById('edit_fecha_boleta')?.value || null;
+  try {
+    await apiFetch(`/api/ordenes/${id}`, { method:'PATCH', body: JSON.stringify({ numero_boleta, fecha_boleta }) });
+    toast('Boleta guardada', 'success');
+    const o = await apiFetch(`/api/ordenes/${id}`);
+    currentOrden = o;
+    renderOrdenModal(o);
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
 }
 
 /* ─────────────────────────────────────
@@ -872,7 +1042,7 @@ function renderValCard(v) {
   const fallas = [v.falla1, v.falla2].filter(Boolean).join(', ');
   const acciones = valEstadoTab === 'pendiente' ? `
     <button class="btn btn-danger btn-sm" onclick="abrirRechazo('${v.id}')">✕ Rechazar</button>
-    <button class="btn btn-primary btn-sm" onclick="abrirAprobacion('${v.id}')">✓ Aprobar</button>
+    <button class="btn btn-primary btn-sm" onclick="abrirAprobacion('${v.id}','${v.canal || ''}')">✓ Aprobar</button>
   ` : '';
   return `
     <div class="val-card">
@@ -903,10 +1073,56 @@ function renderValCard(v) {
 }
 
 /* ── Aprobación ── */
-let pendingAprobacion = { id: null };
+let pendingAprobacion = { id: null, canal: null };
 
-function abrirAprobacion(id) {
-  pendingAprobacion.id = id;
+function htmlPlazoDias(prefix) {
+  return `
+        <div class="form-group">
+          <label>Plazo (días hábiles)</label>
+          <select class="form-control" id="${prefix}_plazo_sel" onchange="togglePlazoOtro('${prefix}')">
+            <option value="">— Seleccionar —</option>
+            <option value="3">3 días hábiles</option>
+            <option value="5">5 días hábiles</option>
+            <option value="7">7 días hábiles</option>
+            <option value="14">14 días hábiles</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group" id="${prefix}_plazo_otro_wrap" style="display:none;">
+          <label>Especifica plazo *</label>
+          <input class="form-control" id="${prefix}_plazo_otro" placeholder="Ej: 21 días hábiles o nota interna"/>
+        </div>`;
+}
+
+function togglePlazoOtro(prefix) {
+  const v = document.getElementById(prefix + '_plazo_sel')?.value;
+  const w = document.getElementById(prefix + '_plazo_otro_wrap');
+  if (w) w.style.display = v === 'otro' ? 'block' : 'none';
+}
+
+function readPlazoDias(prefix) {
+  const sel = document.getElementById(prefix + '_plazo_sel')?.value;
+  const ot = document.getElementById(prefix + '_plazo_otro')?.value.trim();
+  if (sel === 'otro') {
+    return {
+      plazo_dias_habiles: 'otro',
+      plazo_otro: ot || null,
+      plazo: ot ? `Otro: ${ot}` : null
+    };
+  }
+  if (sel) {
+    return {
+      plazo_dias_habiles: sel,
+      plazo_otro: null,
+      plazo: `${sel} días hábiles`
+    };
+  }
+  return { plazo_dias_habiles: null, plazo_otro: null, plazo: null };
+}
+
+function abrirAprobacion(id, canal) {
+  pendingAprobacion = { id, canal: (canal || 'S').toUpperCase() };
+  const isP = pendingAprobacion.canal === 'P';
   const body = document.getElementById('aprobarModalBody');
   body.innerHTML = `
     <div class="form-section">
@@ -916,16 +1132,23 @@ function abrirAprobacion(id) {
           <label>Agente *</label>
           <input class="form-control" id="ap_agente" placeholder="Iniciales, ej. JV" maxlength="5"/>
         </div>
-        <div class="form-group">
-          <label>Plazo estimado</label>
-          <input class="form-control" id="ap_plazo" type="date"/>
-        </div>
+        ${htmlPlazoDias('ap')}
+        ${isP ? `
+        <div class="form-group span2">
+          <label>Garantía</label>
+          <p style="font-size:13px;color:#374151;padding:8px 0;">Canal <strong>P</strong>: garantía <strong>Sí</strong> (no aplica cambiar).</p>
+          <input type="hidden" id="ap_garantia" value="true"/>
+        </div>` : `
         <div class="form-group">
           <label>¿Garantía?</label>
           <select class="form-control" id="ap_garantia">
             <option value="false">No</option>
             <option value="true">Sí</option>
           </select>
+        </div>`}
+        <div class="form-group">
+          <label>N° boleta / documento</label>
+          <input class="form-control" id="ap_numero_boleta" placeholder="Ej: 123456, F-8890…"/>
         </div>
         <div class="form-group">
           <label>Fecha boleta (si aplica)</label>
@@ -959,10 +1182,18 @@ async function confirmarAprobacion() {
   if (!id) return;
   const agente = document.getElementById('ap_agente').value.trim();
   if (!agente) { toast('Ingresa las iniciales del agente', 'warning'); return; }
+  const isP = pendingAprobacion.canal === 'P';
+  const plazoInfo = readPlazoDias('ap');
+  const selPlazo = document.getElementById('ap_plazo_sel')?.value;
+  if (!selPlazo) { toast('Selecciona un plazo en días hábiles', 'warning'); return; }
+  if (selPlazo === 'otro' && !document.getElementById('ap_plazo_otro')?.value.trim()) {
+    toast('Completa el plazo cuando eliges «Otro»', 'warning'); return;
+  }
   const payload = {
     agente,
-    plazo: document.getElementById('ap_plazo').value || null,
-    garantia: document.getElementById('ap_garantia').value === 'true',
+    ...plazoInfo,
+    garantia: isP ? true : (document.getElementById('ap_garantia').value === 'true'),
+    numero_boleta: document.getElementById('ap_numero_boleta')?.value.trim() || null,
     fecha_boleta: document.getElementById('ap_fecha_boleta').value || null,
     obs2: document.getElementById('ap_obs2').value || null,
   };
@@ -1140,7 +1371,25 @@ function renderOrdenModal(o) {
         <div class="detail-item"><span class="detail-key">Color</span><span class="detail-val">${o.color||'—'}</span></div>
         <div class="detail-item"><span class="detail-key">Origen</span><span class="detail-val">${o.origen}</span></div>
         <div class="detail-item"><span class="detail-key">Fecha ingreso</span><span class="detail-val">${fmtDate(o.fecha)}</span></div>
-        <div class="detail-item"><span class="detail-key">Plazo</span><span class="detail-val">${fmtDate(o.plazo)}</span></div>
+        <div class="detail-item"><span class="detail-key">Plazo</span><span class="detail-val">${formatPlazoOrden(o)}</span></div>
+        <div class="detail-item"><span class="detail-key">N° boleta</span><span class="detail-val">${o.numero_boleta || '—'}</span></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Boleta (editar)</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>N° boleta / documento</label>
+          <input class="form-control" id="edit_numero_boleta" value="${escapeAttr(o.numero_boleta || '')}"/>
+        </div>
+        <div class="form-group">
+          <label>Fecha boleta</label>
+          <input class="form-control" id="edit_fecha_boleta" type="date" value="${o.fecha_boleta ? String(o.fecha_boleta).slice(0, 10) : ''}"/>
+        </div>
+        <div class="form-group span2">
+          <button type="button" class="btn btn-primary btn-sm" onclick="guardarBoletaOrden('${o.id}')">Guardar boleta</button>
+        </div>
       </div>
     </div>
 
@@ -1379,14 +1628,18 @@ function abrirNuevaOrden() {
         </div>
       </div>
       <div class="form-section">
-        <div class="form-section-title">Garantía</div>
+        <div class="form-section-title">Garantía, boleta y plazo</div>
         <div class="form-grid">
-          <div class="form-group">
-            <label>¿Tiene garantía?</label>
+          <div class="form-group" id="no_garantia_group">
+            <label id="no_garantia_label">¿Tiene garantía?</label>
             <select class="form-control" id="no_garantia">
               <option value="false">No</option>
               <option value="true">Sí</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>N° boleta / documento</label>
+            <input class="form-control" id="no_numero_boleta" placeholder="Ej: 123456, F-8890"/>
           </div>
           <div class="form-group">
             <label>Fecha boleta</label>
@@ -1396,15 +1649,27 @@ function abrirNuevaOrden() {
             <label>Agente *</label>
             <input class="form-control" id="no_agente" placeholder="Iniciales, ej. JV" maxlength="5"/>
           </div>
-          <div class="form-group">
-            <label>Plazo estimado</label>
-            <input class="form-control" id="no_plazo" type="date"/>
-          </div>
+          ${htmlPlazoDias('no')}
         </div>
       </div>
     </div>
   `;
   openModal('nuevaOrdenModal');
+  setTimeout(syncNuevaOrdenGarantiaUI, 0);
+}
+
+function syncNuevaOrdenGarantiaUI() {
+  const g = document.getElementById('no_garantia');
+  const lbl = document.getElementById('no_garantia_label');
+  if (!g || !lbl) return;
+  if (nuevaOrdenCanal === 'P') {
+    g.value = 'true';
+    g.disabled = true;
+    lbl.textContent = 'Garantía (canal P)';
+  } else {
+    g.disabled = false;
+    lbl.textContent = '¿Tiene garantía?';
+  }
 }
 
 function selNuevaCanal(canal, el) {
@@ -1414,6 +1679,7 @@ function selNuevaCanal(canal, el) {
   const showLoader = canal === 'P' || canal === 'E';
   document.getElementById('nuevaOrdenLoader').style.display = showLoader ? 'flex' : 'none';
   document.getElementById('nuevaOrdenForm').style.display = 'block';
+  syncNuevaOrdenGarantiaUI();
 }
 
 function updateModelos() {
@@ -1441,13 +1707,18 @@ async function cargarSolicitud() {
     if (data.nombre)  document.getElementById('no_nombre').value  = data.nombre;
     if (data.correo)  document.getElementById('no_correo').value  = data.correo;
     if (data.rut)     document.getElementById('no_rut').value     = data.rut;
+    if (data.producto) {
+      const prodSel = document.getElementById('no_producto');
+      if (prodSel && [...prodSel.options].some(o => o.value === data.producto)) prodSel.value = data.producto;
+      updateModelos();
+    }
     if (data.modelo)  document.getElementById('no_modelo').value  = data.modelo;
     if (data.color)   document.getElementById('no_color').value   = data.color;
-    if (data.falla)   document.getElementById('no_falla1').value  = data.falla;
+    if (data.falla || data.falla1) document.getElementById('no_falla1').value = data.falla1 || data.falla;
     if (data.imei)    document.getElementById('no_imei').value    = data.imei;
     toast('Datos cargados desde Registro ' + tipo, 'success');
   } catch(e) {
-    toast('No se encontró el número de solicitud', 'error');
+    toast(e.message || 'No se pudo cargar la solicitud', 'error');
   }
 }
 
@@ -1475,6 +1746,12 @@ async function submitNuevaOrden() {
     toast('Completa el color cuando seleccionas "Otro"', 'warning');
     return;
   }
+  const selPlazo = document.getElementById('no_plazo_sel')?.value;
+  if (!selPlazo) { toast('Selecciona el plazo en días hábiles', 'warning'); return; }
+  if (selPlazo === 'otro' && !document.getElementById('no_plazo_otro')?.value.trim()) {
+    toast('Completa el plazo cuando eliges «Otro»', 'warning'); return;
+  }
+  const plazoInfo = readPlazoDias('no');
   const payload = {
     canal: nuevaOrdenCanal, nombre, correo, producto, modelo, falla1, agente,
     numero_solicitud: document.getElementById('numSolicitud')?.value.trim() || null,
@@ -1486,9 +1763,10 @@ async function submitNuevaOrden() {
     color_otro: colorValue === 'Otro' ? colorOtro : null,
     falla2: document.getElementById('no_falla2')?.value || null,
     obs: document.getElementById('no_obs')?.value || null,
-    garantia: document.getElementById('no_garantia')?.value === 'true',
+    garantia: nuevaOrdenCanal === 'P' ? true : (document.getElementById('no_garantia')?.value === 'true'),
+    numero_boleta: document.getElementById('no_numero_boleta')?.value.trim() || null,
     fecha_boleta: document.getElementById('no_fecha_boleta')?.value || null,
-    plazo: document.getElementById('no_plazo')?.value || null,
+    ...plazoInfo,
   };
   ['mica','carga','pantalla','botones','sim','caja','cable','adaptador','funda'].forEach(a => {
     payload[a] = document.getElementById(`no_${a}`)?.checked || false;
@@ -1505,9 +1783,117 @@ async function submitNuevaOrden() {
 }
 
 /* ─────────────────────────────────────
+   CAMBIOS GARANTÍA ST (tabla local — piloto)
+───────────────────────────────────── */
+const LOGO_URL_CAMBIOS_ST = 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
+
+function readCambiosLS() {
+  try {
+    const raw = localStorage.getItem(LS_CAMBIOS);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) { return []; }
+}
+
+function writeCambiosLS(rows) {
+  try { localStorage.setItem(LS_CAMBIOS, JSON.stringify(rows)); } catch (_) {}
+}
+
+function loadCambiosST() {
+  const tbody = document.getElementById('cambiosTbody');
+  if (!tbody) return;
+  const rows = readCambiosLS();
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:24px;">Sin registros. Usa «+ Agregar fila» para pruebas piloto.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><strong>${escapeHtml(r.orden)}</strong></td>
+      <td>${escapeHtml(r.cliente)}</td>
+      <td>${escapeHtml(r.correo)}</td>
+      <td>${r.estado === 'listo' ? '<span class="badge badge-green">Listo</span>' : '<span class="badge badge-amber">Pendiente</span>'}</td>
+      <td>${r.correo_enviado ? '✓' : '—'}</td>
+      <td style="white-space:nowrap;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="marcarCambioListo('${r.id}')">Listo</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="previewCambioMail('${r.id}')">Ver mail</button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="eliminarCambio('${r.id}')">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function abrirModalCambio() {
+  document.getElementById('cambioModalTitle').textContent = 'Nuevo cambio ST';
+  document.getElementById('cm_orden').value = '';
+  document.getElementById('cm_cliente').value = '';
+  document.getElementById('cm_correo').value = '';
+  openModal('cambioModal');
+}
+
+function guardarCambioRow() {
+  const orden = document.getElementById('cm_orden').value.trim();
+  const cliente = document.getElementById('cm_cliente').value.trim();
+  const correo = document.getElementById('cm_correo').value.trim();
+  if (!orden || !cliente || !correo) { toast('Completa orden, cliente y correo', 'warning'); return; }
+  const rows = readCambiosLS();
+  const id = 'cm-' + Date.now();
+  rows.push({ id, orden, cliente, correo, estado: 'pendiente', correo_enviado: false });
+  writeCambiosLS(rows);
+  closeModal('cambioModal');
+  loadCambiosST();
+  toast('Fila guardada (solo en este navegador)', 'success');
+}
+
+function marcarCambioListo(id) {
+  const rows = readCambiosLS();
+  const r = rows.find(x => x.id === id);
+  if (r) { r.estado = 'listo'; writeCambiosLS(rows); loadCambiosST(); toast('Marcado como listo', 'success'); }
+}
+
+function eliminarCambio(id) {
+  if (!confirm('¿Eliminar esta fila de prueba?')) return;
+  writeCambiosLS(readCambiosLS().filter(x => x.id !== id));
+  loadCambiosST();
+}
+
+function buildCambioEmailHtml({ cliente, orden }) {
+  return `
+<div style="background:#6d28e9; padding:30px 10px; font-family: Arial, sans-serif;">
+  <div style="max-width:600px; margin:auto; background:#f5edff; border-radius:12px; padding:30px;">
+    <div style="text-align:center; margin-bottom:25px;">
+      <img src="${LOGO_URL_CAMBIOS_ST}" alt="SoyMomo" width="180" />
+    </div>
+    <hr style="border:none; border-top:1px solid #d6c7ff; margin:30px 0;">
+    <h2 style="text-align:center; margin:0 0 10px 0; color:#2b0a3d;">Tu nuevo equipo ya está disponible ✅</h2>
+    <p style="text-align:center; color:#5a3b6e; font-size:14px; margin-bottom:25px;">El nuevo dispositivo está listo para retiro.</p>
+    <div style="background:#ede4ff; border:1px solid #d6c7ff; padding:20px; border-radius:10px; margin:25px 0;">
+      <p style="margin:0; font-size:14px; color:#2b0a3d; text-align:center;"><strong>Orden:</strong> ST ${escapeHtml(orden)}</p>
+    </div>
+    <p style="font-size:14px; color:#2b0a3d;">Hola <strong>${escapeHtml(cliente)}</strong></p>
+    <p style="font-size:14px; color:#2b0a3d; line-height:1.6;">Debido a la alta demanda, el stock presentó un retraso. Sin embargo, <strong>tu equipo ya se encuentra disponible para ser retirado.</strong></p>
+    <p style="font-size:14px; color:#2b0a3d;">Gracias por tu paciencia y confianza.</p>
+    <hr style="border:none; border-top:1px solid #d6c7ff; margin:30px 0;">
+    <p style="font-size:13px; color:#5a3b6e; text-align:center; margin:0;">Servicio Técnico SoyMomo</p>
+  </div>
+</div>`;
+}
+
+function previewCambioMail(id) {
+  const r = readCambiosLS().find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('cambioPreviewBody').innerHTML = buildCambioEmailHtml({ cliente: r.cliente, orden: r.orden });
+  openModal('cambioPreviewModal');
+}
+
+/* ─────────────────────────────────────
    INIT
 ───────────────────────────────────── */
 (async () => {
+  setApiBaseHint();
   const ok = await checkAuth();
   if (!ok) return;
   await loadDashboard();
