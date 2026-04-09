@@ -37,6 +37,13 @@ En **Firestore** conviven dos usos distintos del mismo proyecto (`soymomo-invent
 
 **El numero de solicitud del Google Sheet (ej. 444246)** no se sube solo a Firestore al pulsar **Cargar** en el dash: eso solo **rellena el formulario** desde Sheets. En Firestore veras datos ST cuando exista validacion/orden asociada a ese flujo.
 
+### Formulario `st/ingreso.html` y error «Missing or insufficient permissions»
+
+El ingreso usa **`signInAnonymously`** antes de escribir en `st_validaciones`. En **Firebase Console**:
+
+1. **Authentication → Sign-in method → Anónimo** → habilitar.
+2. **Firestore → Reglas**: permitir **create** en `st_validaciones` con `request.auth != null` y los campos que valida el fragmento en **`st/firestore-rules-st.txt`** (cópialo dentro de tus reglas existentes; no borres las de inventario).
+
 ## Flujo principal
 
 1. Usuario inicia sesion en `index.html`.
