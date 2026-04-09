@@ -78,6 +78,12 @@ const SHEETS_EXEC_URL_P =
   'https://script.google.com/macros/s/AKfycbw9b56uioUAC1RsF7QSu-SnnddYtJVqRV-9NFxLppw3i0H5swgsvnaE2HN1xZiEG-U/exec';
 const SHEETS_EXEC_URL_E =
   'https://script.google.com/macros/s/AKfycbw6VM8fta5QuZRHBkXztfrL-ozQaV0PNL47AN4wZJnFTcXjllEOJgtpuQI7hxa0EKEL/exec';
+
+/** Web App st/google-apps-script-informe.gs — deja URL vacía hasta publicar e implementar */
+const INFORME_SCRIPT_URL = '';
+/** Misma clave que ST_SECRET en Propiedades del proyecto (Apps Script) */
+const INFORME_SCRIPT_SECRET = '';
+
 const LS_CAMBIOS = 'st_cambios_garantia_v1';
 const LOGO_URL_CAMBIOS_ST =
   'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
@@ -332,6 +338,76 @@ function formatPlazoOrden(o) {
     return tryFmt !== '—' ? tryFmt : String(o.plazo);
   }
   return '—';
+}
+
+function ynAcc_(o, key) {
+  return o[key] ? 'Sí' : 'No';
+}
+
+/** Payload para Apps Script (marcadores <<…>> del Doc). */
+function buildInformePayloadFromOrden(o) {
+  const boleta =
+    o.fecha_boleta && String(o.fecha_boleta).trim()
+      ? String(o.fecha_boleta).slice(0, 10)
+      : o.numero_boleta || '—';
+  const adic =
+    o.valor_cobrado != null && o.valor_cobrado !== ''
+      ? '$' + Number(o.valor_cobrado).toLocaleString('es-CL')
+      : '—';
+  const pres =
+    o.presupuesto != null && o.presupuesto !== ''
+      ? '$' + Number(o.presupuesto).toLocaleString('es-CL')
+      : '—';
+  return {
+    canal: o.canal,
+    orden: String(o.num_orden || ''),
+    ingresoST: fmtDate(o.fecha),
+    rut: o.rut || '—',
+    nombre: o.nombre || '—',
+    correo: o.correo || '—',
+    boleta,
+    garantia: o.garantia ? 'Sí' : 'No',
+    origen: o.origen || '—',
+    producto: o.producto || '—',
+    modelo: o.modelo || '—',
+    color: o.color || '—',
+    imei: o.imei || '—',
+    solucion: o.solucion || '—',
+    adicionales: adic,
+    falla1: o.falla1 || '—',
+    falla2: o.falla2 || '—',
+    observaciones: o.obs || '—',
+    carga: ynAcc_(o, 'carga'),
+    pantalla: ynAcc_(o, 'pantalla'),
+    botones: ynAcc_(o, 'botones'),
+    sim: ynAcc_(o, 'sim'),
+    caja: ynAcc_(o, 'caja'),
+    cable: ynAcc_(o, 'cable'),
+    adaptador: ynAcc_(o, 'adaptador'),
+    funda: ynAcc_(o, 'funda'),
+    mica: ynAcc_(o, 'mica'),
+    plazost: formatPlazoOrden(o),
+    observaciones2: o.obs2 || '—',
+    presupuesto: pres,
+  };
+}
+
+async function postInformeScript(bodyObj) {
+  const res = await fetch(INFORME_SCRIPT_URL.replace(/\/$/, ''), {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(bodyObj),
+  });
+  const text = await res.text();
+  let j;
+  try {
+    j = JSON.parse(text);
+  } catch {
+    throw new Error(text.slice(0, 200) || 'Respuesta no JSON del script');
+  }
+  if (!res.ok || j.error) throw new Error(j.error || 'Error del script');
+  return j;
 }
 
 async function loadDashboard() {
@@ -694,9 +770,23 @@ async function confirmarAprobacion() {
       const serRef = doc(db, META_SERIAL, 'ordenes');
       const serSnap = await transaction.get(serRef);
       const counts = serSnap.exists() ? serSnap.data() : { P: 0, E: 0, S: 0 };
-      const next = (counts[canal] || 0) + 1;
-      transaction.set(serRef, { ...counts, [canal]: next }, { merge: true });
-      const num_orden = `${canal}${next}`;
+      const preRaw = v.numero_seguimiento != null ? String(v.numero_seguimiento).trim() : '';
+      const preOk =
+        preRaw &&
+        /^[PES]\d+$/.test(preRaw) &&
+        preRaw.charAt(0) === canal &&
+        parseInt(preRaw.slice(1), 10) >= 1;
+      let num_orden;
+      if (preOk) {
+        num_orden = preRaw;
+        const nPre = parseInt(preRaw.slice(1), 10);
+        const prev = counts[canal] || 0;
+        transaction.set(serRef, { ...counts, [canal]: Math.max(prev, nPre) }, { merge: true });
+      } else {
+        const next = (counts[canal] || 0) + 1;
+        transaction.set(serRef, { ...counts, [canal]: next }, { merge: true });
+        num_orden = `${canal}${next}`;
+      }
       const newOrdenRef = doc(collection(db, COL_O));
       const garantia = isP ? true : document.getElementById('ap_garantia').value === 'true';
       transaction.set(newOrdenRef, {
@@ -996,7 +1086,7 @@ function renderOrdenModal(o) {
     <button class="btn btn-ghost" onclick="closeModal('ordenModal')">Cerrar</button>
     <button class="btn btn-amber btn-sm" onclick="abrirEnvioEmail('${o.id}', ${JSON.stringify(o.correo)}, '${o.canal}')">✉ Enviar correo</button>
     <button class="btn btn-ghost btn-sm" onclick="generarInforme('${o.id}')">📄 Generar informe</button>
-    ${o.informe_url ? `<a href="${escapeAttr(o.informe_url)}" target="_blank" class="btn btn-green btn-sm">📥 Ver PDF</a>` : ''}
+    ${o.informe_url ? `<a href="${escapeAttr(o.informe_url)}" target="_blank" class="btn btn-green btn-sm">📥 Ver informe</a>` : ''}
   `;
 }
 
@@ -1037,12 +1127,76 @@ function abrirEnvioEmail(id, correo, canal) {
 }
 
 async function confirmarEnvioEmail() {
+  const id = emailTarget;
+  const evidencias = document.getElementById('emailEvidenciasUrl')?.value.trim() || '';
   closeModal('emailModal');
-  toast('Envío por correo: conecta EmailJS o Cloud Functions cuando lo definan (los datos ya están en Firestore).', 'info', 5000);
+  if (!id) return;
+  if (!INFORME_SCRIPT_URL || !/^https:\/\//i.test(INFORME_SCRIPT_URL)) {
+    toast('Configura INFORME_SCRIPT_URL (Web App de st/google-apps-script-informe.gs).', 'warning', 5000);
+    return;
+  }
+  if (!INFORME_SCRIPT_SECRET) {
+    toast('Configura INFORME_SCRIPT_SECRET (igual que ST_SECRET en Apps Script).', 'warning', 5000);
+    return;
+  }
+  try {
+    toast('Enviando correo…', 'info');
+    const d = await getDoc(doc(db, COL_O, id));
+    if (!d.exists()) throw new Error('Orden no encontrada');
+    const o = normalizeOrden(d.id, d.data());
+    const orden = buildInformePayloadFromOrden(o);
+    const j = await postInformeScript({
+      action: 'enviar',
+      secret: INFORME_SCRIPT_SECRET,
+      orden,
+      informe_url: o.informe_url || '',
+      evidencias_url: evidencias,
+    });
+    if (j.informe_url && j.informe_url !== o.informe_url) {
+      await updateDoc(doc(db, COL_O, id), { informe_url: j.informe_url });
+    }
+    toast('Correo enviado', 'success');
+    if (currentOrden && currentOrden.id === id) {
+      const d2 = await getDoc(doc(db, COL_O, id));
+      if (d2.exists()) {
+        currentOrden = normalizeOrden(d2.id, d2.data());
+        renderOrdenModal(currentOrden);
+      }
+    }
+  } catch (e) {
+    toast(e.message || 'No se pudo enviar el correo', 'error');
+  }
 }
 
 async function generarInforme(_id) {
-  toast('Informe PDF: pendiente (Storage/Functions). Los datos de la orden están en Firestore.', 'info', 5000);
+  if (!INFORME_SCRIPT_URL || !/^https:\/\//i.test(INFORME_SCRIPT_URL)) {
+    toast('Configura INFORME_SCRIPT_URL (Web App de st/google-apps-script-informe.gs).', 'warning', 5000);
+    return;
+  }
+  if (!INFORME_SCRIPT_SECRET) {
+    toast('Configura INFORME_SCRIPT_SECRET (igual que ST_SECRET en Apps Script).', 'warning', 5000);
+    return;
+  }
+  try {
+    toast('Generando informe en Google Docs…', 'info');
+    const d = await getDoc(doc(db, COL_O, _id));
+    if (!d.exists()) throw new Error('Orden no encontrada');
+    const o = normalizeOrden(d.id, d.data());
+    const orden = buildInformePayloadFromOrden(o);
+    const j = await postInformeScript({
+      action: 'generar',
+      secret: INFORME_SCRIPT_SECRET,
+      orden,
+    });
+    await updateDoc(doc(db, COL_O, _id), { informe_url: j.url });
+    toast('Informe generado', 'success');
+    if (currentOrden && currentOrden.id === _id) {
+      currentOrden = { ...currentOrden, informe_url: j.url };
+      renderOrdenModal(currentOrden);
+    }
+  } catch (e) {
+    toast(e.message || 'No se pudo generar el informe', 'error');
+  }
 }
 
 const PRODUCTOS = {
