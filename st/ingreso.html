@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ingreso ST — SoyMomo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{height:100%;-webkit-tap-highlight-color:transparent;}
+body{
+  min-height:100%;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:15px;line-height:1.5;
+  background:linear-gradient(145deg,#5b21b6 0%,#6d28e9 40%,#7c3aed 100%);
+  padding:24px 16px 100px;
+  -webkit-font-smoothing:antialiased;
+  color:#1a0a2e;
+}
+input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline:none;}
+
+.shell{max-width:480px;margin:0 auto;}
+
+/* HEADER */
+.header{text-align:center;padding:4px 0 28px;}
+.brand{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);
+  border-radius:14px;padding:8px 16px;margin-bottom:22px;backdrop-filter:blur(10px);
+}
+.brand img{width:32px;height:32px;border-radius:8px;object-fit:cover;}
+.brand-name{font-weight:700;font-size:14px;color:#fff;letter-spacing:-0.2px;}
+.header h1{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.5px;line-height:1.2;margin-bottom:8px;}
+.header h1 span{color:#e9d5ff;}
+.header p{font-size:13px;color:rgba(255,255,255,0.72);max-width:300px;margin:0 auto;}
+
+/* CANAL BADGE */
+.canal-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);
+  border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;color:#fff;
+}
+.canal-dot{width:7px;height:7px;border-radius:50%;background:#86efac;flex-shrink:0;}
+
+/* PROGRESS */
+.progress-bar{height:3px;background:rgba(255,255,255,0.2);border-radius:10px;margin-bottom:24px;overflow:hidden;}
+.progress-fill{height:100%;background:#fff;border-radius:10px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);}
+
+/* STEPS */
+.steps{display:flex;align-items:center;margin-bottom:28px;padding:0 4px;}
+.step{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative;}
+.step-num{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+  border:2px solid rgba(255,255,255,0.35);color:rgba(255,255,255,0.55);
+  background:rgba(255,255,255,0.08);transition:all 0.3s;position:relative;z-index:1;
+}
+.step.active .step-num{border-color:#fff;background:rgba(255,255,255,0.25);color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,0.1);}
+.step.done .step-num{border-color:#86efac;background:#86efac;color:#065f46;}
+.step-label{font-size:10px;font-weight:500;color:rgba(255,255,255,0.45);white-space:nowrap;}
+.step.active .step-label{color:rgba(255,255,255,0.9);}
+.step.done .step-label{color:rgba(255,255,255,0.65);}
+.step-line{flex:1;height:1px;background:rgba(255,255,255,0.2);margin-top:-17px;max-width:50px;transition:background 0.3s;}
+.step-line.done{background:#86efac;}
+
+/* CARD */
+.card{background:#fff;border-radius:18px;margin-bottom:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.15);}
+.card-section{padding:20px 22px;border-bottom:1px solid #f3eeff;}
+.card-section:last-child{border-bottom:none;}
+.section-label{
+  font-size:10px;font-weight:700;color:#a89bc0;
+  text-transform:uppercase;letter-spacing:0.1em;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:#f3eeff;}
+
+/* FIELDS */
+.field{margin-bottom:16px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:12px;font-weight:600;color:#6b5c8a;margin-bottom:6px;}
+.field label .req{color:#7c3aed;margin-left:2px;}
+.field label .opt{font-weight:400;color:#a89bc0;font-size:11px;margin-left:4px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-row .field{margin-bottom:0;}
+
+.input-wrap{position:relative;}
+.input-wrap .icon{
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:#a89bc0;pointer-events:none;
+}
+.input-wrap input,.input-wrap select,.input-wrap textarea{
+  width:100%;background:#f7f0ff;border:1.5px solid #e9d5ff;border-radius:11px;
+  padding:12px 14px;color:#1a0a2e;font-size:14px;
+  transition:border-color 0.15s,box-shadow 0.15s;
+}
+.input-wrap.has-icon input,.input-wrap.has-icon select{padding-left:40px;}
+.input-wrap input::placeholder,.input-wrap textarea::placeholder{color:#c4b5e0;}
+.input-wrap input:focus,.input-wrap select:focus,.input-wrap textarea:focus{
+  border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,0.12);background:#fdfaff;
+}
+.input-wrap input.error,.input-wrap textarea.error{border-color:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,0.08);}
+.input-wrap input.valid{border-color:#059669;}
+.input-wrap select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a89bc0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;
+}
+.input-wrap select option{background:#fff;}
+.input-wrap textarea{resize:none;min-height:96px;line-height:1.6;}
+.field-hint{font-size:11px;color:#a89bc0;margin-top:5px;line-height:1.4;}
+.field-error{font-size:11px;color:#dc2626;margin-top:5px;display:none;}
+.field-error.show{display:block;}
+.char-counter{font-size:11px;color:#a89bc0;text-align:right;margin-top:4px;}
+
+/* COLOR PICKER */
+.color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px;}
+.color-cell{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.color-opt{
+  width:100%;aspect-ratio:1;border-radius:10px;border:2.5px solid transparent;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.color-opt:hover{transform:scale(1.08);}
+.color-opt.selected{border-color:#1a0a2e;box-shadow:0 0 0 2px rgba(0,0,0,0.12),0 4px 12px rgba(0,0,0,0.25);transform:scale(1.1);}
+.color-opt.selected::after{content:'✓';font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
+.color-name{font-size:9px;color:#a89bc0;font-weight:500;}
+.color-other-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.color-other-row label{font-size:12px;color:#6b5c8a;font-weight:500;white-space:nowrap;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+.chip{
+  padding:7px 13px;border-radius:20px;font-size:12px;font-weight:500;
+  border:1.5px solid #e9d5ff;color:#6b5c8a;cursor:pointer;background:#f7f0ff;
+  transition:all 0.15s;white-space:nowrap;-webkit-tap-highlight-color:transparent;
+}
+.chip:hover{border-color:#7c3aed;color:#7c3aed;}
+.chip.selected{background:#ede4ff;border-color:#7c3aed;color:#5b21b6;font-weight:600;}
+.chip.sec.selected{background:#fef3c7;border-color:#d97706;color:#92400e;}
+
+/* STEP VIEWS */
+.step-view{display:none;animation:fadeIn 0.22s ease;}
+.step-view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:translateX(0);}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BOTTOM BAR */
+.bottom-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;
+  max-width:480px;padding:12px 16px 28px;
+  background:linear-gradient(to top,rgba(88,28,210,0.98) 55%,transparent);
+  display:flex;gap:10px;z-index:50;
+}
+.btn{
+  height:52px;border-radius:13px;font-family:'Inter',sans-serif;
+  font-weight:700;font-size:15px;cursor:pointer;border:none;
+  transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-primary{flex:1;background:#fff;color:#6d28e9;box-shadow:0 4px 18px rgba(0,0,0,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(0,0,0,0.25);}
+.btn-primary:active{transform:scale(0.98);}
+.btn-primary:disabled{opacity:0.45;transform:none;box-shadow:none;cursor:not-allowed;}
+.btn-back{
+  width:52px;flex-shrink:0;background:rgba(255,255,255,0.18);
+  border:1.5px solid rgba(255,255,255,0.3);color:#fff;border-radius:13px;
+}
+.btn-back:hover{background:rgba(255,255,255,0.28);}
+
+/* SUCCESS */
+.success-screen{display:none;text-align:center;padding:48px 0 40px;}
+.success-screen.active{display:block;animation:fadeIn 0.35s ease;}
+.success-icon{
+  width:76px;height:76px;border-radius:50%;
+  background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes popIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+.success-icon svg{width:36px;height:36px;color:#fff;}
+.success-screen h2{font-size:24px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-0.4px;}
+.success-screen p{font-size:13px;color:rgba(255,255,255,0.75);max-width:300px;margin:0 auto 28px;line-height:1.6;}
+.ticket{background:#fff;border-radius:16px;padding:22px;margin:0 auto 28px;text-align:left;box-shadow:0 4px 24px rgba(0,0,0,0.2);}
+.ticket-num{font-size:13px;font-weight:600;color:#a89bc0;text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
+.ticket-id{font-size:28px;font-weight:800;color:#7c3aed;text-align:center;margin-bottom:18px;letter-spacing:-0.5px;}
+.ticket-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3eeff;font-size:13px;}
+.ticket-row:last-child{border-bottom:none;}
+.ticket-key{color:#a89bc0;}
+.ticket-val{color:#1a0a2e;font-weight:600;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-reset{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);
+  color:#fff;border-radius:12px;padding:12px 24px;font-weight:600;font-size:14px;cursor:pointer;
+  transition:all 0.18s;
+}
+.btn-reset:hover{background:rgba(255,255,255,0.28);}
+
+/* OFFLINE */
+.offline-banner{
+  display:none;background:#fee2e2;border:1px solid #fca5a5;
+  border-radius:10px;padding:10px 14px;margin-bottom:14px;
+  font-size:12px;color:#991b1b;align-items:center;gap:8px;
+}
+.offline-banner.show{display:flex;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- OFFLINE -->
+  <div class="offline-banner" id="offline-banner">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    Sin conexión — necesitas internet para enviar tu solicitud.
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <img id="brand-logo" src="" alt="SoyMomo">
+      <span class="brand-name">Servicio Técnico</span>
+    </div>
+    <h1>Registra tu <span>equipo</span></h1>
+    <p>Completa el formulario y te avisaremos cuando esté listo.</p>
+  </div>
+
+  <!-- CANAL BADGE -->
+  <div style="text-align:center;margin-bottom:20px;">
+    <div class="canal-badge">
+      <span class="canal-dot" id="canal-dot"></span>
+      <span id="canal-label">—</span>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:33%"></div></div>
+
+  <!-- STEPS INDICATOR -->
+  <div class="steps">
+    <div class="step active" id="sdot-1"><div class="step-num" id="snum-1">1</div><div class="step-label">Tus datos</div></div>
+    <div class="step-line" id="sline-1"></div>
+    <div class="step" id="sdot-2"><div class="step-num" id="snum-2">2</div><div class="step-label">Equipo</div></div>
+    <div class="step-line" id="sline-2"></div>
+    <div class="step" id="sdot-3"><div class="step-num" id="snum-3">3</div><div class="step-label">Problema</div></div>
+  </div>
+
+  <!-- ══ STEP 1 — DATOS ══ -->
+  <div class="step-view active" id="view-1">
+    <div class="card">
+      <div class="card-section">
+        <div class="section-label">Tus datos personales</div>
+        <div class="field">
+          <label>Nombre completo <span class="req">*</span></label>
+          <div class="input-wrap has-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+            <input type="text" id="f-nombre" placeholder="María González" autocomplete="name">
+          </div>
+          <div class="field-error" id="err-nombre">Ingresa tu nombre completo.</div>
+        </div>
+        <div class="field">
+          <label>Correo electrónico <span class="req">*</span></label>
+          <div class="input-wrap has-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <input type="email" id="f-correo" placeholder="correo@ejemplo.com" autocomplete="email" inputmode="email">
+          </div>
+          <div class="field-hint">Te enviaremos el informe aquí.</div>
+          <div class="field-error" id="err-correo">Ingresa un correo electrónico válido.</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>RUT <span class="opt">(opcional)</span></label>
+            <div class="input-wrap"><input type="text" id="f-rut" placeholder="12.345.678-9"></div>
+          </div>
+          <div class="field">
+            <label>IMEI / N° Serie <span class="opt">(opcional)</span></label>
+            <div class="input-wrap"><input type="text" id="f-imei" placeholder="N° de serie del dispositivo"></div>
+          </div>
+        </div>
+        <div class="field-hint">Relojes: Ajustes → Info. del dispositivo → ID del dispositivo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2 — EQUIPO ══ -->
+  <div class="step-view" id="view-2">
+    <div class="card">
+      <div class="card-section">
+        <div class="section-label">Tu dispositivo</div>
+        <div class="field">
+          <label>Tipo de producto <span class="req">*</span></label>
+          <div class="input-wrap">
+            <select id="f-producto" onchange="onProductoChange()">
+              <option value="">— Selecciona —</option>
+              <option>Reloj</option>
+              <option>Tablet</option>
+              <option>Monitores</option>
+              <option>Camaras</option>
+              <option>Momophone</option>
+              <option>BabyDreams</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field-error" id="err-producto">Selecciona el tipo de producto.</div>
+        </div>
+        <div class="field">
+          <label>Modelo <span class="req">*</span></label>
+          <div class="input-wrap">
+            <select id="f-modelo" disabled>
+              <option value="">— Primero selecciona el producto —</option>
+            </select>
+          </div>
+          <div class="field-error" id="err-modelo">Selecciona el modelo.</div>
+        </div>
+        <div class="field">
+          <label>¿Dónde lo compraste? <span class="req">*</span></label>
+          <div class="input-wrap">
+            <select id="f-origen" onchange="onOrigenChange()">
+              <option value="">— Selecciona tienda —</option>
+              <option>SoyMomo</option>
+              <option>Falabella</option>
+              <option>Ripley</option>
+              <option>Mercado Libre</option>
+              <option>Paris</option>
+              <option>Hites</option>
+              <option>Otro</option>
+              <option>No recuerdo</option>
+            </select>
+          </div>
+          <div class="field-error" id="err-origen">Indica dónde compraste el dispositivo.</div>
+          <div class="color-other-row" id="origen-other-row" style="display:none;">
+            <label>¿Cuál?</label>
+            <div class="input-wrap" style="flex:1">
+              <input type="text" id="f-origen-otro" placeholder="Ej: Retail local, tienda online..." oninput="STATE.origenOtro=this.value.trim()">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-section">
+        <div class="section-label">Color del dispositivo</div>
+        <div class="color-grid">
+          <div class="color-cell">
+            <div class="color-opt" style="background:#111;" onclick="selectColor(this,'Negro')"></div>
+            <span class="color-name">Negro</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#2563eb;" onclick="selectColor(this,'Azul')"></div>
+            <span class="color-name">Azul</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#8b5cf6;" onclick="selectColor(this,'Violeta')"></div>
+            <span class="color-name">Violeta</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#38bdf8;" onclick="selectColor(this,'Celeste')"></div>
+            <span class="color-name">Celeste</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#f59e0b;" onclick="selectColor(this,'lilium')"></div>
+            <span class="color-name">lilium</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#1f2937;" onclick="selectColor(this,'Midnight')"></div>
+            <span class="color-name">Midnight</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#fb7185;" onclick="selectColor(this,'Coral')"></div>
+            <span class="color-name">Coral</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#22c55e;" onclick="selectColor(this,'Verde')"></div>
+            <span class="color-name">Verde</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:#6b7280;" onclick="selectColor(this,'Gris')"></div>
+            <span class="color-name">Gris</span>
+          </div>
+          <div class="color-cell">
+            <div class="color-opt" style="background:linear-gradient(135deg,#f97316,#ec4899,#8b5cf6);" onclick="selectColor(this,'Otro')"></div>
+            <span class="color-name">Otro</span>
+          </div>
+        </div>
+        <div class="color-other-row" id="color-other-row" style="display:none;">
+          <label>Especifica:</label>
+          <div class="input-wrap" style="flex:1">
+            <input type="text" id="f-color-otro" placeholder="ej. Azul marino, Grafito..." oninput="STATE.color=this.value.trim()">
+          </div>
+        </div>
+        <div class="field-error" id="err-color">Selecciona el color de tu dispositivo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3 — PROBLEMA ══ -->
+  <div class="step-view" id="view-3">
+    <div class="card">
+      <div class="card-section">
+        <div class="section-label">Falla principal <span style="color:#dc2626;font-size:9px;margin-left:2px;">*</span></div>
+        <div class="chips" id="chips-falla1">
+          <div class="chip" onclick="selectFalla(this,'falla1')">Batería</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">No enciende</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Pantalla trizada</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">No carga</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Pantalla no funciona</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Botones</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">No reconoce SIM</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Software</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Firmware</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Cámara</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Sonido</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Conectividad</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">GPS</div>
+          <div class="chip" onclick="selectFalla(this,'falla1')">Otro</div>
+        </div>
+        <div style="display:none;" id="f1-otro-wrap">
+          <div class="input-wrap" style="margin-bottom:8px;">
+            <input type="text" id="f-falla1-otro" placeholder="Describe la falla..." oninput="STATE.falla1=this.value.trim()">
+          </div>
+        </div>
+        <div class="field-error" id="err-falla1">Selecciona la falla principal.</div>
+      </div>
+      <div class="card-section">
+        <div class="section-label">Falla secundaria <span style="color:#a89bc0;font-size:9px;margin-left:2px;">(opcional)</span></div>
+        <div class="chips" id="chips-falla2">
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">Batería</div>
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">No carga</div>
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">Pantalla</div>
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">Sonido</div>
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">Conectividad</div>
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">Se apaga solo</div>
+          <div class="chip sec" onclick="selectFalla(this,'falla2')">Otro</div>
+        </div>
+        <div style="display:none;" id="f2-otro-wrap">
+          <div class="input-wrap" style="margin-bottom:8px;">
+            <input type="text" id="f-falla2-otro" placeholder="Describe la falla secundaria..." oninput="STATE.falla2=this.value.trim()">
+          </div>
+        </div>
+      </div>
+      <div class="card-section">
+        <div class="section-label">Descripción del problema</div>
+        <div class="field">
+          <label>Cuéntanos qué pasó <span class="req">*</span></label>
+          <div class="input-wrap">
+            <textarea id="f-obs" placeholder="Ej: La pantalla se trizo al caer, además el puerto de carga dejó de funcionar..." oninput="updateCharCount(this)" maxlength="600"></textarea>
+          </div>
+          <div class="char-counter" id="char-counter">0 / 600</div>
+          <div class="field-error" id="err-obs">Describe el problema (mínimo 10 caracteres).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>¡Solicitud recibida!</h2>
+    <p>Te avisaremos al correo indicado cuando tu equipo esté listo.</p>
+    <div class="ticket" id="ticket-box"></div>
+    <button class="btn-reset" onclick="location.href=location.pathname+location.search">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      Nuevo registro
+    </button>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar" id="bottom-bar">
+  <button class="btn btn-back" id="btn-back" style="display:none;" onclick="prevStep()">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+  </button>
+  <button class="btn btn-primary" id="btn-next" onclick="nextStep()">
+    Continuar
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
+  </button>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════
+const API_BASE = 'http://localhost:3000';
+const LOGO_URL = 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
+
+const MODELOS = {
+  'Reloj':        ['Space 1','Space 2','Space Lite','Space 3','Space 4'],
+  'Tablet':       ['Lite 1','Lite 2','Lite 3','Pro','Pro 2.0'],
+  'Monitores':    ['Baby monitor Lite','Baby Monitor Pro','Baby Monitor Pro 2'],
+  'Camaras':      ['Camara Baby Monitor Lite','Camara Baby Monitor Pro','Camara Baby Monitor Pro 2'],
+  'Momophone':    ['Momophone','Momophone Pro'],
+  'BabyDreams':   ['BabyDreams'],
+  'Otro':         ['Otro'],
+};
+
+const CANAL_INFO = {
+  P: { label:'Garantía · Envío sin costo',      dot:'#22c55e' },
+  E: { label:'Sin Garantía · Envío a coordinar', dot:'#f59e0b' },
+  S: { label:'Recepción presencial',             dot:'#a78bfa' },
+};
+
+const params   = new URLSearchParams(location.search);
+const CANAL    = (params.get('canal') || 'S').toUpperCase();
+const INITIALS = params.get('initials') || '';
+
+const STATE = {
+  step:1, nombre:'', correo:'', rut:'', imei:'',
+  producto:'', modelo:'', origen:'', origenOtro:'', color:'',
+  falla1:'', falla2:'', obs:'',
+};
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('brand-logo').src = LOGO_URL;
+
+  const info = CANAL_INFO[CANAL] || CANAL_INFO.S;
+  document.getElementById('canal-label').textContent = info.label;
+  document.getElementById('canal-dot').style.background = info.dot;
+
+  window.addEventListener('offline', () => document.getElementById('offline-banner').classList.add('show'));
+  window.addEventListener('online',  () => document.getElementById('offline-banner').classList.remove('show'));
+  if (!navigator.onLine) document.getElementById('offline-banner').classList.add('show');
+
+  document.getElementById('f-nombre').addEventListener('blur', () => {
+    markInput('f-nombre', document.getElementById('f-nombre').value.trim().length > 0);
+  });
+  document.getElementById('f-correo').addEventListener('blur', () => {
+    markInput('f-correo', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('f-correo').value.trim()));
+  });
+});
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function setStep(n) {
+  STATE.step = n;
+  document.querySelectorAll('.step-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + n).classList.add('active');
+  document.getElementById('progress-fill').style.width = (n / 3 * 100) + '%';
+
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('sdot-' + i);
+    const num = document.getElementById('snum-' + i);
+    dot.classList.remove('active','done');
+    if (i < n)        { dot.classList.add('done');   num.innerHTML = '✓'; }
+    else if (i === n) { dot.classList.add('active'); num.textContent = i; }
+    else              { num.textContent = i; }
+  }
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('sline-' + i).classList.toggle('done', i < n);
+  }
+  document.getElementById('btn-back').style.display = n > 1 ? '' : 'none';
+  const btnNext = document.getElementById('btn-next');
+  btnNext.innerHTML = n < 3
+    ? 'Continuar <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>'
+    : '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Enviar solicitud';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function nextStep() {
+  if (!validate(STATE.step)) return;
+  collectStep(STATE.step);
+  if (STATE.step < 3) setStep(STATE.step + 1);
+  else                submit();
+}
+
+function prevStep() {
+  if (STATE.step > 1) setStep(STATE.step - 1);
+}
+
+// ══════════════════════════════════════
+//  VALIDATION
+// ══════════════════════════════════════
+function validate(step) {
+  let ok = true;
+  if (step === 1) {
+    const n = document.getElementById('f-nombre').value.trim();
+    const c = document.getElementById('f-correo').value.trim();
+    if (!n) { showErr('err-nombre',true);  markInput('f-nombre',false); ok=false; }
+    else    { showErr('err-nombre',false); markInput('f-nombre',true); }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)) { showErr('err-correo',true);  markInput('f-correo',false); ok=false; }
+    else                                         { showErr('err-correo',false); markInput('f-correo',true); }
+  }
+  if (step === 2) {
+    const origenValue = document.getElementById('f-origen').value;
+    const origenOtro = document.getElementById('f-origen-otro').value.trim();
+    if (!document.getElementById('f-producto').value) { showErr('err-producto',true);  ok=false; }
+    else                                               { showErr('err-producto',false); }
+    if (!document.getElementById('f-modelo').value)   { showErr('err-modelo',true);    ok=false; }
+    else                                               { showErr('err-modelo',false); }
+    if (!origenValue || (origenValue === 'Otro' && !origenOtro)) { showErr('err-origen',true); ok=false; }
+    else                                               { showErr('err-origen',false); }
+    if (!STATE.color || (STATE.color === 'Otro' && !document.getElementById('f-color-otro').value.trim())) {
+      showErr('err-color',true); ok=false;
+    }
+    else                                               { showErr('err-color',false); }
+  }
+  if (step === 3) {
+    if (!STATE.falla1) { showErr('err-falla1',true); ok=false; }
+    else               { showErr('err-falla1',false); }
+    const obs = document.getElementById('f-obs').value.trim();
+    if (obs.length < 10) { showErr('err-obs',true);  markInput('f-obs',false); ok=false; }
+    else                 { showErr('err-obs',false); markInput('f-obs',true); }
+  }
+  return ok;
+}
+
+function showErr(id, show) { const e=document.getElementById(id); if(e) e.classList.toggle('show',show); }
+function markInput(id, valid) { const e=document.getElementById(id); if(!e) return; e.classList.toggle('error',!valid); e.classList.toggle('valid',valid); }
+
+// ══════════════════════════════════════
+//  COLLECT
+// ══════════════════════════════════════
+function collectStep(step) {
+  if (step === 1) {
+    STATE.nombre   = document.getElementById('f-nombre').value.trim();
+    STATE.correo   = document.getElementById('f-correo').value.trim();
+    STATE.rut      = document.getElementById('f-rut').value.trim();
+    STATE.imei     = document.getElementById('f-imei').value.trim();
+  }
+  if (step === 2) {
+    STATE.producto = document.getElementById('f-producto').value;
+    STATE.modelo   = document.getElementById('f-modelo').value;
+    STATE.origen   = document.getElementById('f-origen').value;
+    STATE.origenOtro = document.getElementById('f-origen-otro').value.trim();
+    if (STATE.color === 'Otro') {
+      STATE.color = document.getElementById('f-color-otro').value.trim() || 'Otro';
+    }
+  }
+  if (step === 3) {
+    STATE.obs = document.getElementById('f-obs').value.trim();
+  }
+}
+
+// ══════════════════════════════════════
+//  INTERACTIONS
+// ══════════════════════════════════════
+function onProductoChange() {
+  const p   = document.getElementById('f-producto').value;
+  const sel = document.getElementById('f-modelo');
+  sel.innerHTML = '<option value="">— Selecciona modelo —</option>';
+  if (MODELOS[p]) {
+    MODELOS[p].forEach(m => { const o=document.createElement('option'); o.textContent=m; sel.appendChild(o); });
+    sel.disabled = false;
+  } else {
+    sel.disabled = true;
+  }
+  showErr('err-producto', false);
+}
+
+function onOrigenChange() {
+  const origenValue = document.getElementById('f-origen').value;
+  const row = document.getElementById('origen-other-row');
+  row.style.display = origenValue === 'Otro' ? 'flex' : 'none';
+  if (origenValue !== 'Otro') STATE.origenOtro = '';
+  showErr('err-origen', false);
+}
+
+function selectColor(el, color) {
+  document.querySelectorAll('.color-opt').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  STATE.color = color;
+  const otherRow = document.getElementById('color-other-row');
+  if (color === 'Otro') {
+    otherRow.style.display = 'flex';
+    STATE.color = 'Otro';
+  } else {
+    otherRow.style.display = 'none';
+  }
+  showErr('err-color', false);
+}
+
+function selectFalla(el, type) {
+  const container = document.getElementById('chips-' + type);
+  container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const val = el.textContent.trim();
+  STATE[type] = val;
+  const otroId  = type === 'falla1' ? 'f1-otro-wrap' : 'f2-otro-wrap';
+  document.getElementById(otroId).style.display = val === 'Otro' ? '' : 'none';
+  if (val === 'Otro') STATE[type] = '';
+  if (type === 'falla1') showErr('err-falla1', false);
+}
+
+function updateCharCount(el) {
+  document.getElementById('char-counter').textContent = el.value.length + ' / 600';
+}
+
+// ══════════════════════════════════════
+//  SUBMIT
+// ══════════════════════════════════════
+async function submit() {
+  collectStep(3);
+  const btn = document.getElementById('btn-next');
+  btn.disabled = true;
+  btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="animation:spin 0.8s linear infinite"><path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Enviando...';
+
+  const payload = {
+    nombre: STATE.nombre, correo: STATE.correo,
+    rut:      STATE.rut      || null,
+    imei:     STATE.imei     || null,
+    producto: STATE.producto, modelo: STATE.modelo,
+    origen: STATE.origen === 'Otro' ? (STATE.origenOtro || 'Otro') : STATE.origen,
+    origen_otro: STATE.origen === 'Otro' ? (STATE.origenOtro || null) : null,
+    color: STATE.color === 'Otro' ? (document.getElementById('f-color-otro').value.trim() || 'Otro') : STATE.color,
+    falla1: STATE.falla1,
+    falla2: STATE.falla2 || null,
+    obs: STATE.obs,
+    canal: CANAL,
+    initials: INITIALS || null,
+  };
+
+  try {
+    const res = await fetch(API_BASE + '/api/validacion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Error ' + res.status);
+    }
+    const data = await res.json();
+    showSuccess(data.id || ('ST-' + Date.now().toString().slice(-5)));
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Enviar solicitud';
+    alert('No se pudo enviar tu solicitud:\n' + err.message);
+  }
+}
+
+function showSuccess(id) {
+  document.getElementById('bottom-bar').style.display = 'none';
+  document.querySelectorAll('.step-view').forEach(v => v.style.display = 'none');
+  for (let i = 1; i <= 3; i++) {
+    const d = document.getElementById('sdot-' + i);
+    d.classList.remove('active'); d.classList.add('done');
+    document.getElementById('snum-' + i).innerHTML = '✓';
+  }
+  document.getElementById('progress-fill').style.width = '100%';
+  document.querySelectorAll('.step-line').forEach(l => l.classList.add('done'));
+
+  const cInfo = CANAL_INFO[CANAL] || CANAL_INFO.S;
+  document.getElementById('ticket-box').innerHTML =
+    '<div class="ticket-num">N° de seguimiento</div>' +
+    '<div class="ticket-id">' + id + '</div>' +
+    '<div class="ticket-row"><span class="ticket-key">Nombre</span><span class="ticket-val">' + STATE.nombre + '</span></div>' +
+    '<div class="ticket-row"><span class="ticket-key">Correo</span><span class="ticket-val">' + STATE.correo + '</span></div>' +
+    '<div class="ticket-row"><span class="ticket-key">Equipo</span><span class="ticket-val">' + STATE.producto + ' ' + STATE.modelo + '</span></div>' +
+    '<div class="ticket-row"><span class="ticket-key">Falla</span><span class="ticket-val">' + STATE.falla1 + '</span></div>' +
+    '<div class="ticket-row"><span class="ticket-key">Canal</span><span class="ticket-val">' + cInfo.label + '</span></div>';
+
+  document.getElementById('success-screen').classList.add('active');
+}
+
+// Spin keyframe
+const sty = document.createElement('style');
+sty.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(sty);
+</script>
+</body>
+</html>
