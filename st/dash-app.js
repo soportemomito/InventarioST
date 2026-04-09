@@ -1190,6 +1190,14 @@ function abrirNuevaOrden() {
       </div>
       <div class="form-section">
         <div class="form-section-title">Garantía, boleta y plazo</div>
+        <div id="no_comprobante_p_strip" style="display:none;margin:0 0 14px;padding:10px 14px;background:linear-gradient(100deg,#ecfdf5,#f0fdf4);border:1px solid #6ee7b7;border-radius:12px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:10px;font-weight:800;color:#047857;letter-spacing:0.06em;">BOLETA · CANAL P</span>
+            <a id="no_comprobante_tab_link" class="btn btn-ghost btn-sm" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;padding:5px 12px;border-radius:999px;background:#fff;border:1px solid #34d399;color:#065f46;font-weight:600;">Ver comprobante ↗</a>
+            <input type="hidden" id="no_comprobante_url" value=""/>
+            <input type="url" id="no_comprobante_micro" class="form-control" placeholder="Pegar enlace si falta" style="flex:1;min-width:160px;max-width:280px;font-size:12px;height:34px;padding:6px 10px;" oninput="syncComprobanteMicro()"/>
+          </div>
+        </div>
         <div class="form-grid">
           <div class="form-group" id="no_garantia_group">
             <label id="no_garantia_label">¿Tiene garantía?</label>
@@ -1206,10 +1214,6 @@ function abrirNuevaOrden() {
             <label>Fecha boleta</label>
             <input class="form-control" id="no_fecha_boleta" type="date"/>
           </div>
-          <div class="form-group" style="grid-column:1/-1;">
-            <label>Enlace comprobante (Drive / formulario)</label>
-            <input class="form-control" id="no_comprobante_url" type="url" placeholder="https://…"/>
-          </div>
           <div class="form-group">
             <label>Agente *</label>
             <input class="form-control" id="no_agente" placeholder="Iniciales, ej. JV" maxlength="5"/>
@@ -1220,7 +1224,10 @@ function abrirNuevaOrden() {
     </div>
   `;
   openModal('nuevaOrdenModal');
-  setTimeout(syncNuevaOrdenGarantiaUI, 0);
+  setTimeout(() => {
+    syncNuevaOrdenGarantiaUI();
+    refreshComprobantePUI();
+  }, 0);
 }
 
 function syncNuevaOrdenGarantiaUI() {
@@ -1237,6 +1244,28 @@ function syncNuevaOrdenGarantiaUI() {
   }
 }
 
+function refreshComprobantePUI() {
+  const link = document.getElementById('no_comprobante_tab_link');
+  const hidden = document.getElementById('no_comprobante_url');
+  if (!link || !hidden) return;
+  const u = (hidden.value || '').trim();
+  const ok = /^https?:\/\//i.test(u);
+  if (ok) {
+    link.href = u;
+    link.style.display = 'inline-flex';
+  } else {
+    link.removeAttribute('href');
+    link.style.display = 'none';
+  }
+}
+
+function syncComprobanteMicro() {
+  const m = document.getElementById('no_comprobante_micro');
+  const h = document.getElementById('no_comprobante_url');
+  if (m && h) h.value = m.value.trim();
+  refreshComprobantePUI();
+}
+
 function selNuevaCanal(canal, el) {
   nuevaOrdenCanal = canal;
   document.querySelectorAll('.canal-opt').forEach((o) => o.classList.remove('selected'));
@@ -1245,6 +1274,15 @@ function selNuevaCanal(canal, el) {
   document.getElementById('nuevaOrdenLoader').style.display = showLoader ? 'flex' : 'none';
   document.getElementById('nuevaOrdenForm').style.display = 'block';
   syncNuevaOrdenGarantiaUI();
+  const strip = document.getElementById('no_comprobante_p_strip');
+  const h = document.getElementById('no_comprobante_url');
+  const micro = document.getElementById('no_comprobante_micro');
+  if (strip) strip.style.display = canal === 'P' ? 'block' : 'none';
+  if (canal !== 'P' && h && micro) {
+    h.value = '';
+    micro.value = '';
+  }
+  refreshComprobantePUI();
 }
 
 function updateModelos() {
@@ -1364,8 +1402,11 @@ function applySolicitudToNuevaOrden(data) {
   if (data.falla1) document.getElementById('no_falla1').value = data.falla1;
   if (data.imei) document.getElementById('no_imei').value = data.imei;
   if (data.comprobante_url) {
-    const c = document.getElementById('no_comprobante_url');
-    if (c) c.value = data.comprobante_url;
+    const h = document.getElementById('no_comprobante_url');
+    const m = document.getElementById('no_comprobante_micro');
+    if (h) h.value = data.comprobante_url;
+    if (m) m.value = data.comprobante_url;
+    refreshComprobantePUI();
   }
   if (data.obs_extra) {
     const ta = document.getElementById('no_obs');
@@ -1445,7 +1486,10 @@ async function submitNuevaOrden() {
         garantia,
         numero_boleta: document.getElementById('no_numero_boleta')?.value.trim() || null,
         fecha_boleta: document.getElementById('no_fecha_boleta')?.value || null,
-        comprobante_url: document.getElementById('no_comprobante_url')?.value.trim() || null,
+        comprobante_url:
+          nuevaOrdenCanal === 'P'
+            ? document.getElementById('no_comprobante_url')?.value.trim() || null
+            : null,
         numero_solicitud: document.getElementById('numSolicitud')?.value.trim() || null,
         plazo: plazoInfo.plazo,
         plazo_dias_habiles: plazoInfo.plazo_dias_habiles,
@@ -1615,6 +1659,8 @@ Object.assign(window, {
   updateModelos,
   toggleOtroField,
   cargarSolicitud,
+  syncComprobanteMicro,
+  refreshComprobantePUI,
   submitNuevaOrden,
   togglePlazoOtro,
   loadCambiosST,
