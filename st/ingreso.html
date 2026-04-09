@@ -769,7 +769,6 @@ document.head.appendChild(sty);
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   getFirestore,
   collection,
@@ -787,17 +786,14 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-/** Sin esto, addDoc falla si las reglas exigen usuario autenticado (error "Missing or insufficient permissions"). */
-const authReady = signInAnonymously(auth).catch((e) => {
-  console.error('Firebase Auth anónimo:', e);
-  throw e;
-});
-
+/**
+ * Escritura sin sesión Auth. Requiere reglas Firestore que permitan create en st_validaciones
+ * con request.auth == null (ver st/firestore-rules-st.txt). signInAnonymously() provoca
+ * auth/admin-restricted-operation si Anónimo está deshabilitado o bloqueado en el proyecto.
+ */
 window.STSendValidacion = async (payload) => {
-  await authReady;
   const ref = await addDoc(collection(db, 'st_validaciones'), {
     ...payload,
     estado: 'pendiente',
