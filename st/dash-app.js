@@ -81,7 +81,7 @@ const SHEETS_EXEC_URL_E =
 
 /** Web App st/google-apps-script-informe.gs (Implementar → URL /exec) */
 const INFORME_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbwKbGtZUgzmpReUwpxHAhSBiDRAiSKt5IXZP2Jy6gFy1q6gJxtlUEDbusECJKbNyvCXrQ/exec';
+  'https://script.google.com/macros/s/AKfycbyqS8JXVD_qavR6OMuxk2Bc0ob_62vcU4qT2V3a9R-LjfCIBNsED5xmWhgR5oYGbK3r9g/exec';
 
 /** Opcional: localStorage.setItem('st_informe_script_url','https://…/exec') */
 const LS_INFORME_URL = 'st_informe_script_url';
@@ -95,7 +95,7 @@ function getInformeScriptUrl() {
 }
 
 function informeConfigFaltaMsg() {
-  return 'Informe Google Docs: falta la Web App. Menú lateral → Herramientas → «Config. informe Docs».';
+  return 'Informe Google Docs: falta la URL de la Web App. Edita INFORME_SCRIPT_URL en st/dash-app.js o localStorage st_informe_script_url.';
 }
 
 function getInformeConfigSource() {
