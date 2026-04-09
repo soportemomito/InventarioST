@@ -32,6 +32,14 @@ Aplicacion web interna de SoyMomo para:
    - Se pueden crear ordenes manuales.
    - En canales `P` y `E` se puede cargar por numero de solicitud.
 
+## Google Sheets (Apps Script) + «Cargar» en nueva orden
+
+En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se consulta el Web App de Apps Script (si configuraste la URL) y, si no hay datos o falla, se busca en **Firestore**.
+
+- En la barra del dash: botón **URLs Sheets** → pega la URL de implementación de cada libro (`.../exec`).
+- Se guardan en `localStorage`: `st_sheets_exec_url_p`, `st_sheets_exec_url_e`.
+- Si el navegador bloquea `fetch` por **CORS** hacia `script.google.com`, habrá que usar JSONP o un proxy server-side.
+
 ## Cambios recientes (integracion ST)
 
 - Habilitado acceso directo a ST desde `index.html`.
