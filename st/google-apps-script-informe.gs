@@ -31,6 +31,14 @@ function jsonOut_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+/**
+ * Si en doPost quedaron líneas antiguas (var bad = checkSecret_(body)), sin esta función falla el script.
+ * Siempre permite; la versión actual de doPost no usa secreto.
+ */
+function checkSecret_(_body) {
+  return null;
+}
+
 var TEMPLATE_BY_CANAL = {
   E: {
     templateId: '1fcwUlvbcFSwDonKNCWlbjkISxPhpECOCbc78dhUOx9A',
@@ -98,7 +106,7 @@ function doGet() {
     '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ST informe · Web App</title></head><body style="font-family:system-ui,sans-serif;padding:24px;max-width:520px;line-height:1.5;">' +
     '<h2 style="margin:0 0 12px;">Web App activa</h2>' +
     '<p>Esta dirección está bien publicada. El panel Servicio Técnico la usa con <strong>POST</strong> (acciones <code>generar</code> y <code>enviar</code>), no al abrirla aquí en el navegador.</p>' +
-    '<p style="color:#666;font-size:14px;">URL en <code>dash-app.js</code> o <strong>Herramientas → Config. informe Docs</strong>.</p>' +
+    '<p style="color:#666;font-size:14px;">URL en constante <code>INFORME_SCRIPT_URL</code> de <code>st/dash-app.js</code>.</p>' +
     '</body></html>';
   return HtmlService.createHtmlOutput(html).setTitle('ST informe');
 }
