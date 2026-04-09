@@ -90,6 +90,42 @@ function applyPlaceholders_(body, d) {
   body.replaceText('<<RUT>>', String(d.rut != null ? d.rut : ''));
 }
 
+/**
+ * Asunto y párrafo intro según el bloque del dash (entradas / recepcion / salidas).
+ * Sustituye por tus plantillas HTML completas cuando las pegues aquí.
+ */
+function subjectAndIntroForCorreo_(tipo, num) {
+  var t = String(tipo || '').toLowerCase();
+  if (t === 'entradas') {
+    return {
+      subject: 'SoyMomo — Informe ingreso (entradas) ' + num,
+      intro:
+        'Información de tu ingreso a Servicio Técnico (entrada sin garantía), orden <strong>' +
+        num +
+        '</strong>.',
+    };
+  }
+  if (t === 'recepcion') {
+    return {
+      subject: 'SoyMomo — Informe ingreso (recepción) ' + num,
+      intro:
+        'Información de tu ingreso a Servicio Técnico (recepción garantía/presencial), orden <strong>' +
+        num +
+        '</strong>.',
+    };
+  }
+  if (t === 'salidas') {
+    return {
+      subject: 'SoyMomo — Retiro / salida ST ' + num,
+      intro: 'Actualización sobre tu orden en Servicio Técnico, orden <strong>' + num + '</strong>.',
+    };
+  }
+  return {
+    subject: 'SoyMomo — Informe ingreso ' + num,
+    intro: 'Información de tu ingreso a Servicio Técnico (orden <strong>' + num + '</strong>).',
+  };
+}
+
 function generarDocDesdeOrden_(orden) {
   var cfg = templateFor_(orden.canal);
   var folder = DriveApp.getFolderById(cfg.folderId);
@@ -128,7 +164,9 @@ function doPost(e) {
       var to = String(orden.correo || '').trim();
       if (!to) return jsonOut_({ error: 'Falta correo del cliente' });
       var num = String(orden.orden || '');
-      var subject = 'SoyMomo — Informe ingreso ' + num;
+      var tipoCorreo = String(body.tipo_correo || body.tipoCorreo || '').trim();
+      var copy = subjectAndIntroForCorreo_(tipoCorreo, num);
+      var subject = copy.subject;
       var docUrl = String(body.informe_url || body.informeUrl || '').trim();
       var evid = String(body.evidencias_url || body.evidenciasUrl || '').trim();
 
@@ -145,9 +183,9 @@ function doPost(e) {
         '<p>Hola ' +
         nombreEsc +
         ',</p>' +
-        '<p>Información de tu ingreso a Servicio Técnico (orden <strong>' +
-        num +
-        '</strong>).</p>' +
+        '<p>' +
+        copy.intro +
+        '</p>' +
         '<p><a href="' +
         docUrl +
         '">Abrir informe (Google Docs)</a></p>';
