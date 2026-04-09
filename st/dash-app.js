@@ -75,9 +75,9 @@ function inventarioLoginUrl() {
 const PAGE_SIZE = 30;
 /** Web Apps Apps Script por canal (implementación “Cualquiera” o según tu política) */
 const SHEETS_EXEC_URL_P =
-  'https://script.google.com/macros/s/AKfycbwJmraai9m-VScNtLWQ3MfZQUZPwfB1HgD146V_tPosbkOxjXJ5noelr6lhtCdMGgQ/exec';
+  'https://script.google.com/macros/s/AKfycbw9b56uioUAC1RsF7QSu-SnnddYtJVqRV-9NFxLppw3i0H5swgsvnaE2HN1xZiEG-U/exec';
 const SHEETS_EXEC_URL_E =
-  'https://script.google.com/macros/s/AKfycbz-mgcXFwp0Zh17HXRkdzi48JScwnJCPym-nCebuV_TiMHT0Oi6RKtOKo5WsUoq1k2V/exec';
+  'https://script.google.com/macros/s/AKfycbw6VM8fta5QuZRHBkXztfrL-ozQaV0PNL47AN4wZJnFTcXjllEOJgtpuQI7hxa0EKEL/exec';
 const LS_CAMBIOS = 'st_cambios_garantia_v1';
 const LOGO_URL_CAMBIOS_ST =
   'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
@@ -168,7 +168,9 @@ async function fetchSolicitudFromSheets(num, tipo) {
       data.modelo ||
       data.falla1 ||
       data.falla ||
-      data.imei);
+      data.imei ||
+      data.comprobante_url ||
+      data.segundo_equipo_txt);
   if (!useful) {
     const extra = data ? Object.keys(data).filter((k) => k !== 'canal' && k !== 'falla') : [];
     if (data && data.canal != null && extra.length === 0) {
@@ -920,6 +922,13 @@ function renderOrdenModal(o) {
         <div class="detail-item"><span class="detail-key">Fecha ingreso</span><span class="detail-val">${fmtDate(o.fecha)}</span></div>
         <div class="detail-item"><span class="detail-key">Plazo</span><span class="detail-val">${formatPlazoOrden(o)}</span></div>
         <div class="detail-item"><span class="detail-key">N° boleta</span><span class="detail-val">${o.numero_boleta || '—'}</span></div>
+        ${
+          o.comprobante_url && /^https?:\/\//i.test(o.comprobante_url)
+            ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Comprobante</span><span class="detail-val"><a href="${escapeAttr(o.comprobante_url)}" target="_blank" rel="noopener">Abrir enlace</a></span></div>`
+            : o.comprobante_url
+              ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Comprobante</span><span class="detail-val">${escapeAttr(o.comprobante_url)}</span></div>`
+              : ''
+        }
       </div>
     </div>
 
@@ -1197,6 +1206,10 @@ function abrirNuevaOrden() {
             <label>Fecha boleta</label>
             <input class="form-control" id="no_fecha_boleta" type="date"/>
           </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Enlace comprobante (Drive / formulario)</label>
+            <input class="form-control" id="no_comprobante_url" type="url" placeholder="https://…"/>
+          </div>
           <div class="form-group">
             <label>Agente *</label>
             <input class="form-control" id="no_agente" placeholder="Iniciales, ej. JV" maxlength="5"/>
@@ -1261,6 +1274,8 @@ function mapToSolicitudPayload(x) {
     color: x.color,
     falla1: x.falla1 || x.falla,
     imei: x.imei,
+    comprobante_url: x.comprobante_url || undefined,
+    obs_extra: x.segundo_equipo_txt || undefined,
   };
 }
 
@@ -1348,6 +1363,14 @@ function applySolicitudToNuevaOrden(data) {
   if (data.color) document.getElementById('no_color').value = data.color;
   if (data.falla1) document.getElementById('no_falla1').value = data.falla1;
   if (data.imei) document.getElementById('no_imei').value = data.imei;
+  if (data.comprobante_url) {
+    const c = document.getElementById('no_comprobante_url');
+    if (c) c.value = data.comprobante_url;
+  }
+  if (data.obs_extra) {
+    const ta = document.getElementById('no_obs');
+    if (ta) ta.value = data.obs_extra;
+  }
 }
 
 async function submitNuevaOrden() {
@@ -1422,6 +1445,7 @@ async function submitNuevaOrden() {
         garantia,
         numero_boleta: document.getElementById('no_numero_boleta')?.value.trim() || null,
         fecha_boleta: document.getElementById('no_fecha_boleta')?.value || null,
+        comprobante_url: document.getElementById('no_comprobante_url')?.value.trim() || null,
         numero_solicitud: document.getElementById('numSolicitud')?.value.trim() || null,
         plazo: plazoInfo.plazo,
         plazo_dias_habiles: plazoInfo.plazo_dias_habiles,
