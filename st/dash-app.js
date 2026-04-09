@@ -81,13 +81,10 @@ const SHEETS_EXEC_URL_E =
 
 /** Web App st/google-apps-script-informe.gs (Implementar → URL /exec) */
 const INFORME_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbyyQgqOXwsqCD90faCsIxwLaY-f8I_Np2EIQGfAmEhBaRzrTXPkH7f9vQ8bnex5L8tTDg/exec';
-/** Misma clave que ST_SECRET en Apps Script. Déjalo vacío y configúralo en Herramientas → Config. informe Docs si no quieres subir el secreto al repo. */
-const INFORME_SCRIPT_SECRET = '';
+  'https://script.google.com/macros/s/AKfycbwKbGtZUgzmpReUwpxHAhSBiDRAiSKt5IXZP2Jy6gFy1q6gJxtlUEDbusECJKbNyvCXrQ/exec';
 
-/** Opcional: sin redeploy, en consola del navegador → localStorage.setItem('st_informe_script_url','https://…/exec') */
+/** Opcional: localStorage.setItem('st_informe_script_url','https://…/exec') */
 const LS_INFORME_URL = 'st_informe_script_url';
-const LS_INFORME_SECRET = 'st_informe_script_secret';
 
 function getInformeScriptUrl() {
   try {
@@ -95,14 +92,6 @@ function getInformeScriptUrl() {
     if (u) return u;
   } catch (_) {}
   return (INFORME_SCRIPT_URL || '').trim();
-}
-
-function getInformeScriptSecret() {
-  try {
-    const s = (localStorage.getItem(LS_INFORME_SECRET) || '').trim();
-    if (s) return s;
-  } catch (_) {}
-  return (INFORME_SCRIPT_SECRET || '').trim();
 }
 
 function informeConfigFaltaMsg() {
@@ -119,34 +108,26 @@ function getInformeConfigSource() {
 
 function abrirInformeConfigModal() {
   const urlEl = document.getElementById('informeCfgUrl');
-  const secEl = document.getElementById('informeCfgSecret');
   const stEl = document.getElementById('informeCfgStatus');
-  if (!urlEl || !secEl || !stEl) return;
+  if (!urlEl || !stEl) return;
   urlEl.value = getInformeScriptUrl();
-  secEl.value = getInformeScriptSecret();
   const src = getInformeConfigSource();
   stEl.textContent = src
-    ? `Origen actual: ${src === 'codigo' ? 'archivo st/dash-app.js' : 'este navegador (localStorage)'}. Puedes sobrescribir guardando aquí.`
-    : 'No hay URL ni secreto: completa el formulario o edita las constantes INFORME_SCRIPT_* en dash-app.js.';
+    ? `Origen actual: ${src === 'codigo' ? 'archivo st/dash-app.js' : 'este navegador (localStorage)'}. Puedes sobrescribir la URL guardando aquí.`
+    : 'No hay URL: completa el campo o edita INFORME_SCRIPT_URL en dash-app.js.';
   openModal('informeConfigModal');
 }
 
 function guardarInformeConfig() {
   const url = document.getElementById('informeCfgUrl')?.value.trim() || '';
-  const secret = document.getElementById('informeCfgSecret')?.value.trim() || '';
   if (!url || !/^https:\/\//i.test(url)) {
     toast('Indica una URL https válida del Apps Script (termina en /exec).', 'warning');
     return;
   }
-  if (!secret) {
-    toast('Indica el secreto ST_SECRET del proyecto Apps Script.', 'warning');
-    return;
-  }
   try {
     localStorage.setItem(LS_INFORME_URL, url);
-    localStorage.setItem(LS_INFORME_SECRET, secret);
     closeModal('informeConfigModal');
-    toast('Listo: ya puedes usar Generar informe y Enviar correo en este navegador.', 'success');
+    toast('URL guardada en este navegador.', 'success');
   } catch (e) {
     toast('No se pudo guardar: ' + e.message, 'error');
   }
@@ -155,13 +136,11 @@ function guardarInformeConfig() {
 function limpiarInformeConfigLocal() {
   try {
     localStorage.removeItem(LS_INFORME_URL);
-    localStorage.removeItem(LS_INFORME_SECRET);
+    try {
+      localStorage.removeItem('st_informe_script_secret');
+    } catch (_) {}
     closeModal('informeConfigModal');
-    toast(
-      'Se borró la config. guardada en el navegador. Si definiste URL/secreto en dash-app.js, siguen activos tras recargar.',
-      'info',
-      6000
-    );
+    toast('Se quitó la URL del navegador (y un posible secreto antiguo). Si está en dash-app.js, sigue al recargar.', 'info', 5500);
   } catch (e) {
     toast(e.message, 'error');
   }
@@ -1231,10 +1210,6 @@ async function confirmarEnvioEmail() {
     toast(informeConfigFaltaMsg(), 'warning', 6000);
     return;
   }
-  if (!getInformeScriptSecret()) {
-    toast(informeConfigFaltaMsg(), 'warning', 6000);
-    return;
-  }
   try {
     toast('Enviando correo…', 'info');
     const d = await getDoc(doc(db, COL_O, id));
@@ -1243,7 +1218,6 @@ async function confirmarEnvioEmail() {
     const orden = buildInformePayloadFromOrden(o);
     const j = await postInformeScript({
       action: 'enviar',
-      secret: getInformeScriptSecret(),
       orden,
       informe_url: o.informe_url || '',
       evidencias_url: evidencias,
@@ -1270,10 +1244,6 @@ async function generarInforme(_id) {
     toast(informeConfigFaltaMsg(), 'warning', 6000);
     return;
   }
-  if (!getInformeScriptSecret()) {
-    toast(informeConfigFaltaMsg(), 'warning', 6000);
-    return;
-  }
   try {
     toast('Generando informe en Google Docs…', 'info');
     const d = await getDoc(doc(db, COL_O, _id));
@@ -1282,7 +1252,6 @@ async function generarInforme(_id) {
     const orden = buildInformePayloadFromOrden(o);
     const j = await postInformeScript({
       action: 'generar',
-      secret: getInformeScriptSecret(),
       orden,
     });
     await updateDoc(doc(db, COL_O, _id), { informe_url: j.url });
