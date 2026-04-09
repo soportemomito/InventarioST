@@ -492,21 +492,8 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;appeara
 
 <script>
 // ══════════════════════════════════════
-//  CONFIG
+//  CONFIG (Firestore: colección st_validaciones)
 // ══════════════════════════════════════
-const DEFAULT_API_BASE = 'http://localhost:3000';
-const LS_API_BASE_KEY = 'st_api_base_v1';
-function getApiBase() {
-  try {
-    const qp = new URLSearchParams(location.search).get('api');
-    if (qp) return qp.replace(/\/$/, '');
-  } catch (_) {}
-  try {
-    const s = localStorage.getItem(LS_API_BASE_KEY);
-    if (s) return s.replace(/\/$/, '');
-  } catch (_) {}
-  return DEFAULT_API_BASE;
-}
 const LOGO_URL = 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
 
 const MODELOS = {
@@ -739,17 +726,10 @@ async function submit() {
   };
 
   try {
-    const res = await fetch(getApiBase() + '/api/validacion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Error ' + res.status);
-    }
-    const data = await res.json();
-    showSuccess(data.id || ('ST-' + Date.now().toString().slice(-5)));
+    for (let i = 0; i < 200 && !window.STSendValidacion; i++) await new Promise((r) => setTimeout(r, 40));
+    if (!window.STSendValidacion) throw new Error('Firebase aún no cargó. Recarga la página.');
+    const id = await window.STSendValidacion(payload);
+    showSuccess(id || ('ST-' + Date.now().toString().slice(-5)));
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Enviar solicitud';
@@ -785,6 +765,37 @@ function showSuccess(id) {
 const sty = document.createElement('style');
 sty.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
 document.head.appendChild(sty);
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyDzCUE7t1T3oyM48jej8gWTRU_n2Cb1hec',
+  authDomain: 'soymomo-inventario.firebaseapp.com',
+  projectId: 'soymomo-inventario',
+  storageBucket: 'soymomo-inventario.firebasestorage.app',
+  messagingSenderId: '807454155183',
+  appId: '1:807454155183:web:09b5211a01c2ea197d8f5a',
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.STSendValidacion = async (payload) => {
+  const ref = await addDoc(collection(db, 'st_validaciones'), {
+    ...payload,
+    estado: 'pendiente',
+    created_at: serverTimestamp(),
+  });
+  return ref.id;
+};
 </script>
 </body>
 </html>
