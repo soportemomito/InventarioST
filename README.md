@@ -21,6 +21,22 @@ Aplicacion web interna de SoyMomo para:
 - `st/ingreso.html`: formulario de ingreso para clientes/recepcion.
 - `README.md`: documentacion principal.
 
+## Firebase: inventario vs servicio tecnico
+
+En **Firestore** conviven dos usos distintos del mismo proyecto (`soymomo-inventario`):
+
+| Colecciones | Origen | Contenido tipico |
+|-------------|--------|------------------|
+| `products`, `movements`, `users` | `index.html` (inventario) | Stock, movimientos, usuarios aprobados |
+| `st_validaciones`, `st_ordenes` | `st/ingreso.html` y `st/dash.html` | Ingresos a validar y ordenes de ST |
+
+**Si en la consola solo ves `movements` / `products` / `users`:** es normal. Las colecciones **`st_validaciones`** y **`st_ordenes`** **no aparecen hasta que exista al menos un documento** (Firestore no lista colecciones vacías). Se crean cuando:
+
+1. Alguien envia el formulario en **`st/ingreso.html`** → se escribe en **`st_validaciones`**.
+2. En el **dashboard** creas o apruebas una orden → **`st_ordenes`** (y se actualiza validacion).
+
+**El numero de solicitud del Google Sheet (ej. 444246)** no se sube solo a Firestore al pulsar **Cargar** en el dash: eso solo **rellena el formulario** desde Sheets. En Firestore veras datos ST cuando exista validacion/orden asociada a ese flujo.
+
 ## Flujo principal
 
 1. Usuario inicia sesion en `index.html`.
@@ -38,6 +54,10 @@ En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se co
 
 - Para cambiar de hoja o de despliegue, edita esas constantes en `st/dash-app.js`.
 - Si el navegador bloquea `fetch` por **CORS** hacia `script.google.com`, habrá que usar JSONP o un proxy server-side.
+
+Plantilla de Apps Script en el repo: **`st/google-apps-script-solicitud-lookup.gs`**. Tras cambiarla: **Implementar → nueva versión** en cada libro (P y E). Incluye: encabezado `Número de solicitud`, **respaldo columna C** si falla el nombre, comparación número/texto del N°, y emails típicos de formulario Google (`Dirección de correo electrónico`, etc.).
+
+**Si el dash muestra error tipo `Sheets: No hay columna de N° solicitud en fila 1`:** suele ser fila 1 sin encabezados reconocibles; con la plantilla nueva se usa la columna C como respaldo. Si tu layout no es C, edita `INDICE_FALLBACK_COL_NUM_SOLICITUD` en Apps Script (0 = A, 2 = C).
 
 ## Cambios recientes (integracion ST)
 
