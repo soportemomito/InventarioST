@@ -392,7 +392,9 @@ function formatPlazoOrden(o) {
   if (o.plazo_dias_habiles) {
     const base =
       o.plazo_dias_habiles === 'otro' ? o.plazo_otro || 'Otro' : `${o.plazo_dias_habiles} días hábiles`;
-    if (o.plazo && String(o.plazo).trim()) return `${base} · ${o.plazo}`;
+    const extra = o.plazo && String(o.plazo).trim();
+    // readPlazoDias ya guarda plazo igual que base ("7 días hábiles"); no repetir en informe/UI
+    if (extra && extra !== base) return `${base} · ${extra}`;
     return base;
   }
   if (o.plazo) {
@@ -1397,6 +1399,19 @@ function abrirNuevaOrden() {
         </div>
       </div>
       <div class="form-section">
+        <div class="form-section-title">Diagnóstico / presupuesto (opcional)</div>
+        <div class="form-grid">
+          <div class="form-group span2">
+            <label>Solución / trabajo a realizar</label>
+            <textarea class="form-control" id="no_solucion" rows="2" placeholder="Ej: Cambio de módulo, reinstalación…"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Presupuesto (CLP)</label>
+            <input class="form-control" id="no_presupuesto" type="number" min="0" step="1" placeholder="Ej: 45000"/>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
         <div class="form-section-title">Accesorios recibidos</div>
         <div class="check-grid">
           ${['mica', 'carga', 'pantalla', 'botones', 'sim', 'caja', 'cable', 'adaptador', 'funda']
@@ -1683,6 +1698,9 @@ async function submitNuevaOrden() {
   });
   const canal = nuevaOrdenCanal;
   const garantia = canal === 'P' ? true : document.getElementById('no_garantia')?.value === 'true';
+  const solucionNueva = document.getElementById('no_solucion')?.value.trim() || null;
+  const presRaw = document.getElementById('no_presupuesto')?.value.trim();
+  const presupuestoNueva = presRaw && Number.isFinite(Number(presRaw)) ? Number(presRaw) : null;
   try {
     const numOrden = await runTransaction(db, async (transaction) => {
       const serRef = doc(db, META_SERIAL, 'ordenes');
@@ -1721,8 +1739,8 @@ async function submitNuevaOrden() {
         plazo_dias_habiles: plazoInfo.plazo_dias_habiles,
         plazo_otro: plazoInfo.plazo_otro,
         ...acc,
-        solucion: null,
-        presupuesto: null,
+        solucion: solucionNueva,
+        presupuesto: presupuestoNueva,
         valor_cobrado: null,
         informe_url: null,
       });
