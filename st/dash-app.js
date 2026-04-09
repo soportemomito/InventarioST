@@ -73,6 +73,9 @@ function inventarioLoginUrl() {
 }
 
 const PAGE_SIZE = 30;
+/** URLs completas del despliegue Apps Script (terminan en /exec), una por libro P y E */
+const LS_SHEETS_EXEC_P = 'st_sheets_exec_url_p';
+const LS_SHEETS_EXEC_E = 'st_sheets_exec_url_e';
 const LS_CAMBIOS = 'st_cambios_garantia_v1';
 const LOGO_URL_CAMBIOS_ST =
   'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
@@ -124,12 +127,80 @@ function normalizeOrden(id, data) {
   };
 }
 
+function getSheetsExecBase(canal) {
+  const key = canal === 'P' ? LS_SHEETS_EXEC_P : canal === 'E' ? LS_SHEETS_EXEC_E : null;
+  if (!key) return '';
+  try {
+    const s = localStorage.getItem(key);
+    return s && s.startsWith('http') ? s.trim().replace(/\/$/, '') : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function buildSheetsExecUrl(base, num) {
+  const u = base.replace(/\/$/, '');
+  const sep = u.includes('?') ? '&' : '?';
+  return `${u}${sep}num=${encodeURIComponent(num)}`;
+}
+
+/**
+ * Llama al Web App de Google Apps Script. Si no hay URL, error de red o JSON con error → null (fallback Firestore).
+ */
+async function fetchSolicitudFromSheets(num, tipo) {
+  const t = (tipo || '').toUpperCase();
+  if (t !== 'P' && t !== 'E') return null;
+  const base = getSheetsExecBase(t);
+  if (!base) return null;
+  const url = buildSheetsExecUrl(base, num);
+  const res = await fetch(url, { method: 'GET' });
+  if (!res.ok) throw new Error(`Sheets: HTTP ${res.status}`);
+  const data = await res.json().catch(() => ({}));
+  if (data && data.error) return null;
+  if (!data || (!data.nombre && !data.correo)) return null;
+  return data;
+}
+
+function promptSheetsUrls() {
+  let curP = '';
+  let curE = '';
+  try {
+    curP = localStorage.getItem(LS_SHEETS_EXEC_P) || '';
+    curE = localStorage.getItem(LS_SHEETS_EXEC_E) || '';
+  } catch (_) {}
+  const p = window.prompt(
+    'URL del Web App Apps Script — libro P (debe terminar en /exec o incluir ?):',
+    curP
+  );
+  if (p === null) return;
+  const e = window.prompt('URL del Web App Apps Script — libro E:', curE);
+  if (e === null) return;
+  try {
+    const tp = p.trim();
+    const te = e.trim();
+    if (tp.startsWith('http')) localStorage.setItem(LS_SHEETS_EXEC_P, tp);
+    else localStorage.removeItem(LS_SHEETS_EXEC_P);
+    if (te.startsWith('http')) localStorage.setItem(LS_SHEETS_EXEC_E, te);
+    else localStorage.removeItem(LS_SHEETS_EXEC_E);
+  } catch (_) {}
+  toast('URLs Sheets guardadas.', 'success');
+  setFirestoreHint();
+}
+
 function setFirestoreHint() {
   const el = document.getElementById('api-hint');
   if (!el) return;
   el.style.display = '';
+  const hasP = !!getSheetsExecBase('P');
+  const hasE = !!getSheetsExecBase('E');
+  const sheetsTag =
+    hasP || hasE
+      ? ` · Sheets: <span style="color:#16a34a;">P${hasP ? '✓' : '—'}</span> <span style="color:#d97706;">E${hasE ? '✓' : '—'}</span>`
+      : ' · Sheets: <span style="color:#9ca3af;">sin URLs</span>';
   el.innerHTML =
-    '<span title="Órdenes y validaciones viven en Firestore (proyecto soymomo-inventario)">Datos: <strong>Firebase</strong> · colecciones <code style="font-size:10px;">st_ordenes</code>, <code style="font-size:10px;">st_validaciones</code></span>';
+    '<span title="Firestore + opcional búsqueda en Google Sheets (Apps Script)">Datos: <strong>Firebase</strong><code style="font-size:10px;margin:0 4px;">st_*</code>' +
+    sheetsTag +
+    '</span> <button type="button" class="btn btn-ghost btn-sm" style="margin-left:6px;height:24px;padding:0 8px;font-size:11px;" onclick="promptSheetsUrls()">URLs Sheets</button>';
 }
 
 async function waitForFirebaseUser(maxMs = 12000) {
@@ -1199,6 +1270,7 @@ function mapToSolicitudPayload(x) {
     rut: x.rut,
     modelo: x.modelo,
     producto: x.producto,
+    origen: x.origen,
     color: x.color,
     falla1: x.falla1 || x.falla,
     imei: x.imei,
@@ -1213,6 +1285,23 @@ async function cargarSolicitud() {
   }
   const tipo = nuevaOrdenCanal;
   try {
+    if (tipo === 'P' || tipo === 'E') {
+      try {
+        const sheetRow = await fetchSolicitudFromSheets(num, tipo);
+        if (sheetRow) {
+          applySolicitudToNuevaOrden(mapToSolicitudPayload(sheetRow));
+          toast('Datos cargados desde Google Sheets', 'success');
+          return;
+        }
+      } catch (err) {
+        const msg = err && err.message ? String(err.message) : '';
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+          toast('No se pudo contactar Sheets (CORS o red). Revisa URL o usa un proxy.', 'warning');
+        }
+        /* si es otro error, seguimos a Firestore */
+      }
+    }
+
     const vDoc = await getDoc(doc(db, COL_V, num));
     if (vDoc.exists()) {
       const v = vDoc.data();
@@ -1243,7 +1332,9 @@ async function cargarSolicitud() {
       toast('Datos cargados desde orden existente', 'success');
       return;
     }
-    throw new Error('No encontrado en Firestore. Importa el Excel o crea la solicitud primero.');
+    throw new Error(
+      'No encontrado en Sheets ni en Firestore. Revisa número, URLs Sheets (botón arriba) o importa datos.'
+    );
   } catch (e) {
     toast(e.message || 'No se pudo cargar', 'error');
   }
@@ -1259,6 +1350,11 @@ function applySolicitudToNuevaOrden(data) {
     updateModelos();
   }
   if (data.modelo) document.getElementById('no_modelo').value = data.modelo;
+  if (data.origen) {
+    const oSel = document.getElementById('no_origen');
+    if (oSel && [...oSel.options].some((o) => o.value === data.origen)) oSel.value = data.origen;
+    toggleOtroField('no_origen', 'no_origen_otro_wrap');
+  }
   if (data.color) document.getElementById('no_color').value = data.color;
   if (data.falla1) document.getElementById('no_falla1').value = data.falla1;
   if (data.imei) document.getElementById('no_imei').value = data.imei;
@@ -1514,6 +1610,7 @@ Object.assign(window, {
   eliminarCambio,
   previewCambioMail,
   salir,
+  promptSheetsUrls,
 });
 
 setFirestoreHint();
