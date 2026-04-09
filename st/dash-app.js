@@ -84,6 +84,37 @@ const INFORME_SCRIPT_URL = '';
 /** Misma clave que ST_SECRET en Propiedades del proyecto (Apps Script) */
 const INFORME_SCRIPT_SECRET = '';
 
+/** Opcional: sin redeploy, en consola del navegador → localStorage.setItem('st_informe_script_url','https://…/exec') */
+const LS_INFORME_URL = 'st_informe_script_url';
+const LS_INFORME_SECRET = 'st_informe_script_secret';
+
+function getInformeScriptUrl() {
+  try {
+    const u = (localStorage.getItem(LS_INFORME_URL) || '').trim();
+    if (u) return u;
+  } catch (_) {}
+  return (INFORME_SCRIPT_URL || '').trim();
+}
+
+function getInformeScriptSecret() {
+  try {
+    const s = (localStorage.getItem(LS_INFORME_SECRET) || '').trim();
+    if (s) return s;
+  } catch (_) {}
+  return (INFORME_SCRIPT_SECRET || '').trim();
+}
+
+function informeConfigFaltaMsg() {
+  return (
+    'Informe (Google Docs): falta la Web App. Rellena INFORME_SCRIPT_URL e INFORME_SCRIPT_SECRET en st/dash-app.js, ' +
+    'o en consola: localStorage.setItem("' +
+    LS_INFORME_URL +
+    '","https://script.google.com/macros/s/…/exec") y lo mismo para ' +
+    LS_INFORME_SECRET +
+    ' con tu ST_SECRET. Luego recarga el dash.'
+  );
+}
+
 const LS_CAMBIOS = 'st_cambios_garantia_v1';
 const LOGO_URL_CAMBIOS_ST =
   'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
@@ -393,7 +424,8 @@ function buildInformePayloadFromOrden(o) {
 }
 
 async function postInformeScript(bodyObj) {
-  const res = await fetch(INFORME_SCRIPT_URL.replace(/\/$/, ''), {
+  const base = getInformeScriptUrl().replace(/\/$/, '');
+  const res = await fetch(base, {
     method: 'POST',
     mode: 'cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1131,12 +1163,13 @@ async function confirmarEnvioEmail() {
   const evidencias = document.getElementById('emailEvidenciasUrl')?.value.trim() || '';
   closeModal('emailModal');
   if (!id) return;
-  if (!INFORME_SCRIPT_URL || !/^https:\/\//i.test(INFORME_SCRIPT_URL)) {
-    toast('Configura INFORME_SCRIPT_URL (Web App de st/google-apps-script-informe.gs).', 'warning', 5000);
+  const urlOk = getInformeScriptUrl();
+  if (!urlOk || !/^https:\/\//i.test(urlOk)) {
+    toast(informeConfigFaltaMsg(), 'warning', 9000);
     return;
   }
-  if (!INFORME_SCRIPT_SECRET) {
-    toast('Configura INFORME_SCRIPT_SECRET (igual que ST_SECRET en Apps Script).', 'warning', 5000);
+  if (!getInformeScriptSecret()) {
+    toast(informeConfigFaltaMsg(), 'warning', 9000);
     return;
   }
   try {
@@ -1147,7 +1180,7 @@ async function confirmarEnvioEmail() {
     const orden = buildInformePayloadFromOrden(o);
     const j = await postInformeScript({
       action: 'enviar',
-      secret: INFORME_SCRIPT_SECRET,
+      secret: getInformeScriptSecret(),
       orden,
       informe_url: o.informe_url || '',
       evidencias_url: evidencias,
@@ -1169,12 +1202,13 @@ async function confirmarEnvioEmail() {
 }
 
 async function generarInforme(_id) {
-  if (!INFORME_SCRIPT_URL || !/^https:\/\//i.test(INFORME_SCRIPT_URL)) {
-    toast('Configura INFORME_SCRIPT_URL (Web App de st/google-apps-script-informe.gs).', 'warning', 5000);
+  const urlOk = getInformeScriptUrl();
+  if (!urlOk || !/^https:\/\//i.test(urlOk)) {
+    toast(informeConfigFaltaMsg(), 'warning', 9000);
     return;
   }
-  if (!INFORME_SCRIPT_SECRET) {
-    toast('Configura INFORME_SCRIPT_SECRET (igual que ST_SECRET en Apps Script).', 'warning', 5000);
+  if (!getInformeScriptSecret()) {
+    toast(informeConfigFaltaMsg(), 'warning', 9000);
     return;
   }
   try {
@@ -1185,7 +1219,7 @@ async function generarInforme(_id) {
     const orden = buildInformePayloadFromOrden(o);
     const j = await postInformeScript({
       action: 'generar',
-      secret: INFORME_SCRIPT_SECRET,
+      secret: getInformeScriptSecret(),
       orden,
     });
     await updateDoc(doc(db, COL_O, _id), { informe_url: j.url });
