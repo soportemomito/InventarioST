@@ -14,10 +14,12 @@
  *                            carpeta   1Ni9vY9JcJYCmf22MUJlj93aI6Z5Ecp4L
  *                            nombre    "Informe Entrada Recepción {orden}"
  *
- * ¿Nuevo proyecto .gs? Sí: crea un proyecto Apps Script independiente (o sin contenedor),
- * pega TODO este archivo, añade ST_SECRET, Implementar → Aplicación web. Puedes dejar las
- * funciones del Sheet en su libro; no hace falta borrarlas. Si prefieres un solo proyecto,
- * puedes copiar solo doPost + helpers a un script ya existente (menos habitual).
+ * Dónde pegar el código (recomendado, “por libro / por hoja”):
+ *   Abre tu **mismo** Google Sheet de registro ST → Extensiones → Apps Script. Ahí ya tienes
+ *   generarInformesDocsConPlantillaEntrada y …EntradaPE. Añade en ESE proyecto el contenido
+ *   de este archivo (doPost + helpers). No necesitas un proyecto Apps Script “global” suelto:
+ *   todo queda en el script ligado al libro. Implementar → Aplicación web y usa esa URL /exec
+ *   en el dash. Las funciones que recorren filas siguen igual; el dash solo usa doPost.
  *
  * Configuración:
  * 1) Propiedades del proyecto → ST_SECRET = mismo valor que en st/dash-app.js (Config. informe Docs)
@@ -96,6 +98,17 @@ function generarDocDesdeOrden_(orden) {
   applyPlaceholders_(doc.getBody(), orden);
   doc.saveAndClose();
   return copy.getUrl();
+}
+
+/** Abrir la URL /exec en el navegador hace GET; sin esto aparece "doGet not found". El dash usa POST. */
+function doGet() {
+  var html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ST informe · Web App</title></head><body style="font-family:system-ui,sans-serif;padding:24px;max-width:520px;line-height:1.5;">' +
+    '<h2 style="margin:0 0 12px;">Web App activa</h2>' +
+    '<p>Esta dirección está bien publicada. El panel Servicio Técnico la usa con <strong>POST</strong> (acciones <code>generar</code> y <code>enviar</code>), no al abrirla aquí en el navegador.</p>' +
+    '<p style="color:#666;font-size:14px;">Pega la misma URL en el dash: <strong>Herramientas → Config. informe Docs</strong>.</p>' +
+    '</body></html>';
+  return HtmlService.createHtmlOutput(html).setTitle('ST informe');
 }
 
 function doPost(e) {
