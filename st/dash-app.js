@@ -79,9 +79,10 @@ const SHEETS_EXEC_URL_P =
 const SHEETS_EXEC_URL_E =
   'https://script.google.com/macros/s/AKfycbw6VM8fta5QuZRHBkXztfrL-ozQaV0PNL47AN4wZJnFTcXjllEOJgtpuQI7hxa0EKEL/exec';
 
-/** Web App st/google-apps-script-informe.gs — deja URL vacía hasta publicar e implementar */
-const INFORME_SCRIPT_URL = '';
-/** Misma clave que ST_SECRET en Propiedades del proyecto (Apps Script) */
+/** Web App st/google-apps-script-informe.gs (Implementar → URL /exec) */
+const INFORME_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbyyQgqOXwsqCD90faCsIxwLaY-f8I_Np2EIQGfAmEhBaRzrTXPkH7f9vQ8bnex5L8tTDg/exec';
+/** Misma clave que ST_SECRET en Apps Script. Déjalo vacío y configúralo en Herramientas → Config. informe Docs si no quieres subir el secreto al repo. */
 const INFORME_SCRIPT_SECRET = '';
 
 /** Opcional: sin redeploy, en consola del navegador → localStorage.setItem('st_informe_script_url','https://…/exec') */
