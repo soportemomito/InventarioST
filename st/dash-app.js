@@ -105,14 +105,65 @@ function getInformeScriptSecret() {
 }
 
 function informeConfigFaltaMsg() {
-  return (
-    'Informe (Google Docs): falta la Web App. Rellena INFORME_SCRIPT_URL e INFORME_SCRIPT_SECRET en st/dash-app.js, ' +
-    'o en consola: localStorage.setItem("' +
-    LS_INFORME_URL +
-    '","https://script.google.com/macros/s/…/exec") y lo mismo para ' +
-    LS_INFORME_SECRET +
-    ' con tu ST_SECRET. Luego recarga el dash.'
-  );
+  return 'Informe Google Docs: falta la Web App. Menú lateral → Herramientas → «Config. informe Docs».';
+}
+
+function getInformeConfigSource() {
+  try {
+    if ((localStorage.getItem(LS_INFORME_URL) || '').trim()) return 'localStorage';
+  } catch (_) {}
+  if ((INFORME_SCRIPT_URL || '').trim()) return 'codigo';
+  return null;
+}
+
+function abrirInformeConfigModal() {
+  const urlEl = document.getElementById('informeCfgUrl');
+  const secEl = document.getElementById('informeCfgSecret');
+  const stEl = document.getElementById('informeCfgStatus');
+  if (!urlEl || !secEl || !stEl) return;
+  urlEl.value = getInformeScriptUrl();
+  secEl.value = getInformeScriptSecret();
+  const src = getInformeConfigSource();
+  stEl.textContent = src
+    ? `Origen actual: ${src === 'codigo' ? 'archivo st/dash-app.js' : 'este navegador (localStorage)'}. Puedes sobrescribir guardando aquí.`
+    : 'No hay URL ni secreto: completa el formulario o edita las constantes INFORME_SCRIPT_* en dash-app.js.';
+  openModal('informeConfigModal');
+}
+
+function guardarInformeConfig() {
+  const url = document.getElementById('informeCfgUrl')?.value.trim() || '';
+  const secret = document.getElementById('informeCfgSecret')?.value.trim() || '';
+  if (!url || !/^https:\/\//i.test(url)) {
+    toast('Indica una URL https válida del Apps Script (termina en /exec).', 'warning');
+    return;
+  }
+  if (!secret) {
+    toast('Indica el secreto ST_SECRET del proyecto Apps Script.', 'warning');
+    return;
+  }
+  try {
+    localStorage.setItem(LS_INFORME_URL, url);
+    localStorage.setItem(LS_INFORME_SECRET, secret);
+    closeModal('informeConfigModal');
+    toast('Listo: ya puedes usar Generar informe y Enviar correo en este navegador.', 'success');
+  } catch (e) {
+    toast('No se pudo guardar: ' + e.message, 'error');
+  }
+}
+
+function limpiarInformeConfigLocal() {
+  try {
+    localStorage.removeItem(LS_INFORME_URL);
+    localStorage.removeItem(LS_INFORME_SECRET);
+    closeModal('informeConfigModal');
+    toast(
+      'Se borró la config. guardada en el navegador. Si definiste URL/secreto en dash-app.js, siguen activos tras recargar.',
+      'info',
+      6000
+    );
+  } catch (e) {
+    toast(e.message, 'error');
+  }
 }
 
 const LS_CAMBIOS = 'st_cambios_garantia_v1';
@@ -570,7 +621,18 @@ function renderRecentOrders(rows) {
 function renderDashVal(items) {
   const el = document.getElementById('dashValList');
   if (!items.length) {
-    el.innerHTML = '<div class="empty" style="padding:24px;"><div class="empty-icon">✅</div><p>Sin pendientes</p></div>';
+    el.innerHTML = `
+      <div class="empty" style="padding:20px 16px 24px;text-align:left;">
+        <div class="empty-icon" style="text-align:center;">✅</div>
+        <p style="text-align:center;font-weight:600;color:#374151;margin-bottom:8px;">Nadie esperando aprobación</p>
+        <p style="font-size:12px;color:#6b7280;line-height:1.5;margin:0;">
+          Aquí solo aparecen envíos del <strong>formulario web</strong> (<code style="font-size:10px;">st/ingreso.html</code>) que todavía hay que aprobar o rechazar.
+          Las órdenes ya creadas (p. ej. con <strong>Nueva orden</strong> o tras aprobar una solicitud) están en la tabla <strong>Órdenes recientes</strong> y en la vista <strong>Órdenes</strong>, no en esta lista.
+        </p>
+        <p style="text-align:center;margin-top:14px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="switchView('ordenes')">Ir a Órdenes</button>
+        </p>
+      </div>`;
     return;
   }
   el.innerHTML = items
@@ -1165,11 +1227,11 @@ async function confirmarEnvioEmail() {
   if (!id) return;
   const urlOk = getInformeScriptUrl();
   if (!urlOk || !/^https:\/\//i.test(urlOk)) {
-    toast(informeConfigFaltaMsg(), 'warning', 9000);
+    toast(informeConfigFaltaMsg(), 'warning', 6000);
     return;
   }
   if (!getInformeScriptSecret()) {
-    toast(informeConfigFaltaMsg(), 'warning', 9000);
+    toast(informeConfigFaltaMsg(), 'warning', 6000);
     return;
   }
   try {
@@ -1204,11 +1266,11 @@ async function confirmarEnvioEmail() {
 async function generarInforme(_id) {
   const urlOk = getInformeScriptUrl();
   if (!urlOk || !/^https:\/\//i.test(urlOk)) {
-    toast(informeConfigFaltaMsg(), 'warning', 9000);
+    toast(informeConfigFaltaMsg(), 'warning', 6000);
     return;
   }
   if (!getInformeScriptSecret()) {
-    toast(informeConfigFaltaMsg(), 'warning', 9000);
+    toast(informeConfigFaltaMsg(), 'warning', 6000);
     return;
   }
   try {
@@ -1848,6 +1910,9 @@ Object.assign(window, {
   abrirEnvioEmail,
   confirmarEnvioEmail,
   generarInforme,
+  abrirInformeConfigModal,
+  guardarInformeConfig,
+  limpiarInformeConfigLocal,
   abrirNuevaOrden,
   selNuevaCanal,
   updateModelos,
