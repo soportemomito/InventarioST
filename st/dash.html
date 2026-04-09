@@ -435,36 +435,6 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
   </div>
 </div>
 
-<!-- Config Web App informe Google Docs -->
-<div class="modal-backdrop" id="informeConfigModal">
-  <div class="modal" style="max-width:520px;">
-    <div class="modal-header">
-      <span class="modal-title">Config. informe Google Docs</span>
-      <button class="modal-close" onclick="closeModal('informeConfigModal')">×</button>
-    </div>
-    <div class="modal-body">
-      <p id="informeCfgStatus" style="font-size:12px;color:#6b7280;margin-bottom:14px;line-height:1.5;"></p>
-      <p style="font-size:13px;color:#374151;margin-bottom:16px;line-height:1.55;">
-        En tu <strong>Google Sheet de ST</strong>: <strong>Extensiones → Apps Script</strong>, pega <code style="font-size:11px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">google-apps-script-informe.gs</code>, <strong>Implementar → Aplicación web</strong>. Si la URL ya está en <code style="font-size:10px;">dash-app.js</code>, no hace falta guardar aquí.
-      </p>
-      <div class="form-group">
-        <label>URL Web App (…/exec)</label>
-        <input class="form-control" id="informeCfgUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"/>
-      </div>
-      <p style="font-size:11px;color:#9ca3af;margin-top:14px;line-height:1.45;">
-        Opcional: guardar solo la URL en <strong>este navegador</strong> para otro entorno sin tocar el código.
-      </p>
-    </div>
-    <div class="modal-footer" style="flex-wrap:wrap;justify-content:space-between;">
-      <button type="button" class="btn btn-ghost btn-sm" onclick="limpiarInformeConfigLocal()">Quitar config. del navegador</button>
-      <div style="display:flex;gap:8px;">
-        <button type="button" class="btn btn-ghost" onclick="closeModal('informeConfigModal')">Cerrar</button>
-        <button type="button" class="btn btn-primary" onclick="guardarInformeConfig()">Guardar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Send email confirm modal -->
 <div class="modal-backdrop" id="emailModal">
   <div class="modal" style="max-width:440px;">
@@ -572,10 +542,6 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 
     <div class="nav-section">
       <div class="nav-label">Herramientas</div>
-      <div class="nav-item" onclick="abrirInformeConfigModal()">
-        <span class="nav-icon">📄</span>
-        <span>Config. informe Docs</span>
-      </div>
       <a class="nav-item" href="../index.html" style="text-decoration:none;">
         <span class="nav-icon">📦</span>
         <span>Inventario repuestos</span>
