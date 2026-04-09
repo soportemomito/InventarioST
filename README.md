@@ -78,8 +78,3 @@ Ejemplo con VS Code Live Server o cualquier servidor estatico:
   - `S*` flujo recepcion
   - otros prefijos sin correo externo
 - Centralizar modelo de datos unico para entrada/salida ST.
-
-## Referencias
-
-- InventarioST repo original: [https://github.com/soportemomito/InventarioST.git](https://github.com/soportemomito/InventarioST.git)
-- DASH-ST repo: [https://github.com/soportemomito/DASH-ST.git](https://github.com/soportemomito/DASH-ST.git)
