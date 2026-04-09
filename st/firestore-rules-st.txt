@@ -14,7 +14,9 @@ NO uses signInAnonymously en ingreso si el proyecto tiene Anónimo deshabilitado
         && request.resource.data.producto is string
         && request.resource.data.modelo is string
         && request.resource.data.falla1 is string
-        && request.resource.data.obs is string;
+        && request.resource.data.obs is string
+        && request.resource.data.numero_seguimiento is string
+        && request.resource.data.numero_seguimiento.matches('^[PES][0-9]{1,9}$');
 
       // Personal: leer / actualizar / borrar solo autenticado
       allow read, update, delete: if request.auth != null;
@@ -25,5 +27,27 @@ NO uses signInAnonymously en ingreso si el proyecto tiene Anónimo deshabilitado
     }
 
     match /st_meta/{docId} {
-      allow read, write: if request.auth != null;
+      function isSeqDoc() {
+        return docId == 'seq_P' || docId == 'seq_E' || docId == 'seq_S';
+      }
+
+      // Contador público para N° de ingreso en el formulario (solo +1 en n)
+      allow read: if isSeqDoc() || request.auth != null;
+
+      allow create: if isSeqDoc()
+        && request.auth == null
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n == 1;
+
+      allow update: if isSeqDoc()
+        && request.auth == null
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n is int
+        && resource.data.n is int
+        && request.resource.data.n == resource.data.n + 1;
+
+      allow delete: if false;
+
+      // ordenes y demás meta: solo autenticados
+      allow create, update, delete: if !isSeqDoc() && request.auth != null;
     }
