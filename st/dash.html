@@ -435,6 +435,40 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
   </div>
 </div>
 
+<!-- Config Web App informe Google Docs -->
+<div class="modal-backdrop" id="informeConfigModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title">Config. informe Google Docs</span>
+      <button class="modal-close" onclick="closeModal('informeConfigModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="informeCfgStatus" style="font-size:12px;color:#6b7280;margin-bottom:14px;line-height:1.5;"></p>
+      <p style="font-size:13px;color:#374151;margin-bottom:16px;line-height:1.55;">
+        Publica <code style="font-size:11px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">st/google-apps-script-informe.gs</code> como aplicación web, crea la propiedad <strong>ST_SECRET</strong> en el proyecto del script y pega aquí la URL <code style="font-size:11px;">…/exec</code> y el mismo secreto.
+      </p>
+      <div class="form-group">
+        <label>URL Web App (…/exec)</label>
+        <input class="form-control" id="informeCfgUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"/>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Secreto (ST_SECRET)</label>
+        <input class="form-control" id="informeCfgSecret" type="password" placeholder="Misma clave que en Apps Script" autocomplete="off"/>
+      </div>
+      <p style="font-size:11px;color:#9ca3af;margin-top:14px;line-height:1.45;">
+        Se guarda solo en <strong>este navegador</strong> (localStorage). En equipos compartidos evita guardar el secreto aquí y edita <code style="font-size:10px;">INFORME_SCRIPT_*</code> en el archivo subido al servidor.
+      </p>
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap;justify-content:space-between;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="limpiarInformeConfigLocal()">Quitar config. del navegador</button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('informeConfigModal')">Cerrar</button>
+        <button type="button" class="btn btn-primary" onclick="guardarInformeConfig()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Send email confirm modal -->
 <div class="modal-backdrop" id="emailModal">
   <div class="modal" style="max-width:440px;">
@@ -542,6 +576,10 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 
     <div class="nav-section">
       <div class="nav-label">Herramientas</div>
+      <div class="nav-item" onclick="abrirInformeConfigModal()">
+        <span class="nav-icon">📄</span>
+        <span>Config. informe Docs</span>
+      </div>
       <a class="nav-item" href="../index.html" style="text-decoration:none;">
         <span class="nav-icon">📦</span>
         <span>Inventario repuestos</span>
@@ -609,7 +647,7 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
           </div>
           <div class="card">
             <div class="card-header">
-              <span class="card-title">Proceso de validación pendiente</span>
+              <span class="card-title">Solicitudes web sin aprobar</span>
               <button class="btn btn-ghost btn-sm" onclick="switchView('validacion')">Ver todo</button>
             </div>
             <div class="card-body" id="dashValList" style="padding:0 0 4px;">
@@ -624,7 +662,7 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
         <div class="page-header">
           <div>
             <div class="page-title">Proceso de validación</div>
-            <div class="page-sub">Solicitudes pendientes de aprobación</div>
+            <div class="page-sub">Ingresos desde el formulario público (st/ingreso.html) esperando aprobar o rechazar. Las órdenes ya creadas están en «Órdenes».</div>
           </div>
           <button class="btn btn-ghost btn-sm" onclick="loadValidacion()">↺ Actualizar</button>
         </div>
