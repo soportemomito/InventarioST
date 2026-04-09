@@ -728,8 +728,10 @@ async function submit() {
   try {
     for (let i = 0; i < 200 && !window.STSendValidacion; i++) await new Promise((r) => setTimeout(r, 40));
     if (!window.STSendValidacion) throw new Error('Firebase aún no cargó. Recarga la página.');
-    const id = await window.STSendValidacion(payload);
-    showSuccess(id || ('ST-' + Date.now().toString().slice(-5)));
+    const result = await window.STSendValidacion(payload);
+    const num = result && result.numero_seguimiento ? result.numero_seguimiento : null;
+    const refId = result && result.id ? result.id : String(result || '');
+    showSuccess(num || refId || 'ST-' + Date.now().toString().slice(-5), refId);
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Enviar solicitud';
@@ -737,7 +739,7 @@ async function submit() {
   }
 }
 
-function showSuccess(id) {
+function showSuccess(numeroIngreso, refInterna) {
   document.getElementById('bottom-bar').style.display = 'none';
   document.querySelectorAll('.step-view').forEach(v => v.style.display = 'none');
   for (let i = 1; i <= 3; i++) {
@@ -749,14 +751,21 @@ function showSuccess(id) {
   document.querySelectorAll('.step-line').forEach(l => l.classList.add('done'));
 
   const cInfo = CANAL_INFO[CANAL] || CANAL_INFO.S;
+  const refLine =
+    refInterna && refInterna !== numeroIngreso
+      ? '<div class="ticket-row" style="font-size:12px;opacity:0.8;"><span class="ticket-key">Ref. interna</span><span class="ticket-val" style="font-family:monospace;font-size:11px;">' +
+        String(refInterna).replace(/</g, '') +
+        '</span></div>'
+      : '';
   document.getElementById('ticket-box').innerHTML =
-    '<div class="ticket-num">N° de seguimiento</div>' +
-    '<div class="ticket-id">' + id + '</div>' +
+    '<div class="ticket-num">N° de ingreso</div>' +
+    '<div class="ticket-id">' + String(numeroIngreso).replace(/</g, '') + '</div>' +
     '<div class="ticket-row"><span class="ticket-key">Nombre</span><span class="ticket-val">' + STATE.nombre + '</span></div>' +
     '<div class="ticket-row"><span class="ticket-key">Correo</span><span class="ticket-val">' + STATE.correo + '</span></div>' +
     '<div class="ticket-row"><span class="ticket-key">Equipo</span><span class="ticket-val">' + STATE.producto + ' ' + STATE.modelo + '</span></div>' +
     '<div class="ticket-row"><span class="ticket-key">Falla</span><span class="ticket-val">' + STATE.falla1 + '</span></div>' +
-    '<div class="ticket-row"><span class="ticket-key">Canal</span><span class="ticket-val">' + cInfo.label + '</span></div>';
+    '<div class="ticket-row"><span class="ticket-key">Canal</span><span class="ticket-val">' + cInfo.label + '</span></div>' +
+    refLine;
 
   document.getElementById('success-screen').classList.add('active');
 }
@@ -772,7 +781,9 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import {
   getFirestore,
   collection,
+  doc,
   addDoc,
+  runTransaction,
   serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -789,17 +800,32 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 /**
- * Escritura sin sesión Auth. Requiere reglas Firestore que permitan create en st_validaciones
- * con request.auth == null (ver st/firestore-rules-st.txt). signInAnonymously() provoca
- * auth/admin-restricted-operation si Anónimo está deshabilitado o bloqueado en el proyecto.
+ * Escritura sin sesión Auth. Requiere reglas en st/firestore-rules-st.txt:
+ * - create en st_validaciones (con numero_seguimiento)
+ * - lectura/escritura de st_meta/seq_P|E|S (incremento +1) sin auth
  */
 window.STSendValidacion = async (payload) => {
+  const canal = String(payload.canal || 'S')
+    .toUpperCase()
+    .slice(0, 1);
+  if (!['P', 'E', 'S'].includes(canal)) {
+    throw new Error('Canal inválido');
+  }
+  const seqRef = doc(db, 'st_meta', `seq_${canal}`);
+  const numero_seguimiento = await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(seqRef);
+    const prev = snap.exists() ? Number(snap.data().n) || 0 : 0;
+    const next = prev + 1;
+    transaction.set(seqRef, { n: next }, { merge: true });
+    return `${canal}${next}`;
+  });
   const ref = await addDoc(collection(db, 'st_validaciones'), {
     ...payload,
     estado: 'pendiente',
+    numero_seguimiento,
     created_at: serverTimestamp(),
   });
-  return ref.id;
+  return { id: ref.id, numero_seguimiento };
 };
 </script>
 </body>
