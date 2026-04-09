@@ -1,16 +1,28 @@
 /**
  * Web App: generar Google Doc (plantilla orden de ingreso) y/o enviar por Gmail.
+ * Lo usa el panel st/dash.html (Firestore) vía doPost; NO reemplaza tus funciones del Sheet.
+ *
+ * Tus scripts legacy (misma plantilla, misma carpeta de salida):
+ *   generarInformesDocsConPlantillaEntrada     → hoja "Entrada recepción"
+ *   generarInformesDocsConPlantillaEntradaPE  → hoja "Entradas"
+ * Aquí los datos vienen en JSON desde el navegador; makeCopy va al MISMO folder que en Sheets:
+ *
+ *   Canal E (Sin garantía):  plantilla 1fcwUlvbcFSwDonKNCWlbjkISxPhpECOCbc78dhUOx9A
+ *                            carpeta   1RGITbdAModR4aOIDNtfEor949CPLEv4B
+ *                            nombre    "Informe Entrada {orden}"
+ *   Canal P o S:             plantilla 1DlI3IA_E5nXtLKv370ULVUDSPpIl-j9GcqdYcfv4m5s
+ *                            carpeta   1Ni9vY9JcJYCmf22MUJlj93aI6Z5Ecp4L
+ *                            nombre    "Informe Entrada Recepción {orden}"
+ *
+ * ¿Nuevo proyecto .gs? Sí: crea un proyecto Apps Script independiente (o sin contenedor),
+ * pega TODO este archivo, añade ST_SECRET, Implementar → Aplicación web. Puedes dejar las
+ * funciones del Sheet en su libro; no hace falta borrarlas. Si prefieres un solo proyecto,
+ * puedes copiar solo doPost + helpers a un script ya existente (menos habitual).
  *
  * Configuración:
- * 1) Editor → Configuración del proyecto (engranaje) → Propiedades de secuencias de comandos:
- *    Clave ST_SECRET = mismo valor que INFORME_SCRIPT_SECRET en st/dash-app.js
- * 2) Implementar → Nueva implementación → Aplicación web
- *    Ejecutar como: yo | Quién tiene acceso: Cualquier usuario (o restricción por dominio)
- * 3) Copia la URL …/exec en INFORME_SCRIPT_URL del dash.
- *
- * Plantillas (mismas que tus scripts de Sheets):
- * - P / S: Docs 1DlI3IA… carpeta 1Ni9vY9…
- * - E: Docs 1fcwUlv… carpeta 1RGITbd…
+ * 1) Propiedades del proyecto → ST_SECRET = mismo valor que en st/dash-app.js (Config. informe Docs)
+ * 2) Implementar → Aplicación web — Ejecutar como: yo | Acceso: quien corresponda
+ * 3) URL …/exec → INFORME_SCRIPT_URL o modal del dash
  */
 
 function jsonOut_(obj) {
