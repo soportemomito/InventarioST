@@ -46,12 +46,64 @@ Aplicacion web interna de SoyMomo para:
   - soporte de origen/color "Otro"
   - canal `S` contemplado para recepcion.
 
+## Servicio Tecnico y Firebase (Firestore)
+
+El panel ST (`st/dash.html` + `st/dash-app.js`) y el formulario `st/ingreso.html` usan **el mismo proyecto Firebase** que el inventario. Los datos viven en Firestore:
+
+- `st_validaciones` — solicitudes del formulario de ingreso.
+- `st_ordenes` — ordenes creadas desde el dash.
+- `st_meta/ordenes` — contadores por canal (P/E/S) para numeros de orden.
+
+En **Firebase Console → Firestore → Reglas** debes permitir lectura/escritura autenticada para tecnicos y, si el formulario publico escribe sin login, una regla controlada de `create` en `st_validaciones`.
+
+## Dos URLs en Vercel (inventario + ST)
+
+Si el inventario esta en una URL (ej. `https://inventario-xxx.vercel.app`) y el ST en otra (ej. `https://st-yyy.vercel.app/st/dash.html`):
+
+1. **Firebase Authentication → Configuracion → Dominios autorizados**: agrega **ambos** dominios `*.vercel.app` (o tus dominios custom).
+2. En el navegador, en la app de **inventario**, guarda la URL del dash ST (una sola vez por equipo/navegador):
+
+   ```js
+   localStorage.setItem('soymomo_st_dash_url', 'https://st-yyy.vercel.app/st/dash.html');
+   ```
+
+   Tambien puedes usar la consola del inventario:
+
+   ```js
+   __soymomoSetStDashUrl('https://st-yyy.vercel.app/st/dash.html');
+   ```
+
+3. Al elegir **Servicio Tecnico**, el inventario redirige al ST con `#st_token=...&inv=...`. El dash guarda el token en `sessionStorage` y la URL de retorno al inventario en `localStorage` (`soymomo_inventario_url`), asi **Salir** o sesion caducada pueden volver al login del inventario.
+4. Si abres el ST **sin** pasar por inventario, configura a mano:
+
+   ```js
+   localStorage.setItem('soymomo_inventario_url', 'https://inventario-xxx.vercel.app');
+   ```
+
+5. Tras login, forzar ir al ST: `https://inventario-xxx.vercel.app/index.html?continue=st`
+
+**Mismo sitio** (todo en un solo deploy): no hace falta `soymomo_st_dash_url`; se usa `./st/dash.html` y el token solo en `sessionStorage`.
+
+## Modulo «Cambios garantia ST» (piloto)
+
+En `st/dash.html` hay una vista **Cambios garantia ST** con tabla almacenada en **localStorage del navegador** (pruebas piloto). Permite agregar filas, marcar listo, ver vista previa del HTML del correo (mismo criterio que tu script de Sheets) y eliminar filas. La integracion real con envio Gmail/Sheets sera en backend.
+
 ## Requisitos
 
 - Navegador moderno (Chrome, Edge, Firefox).
 - Acceso a internet.
-- Backend/API de ST activo para endpoints `http://localhost:3000` (segun configuracion actual del modulo ST).
-- Proyecto Firebase configurado para Inventario y login.
+- Proyecto Firebase (Auth + Firestore) con reglas acordes a `st_*`.
+
+## Despliegue (Vercel)
+
+1. **Opcion A — un solo proyecto**: despliega el repo como sitio estatico; `index.html` en la raiz y rutas `/st/dash.html`, `/st/ingreso.html`.
+2. **Opcion B — dos proyectos**: inventario en un deployment y ST (carpeta `st/` o copia minima) en otro; configura `soymomo_st_dash_url` en el inventario como arriba.
+
+## Piloto del formulario de ingreso
+
+- Abrir `st/ingreso.html?canal=P` o `?canal=E`.
+- Los envios crean documentos en `st_validaciones` (Firestore).
+- Modulo Cambios ST en el dash sigue usando solo localStorage del navegador.
 
 ## Ejecucion local
 
