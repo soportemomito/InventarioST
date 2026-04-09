@@ -55,7 +55,7 @@ En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se co
 - Para cambiar de hoja o de despliegue, edita esas constantes en `st/dash-app.js`.
 - Si el navegador bloquea `fetch` por **CORS** hacia `script.google.com`, habrá que usar JSONP o un proxy server-side.
 
-Plantilla de Apps Script en el repo: **`st/google-apps-script-solicitud-lookup.gs`**. Tras cambiarla: **Implementar → nueva versión** en cada libro (P y E). Incluye: encabezado `Número de solicitud`, **respaldo columna C** si falla el nombre, comparación número/texto del N°, y emails típicos de formulario Google (`Dirección de correo electrónico`, etc.).
+Plantilla de Apps Script: **`st/google-apps-script-solicitud-lookup.gs`** (`FIELD_BY_HEADER_P` / `FIELD_BY_HEADER_E` según `CANAL`). **P** incluye enlace del **comprobante** (columna de archivo del formulario). No se mapean teléfono, dirección, observaciones sueltas, transporte, orden ST ni OT. **E** conserva segundo dispositivo en texto auxiliar. **Implementar → nueva versión** en cada libro.
 
 **Si el dash muestra error tipo `Sheets: No hay columna de N° solicitud en fila 1`:** suele ser fila 1 sin encabezados reconocibles; con la plantilla nueva se usa la columna C como respaldo. Si tu layout no es C, edita `INDICE_FALLBACK_COL_NUM_SOLICITUD` en Apps Script (0 = A, 2 = C).
 
