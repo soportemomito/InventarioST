@@ -34,10 +34,9 @@ Aplicacion web interna de SoyMomo para:
 
 ## Google Sheets (Apps Script) + «Cargar» en nueva orden
 
-En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se consulta el Web App de Apps Script (si configuraste la URL) y, si no hay datos o falla, se busca en **Firestore**.
+En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se consulta el Web App de Apps Script (URLs `.../exec` definidas en constantes `SHEETS_EXEC_URL_P` / `SHEETS_EXEC_URL_E`) y, si no hay datos o falla, se busca en **Firestore**.
 
-- En la barra del dash: botón **URLs Sheets** → pega la URL de implementación de cada libro (`.../exec`).
-- Se guardan en `localStorage`: `st_sheets_exec_url_p`, `st_sheets_exec_url_e`.
+- Para cambiar de hoja o de despliegue, edita esas constantes en `st/dash-app.js`.
 - Si el navegador bloquea `fetch` por **CORS** hacia `script.google.com`, habrá que usar JSONP o un proxy server-side.
 
 ## Cambios recientes (integracion ST)
