@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Servicio Técnico · SoyMomo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── TOKENS ── */
+:root {
+  --p900:#2e1065; --p800:#3b0764; --p700:#4c1d95; --p600:#5b21b6;
+  --p500:#6d28d9; --p400:#7c3aed; --p300:#8b5cf6; --p200:#a78bfa;
+  --p100:#ddd6fe; --p50:#f5f3ff;
+  --green:#16a34a; --green-bg:#dcfce7; --green-txt:#15803d;
+  --amber:#d97706; --amber-bg:#fef3c7; --amber-txt:#92400e;
+  --red:#dc2626; --red-bg:#fee2e2; --red-txt:#991b1b;
+  --blue:#2563eb; --blue-bg:#dbeafe; --blue-txt:#1e40af;
+  --gray:#6b7280; --gray-bg:#f3f4f6; --gray-txt:#374151;
+  --sidebar-w:240px;
+  --radius:12px; --radius-sm:8px; --radius-xs:6px;
+  --shadow:0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.12),0 2px 6px rgba(0,0,0,0.08);
+  --shadow-lg:0 10px 40px rgba(0,0,0,0.2);
+  --transition:0.15s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;background:var(--p50);color:#1e1b4b;}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;}
+input,select,textarea{font-family:inherit;outline:none;}
+a{color:inherit;text-decoration:none;}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:linear-gradient(180deg,var(--p800) 0%,var(--p700) 60%,var(--p600) 100%);
+  display:flex;flex-direction:column;overflow-y:auto;z-index:20;
+  box-shadow:2px 0 12px rgba(0,0,0,0.25);
+}
+.sidebar-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.brand-logo{display:flex;align-items:center;gap:10px;}
+.brand-logo img{width:32px;height:32px;border-radius:8px;}
+.brand-name{font-weight:700;font-size:15px;color:#fff;letter-spacing:-0.3px;}
+.brand-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;}
+
+.nav-section{padding:16px 12px 8px;}
+.nav-label{font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:var(--radius-sm);
+  color:rgba(255,255,255,0.65);font-size:13px;
+  cursor:pointer;transition:all var(--transition);
+  margin-bottom:2px;position:relative;user-select:none;
+}
+.nav-item:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,0.15);color:#fff;font-weight:500;}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:60%;background:var(--p200);border-radius:0 3px 3px 0;
+}
+.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.nav-badge{
+  margin-left:auto;background:rgba(245,166,35,0.25);color:#fbbf24;
+  font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;
+  min-width:20px;text-align:center;
+}
+.nav-badge.hidden{display:none;}
+
+.sidebar-bottom{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,0.1);}
+.agent-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.08);
+}
+.agent-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--p300),#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.agent-name{font-size:12px;font-weight:600;color:#fff;}
+.agent-role{font-size:11px;color:rgba(255,255,255,0.45);}
+.agent-out{
+  margin-left:auto;background:none;border:1px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.5);font-size:11px;padding:3px 8px;
+  border-radius:var(--radius-xs);cursor:pointer;transition:all var(--transition);
+}
+.agent-out:hover{background:rgba(255,255,255,0.1);color:#fff;}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:56px;min-height:56px;
+  background:#fff;border-bottom:1px solid #e5e7eb;
+  display:flex;align-items:center;padding:0 24px;gap:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+.topbar-title{font-weight:700;font-size:16px;color:#1e1b4b;flex:1;}
+.topbar-search{
+  display:flex;align-items:center;gap:8px;
+  background:#f9fafb;border:1px solid #e5e7eb;
+  border-radius:var(--radius-sm);padding:0 12px;height:36px;width:240px;
+  transition:border-color var(--transition);
+}
+.topbar-search:focus-within{border-color:var(--p400);background:#fff;}
+.topbar-search input{background:none;border:none;color:#1f2937;font-size:13px;width:100%;}
+.topbar-search input::placeholder{color:#9ca3af;}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:0 14px;height:34px;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:500;transition:all var(--transition);
+  cursor:pointer;white-space:nowrap;
+}
+.btn-primary{background:var(--p400);color:#fff;}
+.btn-primary:hover{background:var(--p500);}
+.btn-sm{height:28px;padding:0 10px;font-size:12px;}
+.btn-ghost{background:transparent;color:#6b7280;border:1px solid #e5e7eb;}
+.btn-ghost:hover{background:#f9fafb;color:#374151;}
+.btn-danger{background:var(--red-bg);color:var(--red-txt);}
+.btn-danger:hover{background:#fecaca;}
+.btn-green{background:var(--green-bg);color:var(--green-txt);}
+.btn-green:hover{background:#bbf7d0;}
+.btn-amber{background:var(--amber-bg);color:var(--amber-txt);}
+.btn-amber:hover{background:#fde68a;}
+.btn-icon{width:34px;padding:0;}
+
+/* ── CONTENT AREA ── */
+.content{flex:1;overflow-y:auto;padding:24px;}
+
+/* ── VIEWS ── */
+.view{display:none;}
+.view.active{display:block;}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{
+  background:#fff;border-radius:var(--radius);padding:18px 20px;
+  box-shadow:var(--shadow);border:1px solid #f3f4f6;
+  display:flex;flex-direction:column;gap:4px;
+}
+.stat-label{font-size:12px;color:#6b7280;font-weight:500;}
+.stat-value{font-size:26px;font-weight:700;color:#1e1b4b;line-height:1.1;}
+.stat-sub{font-size:11px;color:#9ca3af;}
+.stat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #f3f4f6;}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid #f3f4f6;
+}
+.card-title{font-size:14px;font-weight:600;color:#1e1b4b;}
+.card-body{padding:0;}
+
+/* ── GRID 2 COL ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{
+  background:#f9fafb;font-size:11px;font-weight:600;color:#6b7280;
+  text-transform:uppercase;letter-spacing:0.05em;
+  padding:10px 16px;text-align:left;border-bottom:1px solid #f3f4f6;
+  white-space:nowrap;
+}
+td{padding:12px 16px;border-bottom:1px solid #f9fafb;font-size:13px;color:#374151;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-green{background:var(--green-bg);color:var(--green-txt);}
+.badge-amber{background:var(--amber-bg);color:var(--amber-txt);}
+.badge-red{background:var(--red-bg);color:var(--red-txt);}
+.badge-blue{background:var(--blue-bg);color:var(--blue-txt);}
+.badge-purple{background:#ede9fe;color:var(--p700);}
+.badge-gray{background:var(--gray-bg);color:var(--gray-txt);}
+
+/* ── ESTADO MAP ── */
+/* applied via JS with .estado-* class */
+
+/* ── FILTERS ROW ── */
+.filters{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-input{
+  height:36px;padding:0 12px;border:1px solid #e5e7eb;border-radius:var(--radius-sm);
+  background:#fff;font-size:13px;color:#374151;min-width:180px;
+}
+.filter-input:focus{border-color:var(--p400);}
+select.filter-input{min-width:140px;cursor:pointer;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:48px 24px;color:#9ca3af;}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty p{font-size:13px;}
+
+/* ── MODAL ── */
+.modal-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+  z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(2px);
+}
+.modal-backdrop.open{display:flex;}
+.modal{
+  background:#fff;border-radius:var(--radius);width:100%;max-width:640px;
+  max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);
+  margin:16px;
+}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;background:#fff;z-index:1;
+}
+.modal-title{font-size:16px;font-weight:700;color:#1e1b4b;}
+.modal-close{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#f3f4f6;color:#6b7280;font-size:18px;cursor:pointer;transition:all var(--transition);border:none;
+}
+.modal-close:hover{background:#e5e7eb;color:#374151;}
+.modal-body{padding:24px;}
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:8px;
+  padding:16px 24px;border-top:1px solid #f3f4f6;background:#fafafa;
+  border-radius:0 0 var(--radius) var(--radius);
+}
+
+/* ── FORM FIELDS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.col3{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.span2{grid-column:span 2;}
+.form-group.span3{grid-column:span 3;}
+label{font-size:12px;font-weight:500;color:#374151;}
+.form-control{
+  height:38px;padding:0 12px;border:1px solid #e5e7eb;border-radius:var(--radius-sm);
+  font-size:13px;color:#1f2937;background:#fff;width:100%;transition:border-color var(--transition);
+}
+.form-control:focus{border-color:var(--p400);box-shadow:0 0 0 3px rgba(124,58,237,0.08);}
+textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
+.form-section{margin-bottom:20px;}
+.form-section-title{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f3f4f6;}
+
+/* ── CHECKBOX GRID ── */
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+.check-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;border:1px solid #e5e7eb;border-radius:var(--radius-sm);
+  cursor:pointer;transition:all var(--transition);user-select:none;font-size:13px;
+}
+.check-item:hover{border-color:var(--p300);background:var(--p50);}
+.check-item input[type=checkbox]{accent-color:var(--p400);width:14px;height:14px;}
+.check-item.checked{border-color:var(--p300);background:var(--p50);color:var(--p700);}
+
+/* ── CANAL SELECTOR ── */
+.canal-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.canal-opt{
+  border:2px solid #e5e7eb;border-radius:var(--radius);padding:14px 12px;
+  cursor:pointer;transition:all var(--transition);text-align:center;
+}
+.canal-opt:hover{border-color:var(--p300);background:var(--p50);}
+.canal-opt.selected{border-color:var(--p400);background:var(--p50);}
+.canal-opt .canal-icon{font-size:22px;margin-bottom:6px;}
+.canal-opt .canal-name{font-size:13px;font-weight:600;color:#374151;}
+.canal-opt .canal-desc{font-size:11px;color:#6b7280;margin-top:2px;}
+
+/* ── ORDER DETAIL PANEL ── */
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.detail-item{display:flex;flex-direction:column;gap:3px;}
+.detail-key{font-size:11px;color:#6b7280;font-weight:500;}
+.detail-val{font-size:13px;color:#1f2937;font-weight:500;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{
+  background:#1e1b4b;color:#fff;padding:12px 16px;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:500;box-shadow:var(--shadow-md);
+  display:flex;align-items:center;gap:8px;
+  animation:slideUp 0.2s ease;pointer-events:auto;
+  max-width:320px;
+}
+.toast.success{background:#065f46;}
+.toast.error{background:#7f1d1d;}
+.toast.warning{background:#78350f;}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SPINNER ── */
+.spinner{
+  display:inline-block;width:16px;height:16px;
+  border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;
+  border-radius:50%;animation:spin 0.6s linear infinite;
+}
+.spinner-dark{border-color:rgba(0,0,0,0.15);border-top-color:var(--p400);}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── LOADING OVERLAY ── */
+.loading-row td{text-align:center;color:#9ca3af;padding:32px;}
+
+/* ── CANAL PILL ── */
+.canal-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;
+}
+.canal-P{background:#dcfce7;color:#15803d;}
+.canal-E{background:#fef3c7;color:#92400e;}
+.canal-S{background:#ede9fe;color:#5b21b6;}
+
+/* ── TIMELINE DOTS (detail) ── */
+.log-list{list-style:none;padding:0;}
+.log-item{display:flex;gap:12px;padding:8px 0;font-size:13px;border-bottom:1px solid #f9fafb;}
+.log-item:last-child{border-bottom:none;}
+.log-dot{width:8px;height:8px;border-radius:50%;background:var(--p400);margin-top:5px;flex-shrink:0;}
+.log-text{flex:1;color:#374151;}
+.log-ts{font-size:11px;color:#9ca3af;white-space:nowrap;}
+
+/* ── SOLICITUD LOADER ── */
+.solicitud-loader{
+  background:#f9fafb;border:1px dashed #e5e7eb;border-radius:var(--radius-sm);
+  padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;
+}
+.solicitud-loader input{
+  flex:1;background:none;border:none;font-size:13px;color:#374151;
+}
+.solicitud-loader input::placeholder{color:#9ca3af;}
+
+/* ── VALIDACION CARD ── */
+.val-card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:var(--radius);
+  padding:16px;margin-bottom:12px;transition:box-shadow var(--transition);
+}
+.val-card:hover{box-shadow:var(--shadow-md);}
+.val-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.val-card-name{font-weight:600;font-size:14px;color:#1e1b4b;}
+.val-card-sub{font-size:12px;color:#6b7280;margin-top:2px;}
+.val-card-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px;}
+.val-card-actions{display:flex;gap:8px;justify-content:flex-end;}
+
+/* ── PAGE HEADER ── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.page-title{font-size:20px;font-weight:700;color:#1e1b4b;}
+.page-sub{font-size:13px;color:#6b7280;margin-top:2px;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:#f3f4f6;padding:4px;border-radius:var(--radius-sm);width:fit-content;margin-bottom:20px;}
+.tab{padding:6px 14px;border-radius:var(--radius-xs);font-size:13px;font-weight:500;color:#6b7280;cursor:pointer;transition:all var(--transition);}
+.tab.active{background:#fff;color:var(--p600);box-shadow:var(--shadow);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .grid-2{grid-template-columns:1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-group.span2{grid-column:span 1;}
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#9ca3af;}
+</style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Approval modal -->
+<div class="modal-backdrop" id="aprobarModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Aprobar ingreso</span>
+      <button class="modal-close" onclick="closeModal('aprobarModal')">×</button>
+    </div>
+    <div class="modal-body" id="aprobarModalBody">
+      <!-- filled by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('aprobarModal')">Cancelar</button>
+      <button class="btn btn-primary" id="aprobarConfirmBtn" onclick="confirmarAprobacion()">
+        <span>Crear orden</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject modal -->
+<div class="modal-backdrop" id="rechazarModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title">Rechazar solicitud</span>
+      <button class="modal-close" onclick="closeModal('rechazarModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Motivo del rechazo</label>
+        <textarea class="form-control" id="rechazarMotivo" rows="3" placeholder="Ej: Falla no corresponde a garantía, equipo con daño físico evidente…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('rechazarModal')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarRechazo()">Rechazar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order detail modal -->
+<div class="modal-backdrop" id="ordenModal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header">
+      <span class="modal-title" id="ordenModalTitle">Orden</span>
+      <button class="modal-close" onclick="closeModal('ordenModal')">×</button>
+    </div>
+    <div class="modal-body" id="ordenModalBody"><!-- filled by JS --></div>
+    <div class="modal-footer" id="ordenModalFooter"><!-- filled by JS --></div>
+  </div>
+</div>
+
+<!-- Nueva Orden modal -->
+<div class="modal-backdrop" id="nuevaOrdenModal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header">
+      <span class="modal-title">Nueva orden manual</span>
+      <button class="modal-close" onclick="closeModal('nuevaOrdenModal')">×</button>
+    </div>
+    <div class="modal-body" id="nuevaOrdenBody"><!-- filled by JS --></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('nuevaOrdenModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitNuevaOrden()">Crear orden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Send email confirm modal -->
+<div class="modal-backdrop" id="emailModal">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title">Enviar correo</span>
+      <button class="modal-close" onclick="closeModal('emailModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#374151;margin-bottom:14px;" id="emailModalDesc"></p>
+      <div class="form-group">
+        <label>URL de evidencias (Drive, opcional)</label>
+        <input class="form-control" id="emailEvidenciasUrl" type="url" placeholder="https://drive.google.com/…"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('emailModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEnvioEmail()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <img src="https://i.imgur.com/placeholder.gif" alt="SoyMomo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <div style="display:none;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.15);align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">S</div>
+        <div>
+          <div class="brand-name">SoyMomo</div>
+          <div class="brand-sub">Servicio Técnico</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Panel</div>
+      <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </div>
+      <div class="nav-item" data-view="validacion" onclick="switchView('validacion')">
+        <span class="nav-icon">📥</span>
+        <span>Proceso de validación</span>
+        <span class="nav-badge hidden" id="valBadge">0</span>
+      </div>
+      <div class="nav-item" data-view="ordenes" onclick="switchView('ordenes')">
+        <span class="nav-icon">📋</span>
+        <span>Órdenes</span>
+      </div>
+      <div class="nav-item" data-view="nueva" onclick="abrirNuevaOrden()">
+        <span class="nav-icon">➕</span>
+        <span>Nueva orden</span>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="agent-pill">
+        <div class="agent-avatar" id="agentAvatarSidebar">?</div>
+        <div>
+          <div class="agent-name" id="agentNameSidebar">—</div>
+          <div class="agent-role">Técnico</div>
+        </div>
+        <button class="agent-out" onclick="salir()">Salir</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-search" id="topbarSearchWrap" style="display:none;">
+        <span style="color:#9ca3af;font-size:14px;">🔍</span>
+        <input type="text" id="topbarSearch" placeholder="Buscar orden, cliente, IMEI…" oninput="debouncedSearch()"/>
+      </div>
+      <button class="btn btn-primary" onclick="abrirNuevaOrden()">+ Nueva orden</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="mainContent">
+
+      <!-- ── VIEW: DASHBOARD ── -->
+      <div class="view active" id="view-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Dashboard</div>
+            <div class="page-sub" id="dashFecha">Hoy, —</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↺ Actualizar</button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card"><div class="stat-label">Total órdenes</div><div class="stat-value">—</div></div>
+          <div class="stat-card"><div class="stat-label">En revisión</div><div class="stat-value">—</div></div>
+          <div class="stat-card"><div class="stat-label">Listos p/entrega</div><div class="stat-value">—</div></div>
+          <div class="stat-card"><div class="stat-label">Pendiente presup.</div><div class="stat-value">—</div></div>
+          <div class="stat-card"><div class="stat-label">Validación pend.</div><div class="stat-value">—</div></div>
+        </div>
+
+        <div class="grid-2" style="gap:16px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Órdenes recientes</span>
+              <button class="btn btn-ghost btn-sm" onclick="switchView('ordenes')">Ver todas</button>
+            </div>
+            <div class="card-body table-wrap">
+              <table id="recentTable">
+                <thead><tr><th>Orden</th><th>Cliente</th><th>Estado</th><th>Canal</th></tr></thead>
+                <tbody id="recentTbody"><tr class="loading-row"><td colspan="4"><span class="spinner spinner-dark"></span></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Proceso de validación pendiente</span>
+              <button class="btn btn-ghost btn-sm" onclick="switchView('validacion')">Ver todo</button>
+            </div>
+            <div class="card-body" id="dashValList" style="padding:0 0 4px;">
+              <div class="loading-row" style="text-align:center;padding:24px;"><span class="spinner spinner-dark"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: VALIDACION ── -->
+      <div class="view" id="view-validacion">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Proceso de validación</div>
+            <div class="page-sub">Solicitudes pendientes de aprobación</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="loadValidacion()">↺ Actualizar</button>
+        </div>
+        <div class="tabs">
+          <div class="tab active" onclick="setValTab('pendiente',this)">Pendientes</div>
+          <div class="tab" onclick="setValTab('aprobado',this)">Aprobadas</div>
+          <div class="tab" onclick="setValTab('rechazado',this)">Rechazadas</div>
+        </div>
+        <div id="valList">
+          <div class="empty"><div class="empty-icon">📭</div><p>Cargando…</p></div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: ORDENES ── -->
+      <div class="view" id="view-ordenes">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Órdenes</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="loadOrdenes()">↺ Actualizar</button>
+        </div>
+        <div class="filters">
+          <input class="filter-input" type="text" id="ordenSearch" placeholder="🔍  Buscar nombre, orden, IMEI…" oninput="debouncedLoadOrdenes()"/>
+          <select class="filter-input" id="ordenEstado" onchange="loadOrdenes()">
+            <option value="">Todos los estados</option>
+            <option>Ingresado</option>
+            <option>En revisión</option>
+            <option>Listo</option>
+            <option>Entregado</option>
+            <option>No reparado</option>
+            <option>Pendiente presupuesto</option>
+          </select>
+          <select class="filter-input" id="ordenCanal" onchange="loadOrdenes()">
+            <option value="">Todos los canales</option>
+            <option value="P">P — Garantía</option>
+            <option value="E">E — Sin Garantía</option>
+            <option value="S">S — Presencial</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="card-body table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>N° Orden</th><th>Fecha</th><th>Cliente</th>
+                  <th>Equipo</th><th>Estado</th><th>Canal</th><th>Agente</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="ordenesTbody">
+                <tr class="loading-row"><td colspan="8"><span class="spinner spinner-dark"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div id="ordenesPager" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+/* ─────────────────────────────────────
+   CONFIG
+───────────────────────────────────── */
+const API_BASE = 'http://localhost:3000';
+const PAGE_SIZE = 30;
+
+/* ─────────────────────────────────────
+   AUTH
+───────────────────────────────────── */
+let TOKEN = sessionStorage.getItem('st_token') || '';
+let AGENT = null;
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
+}
+
+async function checkAuth() {
+  if (!TOKEN) {
+    // No token: redirect back to inventory login
+    toast('Sesión no iniciada. Redirigiendo…', 'warning');
+    setTimeout(() => { window.location.href = '../index.html'; }, 2000);
+    return false;
+  }
+  try {
+    const res = await apiFetch('/api/health');
+    // Decode JWT payload for display
+    try {
+      const payload = JSON.parse(atob(TOKEN.split('.')[1]));
+      AGENT = { name: payload.name || payload.email || 'Agente', email: payload.email || '' };
+    } catch { AGENT = { name: 'Agente', email: '' }; }
+    const initials = (AGENT.name || '?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    document.getElementById('agentAvatarSidebar').textContent = initials;
+    document.getElementById('agentNameSidebar').textContent = AGENT.name;
+    return true;
+  } catch {
+    toast('Error de autenticación', 'error');
+    return false;
+  }
+}
+
+function salir() {
+  sessionStorage.removeItem('st_token');
+  window.location.href = '../index.html';
+}
+
+/* ─────────────────────────────────────
+   FETCH HELPER
+───────────────────────────────────── */
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: { ...authHeaders(), ...(opts.headers || {}) }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/* ─────────────────────────────────────
+   TOAST
+───────────────────────────────────── */
+function toast(msg, type = 'info', duration = 3500) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span><span>${msg}</span>`;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+/* ─────────────────────────────────────
+   MODAL HELPERS
+───────────────────────────────────── */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+/* ─────────────────────────────────────
+   NAVIGATION
+───────────────────────────────────── */
+const VIEW_TITLES = {
+  dashboard: 'Dashboard',
+  validacion: 'Proceso de validación',
+  ordenes: 'Órdenes'
+};
+
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const view = document.getElementById(`view-${name}`);
+  if (view) view.classList.add('active');
+  const navItem = document.querySelector(`[data-view="${name}"]`);
+  if (navItem) navItem.classList.add('active');
+  document.getElementById('topbarTitle').textContent = VIEW_TITLES[name] || name;
+  const searchViews = ['ordenes'];
+  document.getElementById('topbarSearchWrap').style.display = searchViews.includes(name) ? 'flex' : 'none';
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'validacion') loadValidacion();
+  if (name === 'ordenes') loadOrdenes();
+}
+
+/* ─────────────────────────────────────
+   HELPERS: BADGES
+───────────────────────────────────── */
+const ESTADO_BADGE = {
+  'Ingresado':             '<span class="badge badge-blue">Ingresado</span>',
+  'En revisión':           '<span class="badge badge-amber">En revisión</span>',
+  'Listo':                 '<span class="badge badge-green">Listo ✓</span>',
+  'Entregado':             '<span class="badge badge-gray">Entregado</span>',
+  'No reparado':           '<span class="badge badge-red">No reparado</span>',
+  'Pendiente presupuesto': '<span class="badge badge-purple">Pdte. presupuesto</span>',
+};
+
+function estadoBadge(e) { return ESTADO_BADGE[e] || `<span class="badge badge-gray">${e||'—'}</span>`; }
+
+function canalPill(c) {
+  const labels = { P:'Garantía', E:'Sin Garantía', S:'Presencial' };
+  return `<span class="canal-pill canal-${c}">${c} · ${labels[c]||c}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+/* ─────────────────────────────────────
+   DASHBOARD
+───────────────────────────────────── */
+async function loadDashboard() {
+  // Date
+  document.getElementById('dashFecha').textContent =
+    'Hoy, ' + new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+
+  // Stats
+  try {
+    const stats = await apiFetch('/api/stats');
+    renderStats(stats);
+    renderRecentOrders(stats.recientes || []);
+    renderDashVal(stats.validacion_pendiente_items || []);
+    // Badge
+    const badge = document.getElementById('valBadge');
+    const cnt = stats.validacion_pendiente || 0;
+    badge.textContent = cnt;
+    badge.classList.toggle('hidden', cnt === 0);
+  } catch(e) {
+    toast('Error cargando estadísticas: ' + e.message, 'error');
+  }
+}
+
+function renderStats(s) {
+  const grid = document.getElementById('statsGrid');
+  const items = [
+    { label:'Total órdenes', value: s.total ?? '—', sub: `Hoy: ${s.hoy?.ingresos ?? 0} ingresadas` },
+    { label:'En revisión',   value: s.en_revision ?? '—' },
+    { label:'Listos p/entrega', value: s.listo ?? '—', dot:'#16a34a' },
+    { label:'Pdte. presupuesto', value: s.pendiente_presup ?? '—', dot:'#d97706' },
+    { label:'Validación pend.', value: s.validacion_pendiente ?? '—', dot:'#7c3aed' },
+  ];
+  grid.innerHTML = items.map(i => `
+    <div class="stat-card">
+      <div class="stat-label">${i.label}</div>
+      <div class="stat-value">${i.value}</div>
+      ${i.sub ? `<div class="stat-sub">${i.sub}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderRecentOrders(rows) {
+  const tbody = document.getElementById('recentTbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:24px;">Sin órdenes recientes</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(o => `
+    <tr style="cursor:pointer;" onclick="abrirOrden('${o.id}')">
+      <td><strong>${o.num_orden}</strong></td>
+      <td>${o.nombre}</td>
+      <td>${estadoBadge(o.estado)}</td>
+      <td>${canalPill(o.canal)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderDashVal(items) {
+  const el = document.getElementById('dashValList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty" style="padding:24px;"><div class="empty-icon">✅</div><p>Sin pendientes</p></div>';
+    return;
+  }
+  el.innerHTML = items.slice(0,5).map(v => `
+    <div style="padding:12px 16px;border-bottom:1px solid #f9fafb;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div>
+        <div style="font-weight:600;font-size:13px;">${v.nombre}</div>
+        <div style="font-size:11px;color:#6b7280;">${v.producto} · ${v.modelo} · ${canalPill(v.canal)}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="switchView('validacion')">Ver →</button>
+    </div>
+  `).join('');
+}
+
+/* ─────────────────────────────────────
+   VALIDACION
+───────────────────────────────────── */
+let valEstadoTab = 'pendiente';
+let valPendingId = null;
+
+function setValTab(estado, el) {
+  valEstadoTab = estado;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  loadValidacion();
+}
+
+async function loadValidacion() {
+  const el = document.getElementById('valList');
+  el.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><p>Cargando…</p></div>';
+  try {
+    const data = await apiFetch(`/api/validacion?estado=${valEstadoTab}`);
+    const items = data.items || data;
+    // Badge update
+    if (valEstadoTab === 'pendiente') {
+      const badge = document.getElementById('valBadge');
+      badge.textContent = items.length;
+      badge.classList.toggle('hidden', items.length === 0);
+    }
+    if (!items.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No hay solicitudes en este estado</p></div>';
+      return;
+    }
+    el.innerHTML = items.map(v => renderValCard(v)).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+function renderValCard(v) {
+  const fallas = [v.falla1, v.falla2].filter(Boolean).join(', ');
+  const acciones = valEstadoTab === 'pendiente' ? `
+    <button class="btn btn-danger btn-sm" onclick="abrirRechazo('${v.id}')">✕ Rechazar</button>
+    <button class="btn btn-primary btn-sm" onclick="abrirAprobacion('${v.id}')">✓ Aprobar</button>
+  ` : '';
+  return `
+    <div class="val-card">
+      <div class="val-card-header">
+        <div>
+          <div class="val-card-name">${v.nombre}</div>
+          <div class="val-card-sub">${v.correo}${v.rut?' · '+v.rut:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          ${canalPill(v.canal)}
+          ${v.initials?`<span style="font-size:11px;color:#6b7280;">Agente: ${v.initials}</span>`:''}
+        </div>
+      </div>
+      <div class="val-card-body">
+        <div class="detail-item"><span class="detail-key">Producto</span><span class="detail-val">${v.producto}</span></div>
+        <div class="detail-item"><span class="detail-key">Modelo</span><span class="detail-val">${v.modelo}</span></div>
+        <div class="detail-item"><span class="detail-key">Origen</span><span class="detail-val">${v.origen||'—'}</span></div>
+        <div class="detail-item"><span class="detail-key">Color</span><span class="detail-val">${v.color||'—'}</span></div>
+        <div class="detail-item"><span class="detail-key">IMEI</span><span class="detail-val" style="font-family:monospace;">${v.imei||'—'}</span></div>
+        <div class="detail-item"><span class="detail-key">Falla(s)</span><span class="detail-val">${fallas}</span></div>
+        ${v.obs?`<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Observaciones</span><span class="detail-val">${v.obs}</span></div>`:''}
+      </div>
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">${fmtDate(v.created_at)}</div>
+      ${v.rechazado_motivo?`<div style="background:#fee2e2;color:#7f1d1d;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px;">Motivo rechazo: ${v.rechazado_motivo}</div>`:''}
+      <div class="val-card-actions">${acciones}</div>
+    </div>
+  `;
+}
+
+/* ── Aprobación ── */
+let pendingAprobacion = { id: null };
+
+function abrirAprobacion(id) {
+  pendingAprobacion.id = id;
+  const body = document.getElementById('aprobarModalBody');
+  body.innerHTML = `
+    <div class="form-section">
+      <div class="form-section-title">Datos de la orden</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Agente *</label>
+          <input class="form-control" id="ap_agente" placeholder="Iniciales, ej. JV" maxlength="5"/>
+        </div>
+        <div class="form-group">
+          <label>Plazo estimado</label>
+          <input class="form-control" id="ap_plazo" type="date"/>
+        </div>
+        <div class="form-group">
+          <label>¿Garantía?</label>
+          <select class="form-control" id="ap_garantia">
+            <option value="false">No</option>
+            <option value="true">Sí</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha boleta (si aplica)</label>
+          <input class="form-control" id="ap_fecha_boleta" type="date"/>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">Accesorios recibidos</div>
+      <div class="check-grid" id="ap_accesorios">
+        ${['mica','carga','pantalla','botones','sim','caja','cable','adaptador','funda'].map(a=>`
+          <label class="check-item">
+            <input type="checkbox" id="ap_${a}"/>
+            <span>${a.charAt(0).toUpperCase()+a.slice(1)}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">Observaciones internas (opcional)</div>
+      <div class="form-group">
+        <textarea class="form-control" id="ap_obs2" placeholder="Notas del técnico para la orden…"></textarea>
+      </div>
+    </div>
+  `;
+  openModal('aprobarModal');
+}
+
+async function confirmarAprobacion() {
+  const id = pendingAprobacion.id;
+  if (!id) return;
+  const agente = document.getElementById('ap_agente').value.trim();
+  if (!agente) { toast('Ingresa las iniciales del agente', 'warning'); return; }
+  const payload = {
+    agente,
+    plazo: document.getElementById('ap_plazo').value || null,
+    garantia: document.getElementById('ap_garantia').value === 'true',
+    fecha_boleta: document.getElementById('ap_fecha_boleta').value || null,
+    obs2: document.getElementById('ap_obs2').value || null,
+  };
+  ['mica','carga','pantalla','botones','sim','caja','cable','adaptador','funda'].forEach(a => {
+    payload[a] = document.getElementById(`ap_${a}`)?.checked || false;
+  });
+  const btn = document.getElementById('aprobarConfirmBtn');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    const res = await apiFetch(`/api/validacion/${id}/aprobar`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    closeModal('aprobarModal');
+    toast(`Orden ${res.orden?.num_orden} creada exitosamente`, 'success');
+    loadValidacion();
+    loadDashboard();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.innerHTML = '<span>Crear orden</span>';
+    btn.disabled = false;
+  }
+}
+
+/* ── Rechazo ── */
+let pendingRechazoId = null;
+
+function abrirRechazo(id) {
+  pendingRechazoId = id;
+  document.getElementById('rechazarMotivo').value = '';
+  openModal('rechazarModal');
+}
+
+async function confirmarRechazo() {
+  const motivo = document.getElementById('rechazarMotivo').value.trim();
+  if (!motivo) { toast('Ingresa el motivo del rechazo', 'warning'); return; }
+  try {
+    await apiFetch(`/api/validacion/${pendingRechazoId}/rechazar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rechazado_motivo: motivo })
+    });
+    closeModal('rechazarModal');
+    toast('Solicitud rechazada', 'warning');
+    loadValidacion();
+    loadDashboard();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+/* ─────────────────────────────────────
+   ORDENES LIST
+───────────────────────────────────── */
+let ordenesOffset = 0;
+let ordenesTotal  = 0;
+let ordenesDebounce = null;
+
+function debouncedLoadOrdenes() {
+  clearTimeout(ordenesDebounce);
+  ordenesDebounce = setTimeout(() => { ordenesOffset = 0; loadOrdenes(); }, 350);
+}
+
+function debouncedSearch() {
+  document.getElementById('ordenSearch').value = document.getElementById('topbarSearch')?.value || '';
+  debouncedLoadOrdenes();
+}
+
+async function loadOrdenes() {
+  const tbody = document.getElementById('ordenesTbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="8"><span class="spinner spinner-dark"></span></td></tr>';
+  const q      = (document.getElementById('ordenSearch')?.value || '').trim();
+  const estado = document.getElementById('ordenEstado')?.value || '';
+  const canal  = document.getElementById('ordenCanal')?.value  || '';
+  const params = new URLSearchParams({ limit: PAGE_SIZE, offset: ordenesOffset });
+  if (q)      params.set('q', q);
+  if (estado) params.set('estado', estado);
+  if (canal)  params.set('canal', canal);
+  try {
+    const data = await apiFetch('/api/ordenes?' + params);
+    const rows = data.items || data;
+    ordenesTotal = data.total || rows.length;
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:32px;">Sin resultados</td></tr>';
+      renderPager();
+      return;
+    }
+    tbody.innerHTML = rows.map(o => `
+      <tr style="cursor:pointer;" onclick="abrirOrden('${o.id}')">
+        <td><strong style="font-family:monospace;">${o.num_orden}</strong></td>
+        <td>${fmtDate(o.fecha)}</td>
+        <td>
+          <div style="font-weight:500;">${o.nombre}</div>
+          <div style="font-size:11px;color:#6b7280;">${o.correo}</div>
+        </td>
+        <td>${o.producto} ${o.modelo}</td>
+        <td>${estadoBadge(o.estado)}</td>
+        <td>${canalPill(o.canal)}</td>
+        <td>${o.agente||'—'}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();abrirOrden('${o.id}')" title="Ver detalle">→</button>
+        </td>
+      </tr>
+    `).join('');
+    renderPager();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#dc2626;padding:24px;">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function renderPager() {
+  const wrap = document.getElementById('ordenesPager');
+  if (!wrap) return;
+  const pages = Math.ceil(ordenesTotal / PAGE_SIZE);
+  const cur   = Math.floor(ordenesOffset / PAGE_SIZE) + 1;
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <button class="btn btn-ghost btn-sm" ${cur===1?'disabled':''} onclick="goPage(${cur-2})">← Anterior</button>
+    <span style="font-size:13px;color:#6b7280;padding:0 8px;">Página ${cur} de ${pages}</span>
+    <button class="btn btn-ghost btn-sm" ${cur===pages?'disabled':''} onclick="goPage(${cur})">Siguiente →</button>
+  `;
+}
+
+function goPage(pageIndex) {
+  ordenesOffset = pageIndex * PAGE_SIZE;
+  loadOrdenes();
+}
+
+/* ─────────────────────────────────────
+   ORDER DETAIL
+───────────────────────────────────── */
+let currentOrden = null;
+
+async function abrirOrden(id) {
+  openModal('ordenModal');
+  document.getElementById('ordenModalTitle').textContent = 'Cargando…';
+  document.getElementById('ordenModalBody').innerHTML = '<div style="text-align:center;padding:40px;"><span class="spinner spinner-dark"></span></div>';
+  document.getElementById('ordenModalFooter').innerHTML = '';
+  try {
+    const o = await apiFetch(`/api/ordenes/${id}`);
+    currentOrden = o;
+    renderOrdenModal(o);
+  } catch(e) {
+    document.getElementById('ordenModalBody').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+function renderOrdenModal(o) {
+  document.getElementById('ordenModalTitle').textContent = o.num_orden;
+  const accs = ['mica','carga','pantalla','botones','sim','caja','cable','adaptador','funda']
+    .filter(a => o[a]).join(', ') || '—';
+  document.getElementById('ordenModalBody').innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+      ${estadoBadge(o.estado)} ${canalPill(o.canal)}
+      ${o.garantia?'<span class="badge badge-green">Garantía</span>':''}
+      <span style="font-size:12px;color:#6b7280;margin-left:auto;">Agente: ${o.agente||'—'}</span>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Cliente</div>
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-key">Nombre</span><span class="detail-val">${o.nombre}</span></div>
+        <div class="detail-item"><span class="detail-key">Correo</span><span class="detail-val">${o.correo}</span></div>
+        <div class="detail-item"><span class="detail-key">RUT</span><span class="detail-val">${o.rut||'—'}</span></div>
+        <div class="detail-item"><span class="detail-key">IMEI</span><span class="detail-val" style="font-family:monospace;">${o.imei||'—'}</span></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Equipo</div>
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-key">Producto</span><span class="detail-val">${o.producto}</span></div>
+        <div class="detail-item"><span class="detail-key">Modelo</span><span class="detail-val">${o.modelo}</span></div>
+        <div class="detail-item"><span class="detail-key">Color</span><span class="detail-val">${o.color||'—'}</span></div>
+        <div class="detail-item"><span class="detail-key">Origen</span><span class="detail-val">${o.origen}</span></div>
+        <div class="detail-item"><span class="detail-key">Fecha ingreso</span><span class="detail-val">${fmtDate(o.fecha)}</span></div>
+        <div class="detail-item"><span class="detail-key">Plazo</span><span class="detail-val">${fmtDate(o.plazo)}</span></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Falla</div>
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-key">Falla principal</span><span class="detail-val">${o.falla1}</span></div>
+        ${o.falla2?`<div class="detail-item"><span class="detail-key">Falla secundaria</span><span class="detail-val">${o.falla2}</span></div>`:''}
+        ${o.obs?`<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Obs. cliente</span><span class="detail-val">${o.obs}</span></div>`:''}
+        ${o.obs2?`<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Obs. técnico</span><span class="detail-val">${o.obs2}</span></div>`:''}
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Accesorios recibidos</div>
+      <p style="font-size:13px;color:#374151;">${accs}</p>
+    </div>
+
+    ${o.solucion || o.presupuesto ? `
+    <div class="form-section">
+      <div class="form-section-title">Diagnóstico / Presupuesto</div>
+      <div class="detail-grid">
+        ${o.solucion?`<div class="detail-item"><span class="detail-key">Solución</span><span class="detail-val">${o.solucion}</span></div>`:''}
+        ${o.presupuesto?`<div class="detail-item"><span class="detail-key">Presupuesto</span><span class="detail-val">$${Number(o.presupuesto).toLocaleString('es-CL')}</span></div>`:''}
+        ${o.valor_cobrado?`<div class="detail-item"><span class="detail-key">Valor cobrado</span><span class="detail-val">$${Number(o.valor_cobrado).toLocaleString('es-CL')}</span></div>`:''}
+      </div>
+    </div>
+    `:''}
+
+    <div class="form-section">
+      <div class="form-section-title">Cambiar estado</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select class="form-control" id="cambiarEstadoSel" style="width:auto;min-width:200px;">
+          ${['Ingresado','En revisión','Listo','Entregado','No reparado','Pendiente presupuesto']
+            .map(e=>`<option ${e===o.estado?'selected':''}>${e}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="cambiarEstado('${o.id}')">Actualizar estado</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('ordenModalFooter').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal('ordenModal')">Cerrar</button>
+    <button class="btn btn-amber btn-sm" onclick="abrirEnvioEmail('${o.id}','${o.correo}','${o.canal}')">✉ Enviar correo</button>
+    <button class="btn btn-ghost btn-sm" onclick="generarInforme('${o.id}')">📄 Generar informe</button>
+    ${o.informe_url?`<a href="${o.informe_url}" target="_blank" class="btn btn-green btn-sm">📥 Ver PDF</a>`:''}
+  `;
+}
+
+async function cambiarEstado(id) {
+  const estado = document.getElementById('cambiarEstadoSel').value;
+  try {
+    await apiFetch(`/api/ordenes/${id}`, { method:'PATCH', body: JSON.stringify({ estado }) });
+    toast('Estado actualizado', 'success');
+    closeModal('ordenModal');
+    loadOrdenes();
+    loadDashboard();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+/* ─────────────────────────────────────
+   EMAIL
+───────────────────────────────────── */
+let emailTarget = null;
+
+function abrirEnvioEmail(id, correo, canal) {
+  emailTarget = id;
+  const labels = { P:'Garantía (tipo P)', E:'Sin Garantía (tipo E)', S:'Presencial (tipo S)' };
+  document.getElementById('emailModalDesc').textContent =
+    `Se enviará un correo tipo ${labels[canal]||canal} a ${correo}.`;
+  document.getElementById('emailEvidenciasUrl').value = '';
+  openModal('emailModal');
+}
+
+async function confirmarEnvioEmail() {
+  const url = document.getElementById('emailEvidenciasUrl').value.trim();
+  try {
+    await apiFetch('/api/email/enviar', {
+      method: 'POST',
+      body: JSON.stringify({ orden_id: emailTarget, evidencias_url: url || undefined })
+    });
+    closeModal('emailModal');
+    toast('Correo enviado exitosamente', 'success');
+  } catch(e) {
+    toast('Error enviando correo: ' + e.message, 'error');
+  }
+}
+
+/* ─────────────────────────────────────
+   INFORME PDF
+───────────────────────────────────── */
+async function generarInforme(id) {
+  toast('Generando informe PDF…', 'info', 5000);
+  try {
+    const res = await apiFetch('/api/reports/generar', {
+      method: 'POST',
+      body: JSON.stringify({ orden_id: id })
+    });
+    if (res.url) window.open(res.url, '_blank');
+    toast('Informe generado', 'success');
+    closeModal('ordenModal');
+  } catch(e) {
+    toast('Error generando informe: ' + e.message, 'error');
+  }
+}
+
+/* ─────────────────────────────────────
+   NUEVA ORDEN MANUAL
+───────────────────────────────────── */
+const PRODUCTOS = {
+  'Reloj': ['Space 1','Space 2','Space Lite','Space 3','Space 4'],
+  'Tablet': ['Lite 1','Lite 2','Lite 3','Pro','Pro 2.0'],
+  'Monitores': ['Baby monitor Lite','Baby Monitor Pro','Baby Monitor Pro 2'],
+  'Camaras': ['Camara Baby Monitor Lite','Camara Baby Monitor Pro','Camara Baby Monitor Pro 2'],
+  'Momophone': ['Momophone','Momophone Pro'],
+  'BabyDreams': ['BabyDreams'],
+  'Otro': ['Otro'],
+};
+const ORIGENES  = ['SoyMomo','Falabella','Ripley','Mercado Libre','Paris','Hites','Otro','No recuerdo'];
+const COLORES   = ['Negro','Azul','Violeta','Celeste','lilium','Midnight','Coral','Verde','Gris','Otro'];
+const FALLAS1   = ['Pantalla rota','No enciende','No carga','Batería','Botón roto','Cámara','Audio','Wifi/BT','Táctil','Correa','Sistema/Software','No conecta reloj','Golpe sin daño visible','Otro'];
+const FALLAS2   = ['Pantalla rota','No enciende','No carga','Batería','Botón roto','Cámara','Audio','Otro'];
+
+let nuevaOrdenCanal = null;
+
+function abrirNuevaOrden() {
+  nuevaOrdenCanal = null;
+  const body = document.getElementById('nuevaOrdenBody');
+  body.innerHTML = `
+    <div class="form-section">
+      <div class="form-section-title">Canal de ingreso</div>
+      <div class="canal-selector">
+        <div class="canal-opt" onclick="selNuevaCanal('P',this)">
+          <div class="canal-icon">📦</div>
+          <div class="canal-name">Garantía</div>
+          <div class="canal-desc">Envío gratuito (P)</div>
+        </div>
+        <div class="canal-opt" onclick="selNuevaCanal('E',this)">
+          <div class="canal-icon">🚚</div>
+          <div class="canal-name">Sin Garantía</div>
+          <div class="canal-desc">Cliente coordina envío (E)</div>
+        </div>
+        <div class="canal-opt" onclick="selNuevaCanal('S',this)">
+          <div class="canal-icon">🏪</div>
+          <div class="canal-name">Presencial</div>
+          <div class="canal-desc">Recepción Ricardo Lyon (S)</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="nuevaOrdenLoader" class="solicitud-loader" style="display:none;">
+      <span style="font-size:14px;">🔍</span>
+      <input type="text" id="numSolicitud" placeholder="N° solicitud (Registro E/P) para pre-llenar…"/>
+      <button class="btn btn-ghost btn-sm" onclick="cargarSolicitud()">Cargar</button>
+    </div>
+
+    <div id="nuevaOrdenForm" style="display:none;">
+      <div class="form-section">
+        <div class="form-section-title">Cliente</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nombre completo *</label><input class="form-control" id="no_nombre" placeholder="Ana Pérez"/></div>
+          <div class="form-group"><label>Correo electrónico *</label><input class="form-control" id="no_correo" type="email" placeholder="ana@email.cl"/></div>
+          <div class="form-group"><label>RUT</label><input class="form-control" id="no_rut" placeholder="12.345.678-9"/></div>
+          <div class="form-group"><label>IMEI</label><input class="form-control" id="no_imei" placeholder="354…" maxlength="17"/></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Equipo</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Producto *</label>
+            <select class="form-control" id="no_producto" onchange="updateModelos()">
+              <option value="">Seleccionar…</option>
+              ${Object.keys(PRODUCTOS).map(p=>`<option>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Modelo *</label>
+            <select class="form-control" id="no_modelo"><option value="">Primero elige producto</option></select>
+          </div>
+          <div class="form-group">
+            <label>Origen *</label>
+            <select class="form-control" id="no_origen" onchange="toggleOtroField('no_origen','no_origen_otro_wrap')">
+              <option value="">Seleccionar…</option>
+              ${ORIGENES.map(o=>`<option>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" id="no_origen_otro_wrap" style="display:none;">
+            <label>Especifica origen *</label>
+            <input class="form-control" id="no_origen_otro" placeholder="Ej: retail local, marketplace..." />
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <select class="form-control" id="no_color" onchange="toggleOtroField('no_color','no_color_otro_wrap')">
+              <option value="">Seleccionar…</option>
+              ${COLORES.map(c=>`<option>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" id="no_color_otro_wrap" style="display:none;">
+            <label>Especifica color *</label>
+            <input class="form-control" id="no_color_otro" placeholder="Ej: grafito, púrpura oscuro..." />
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Falla</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Falla principal *</label>
+            <select class="form-control" id="no_falla1">
+              <option value="">Seleccionar…</option>
+              ${FALLAS1.map(f=>`<option>${f}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Falla secundaria</label>
+            <select class="form-control" id="no_falla2">
+              <option value="">Ninguna</option>
+              ${FALLAS2.map(f=>`<option>${f}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group span2">
+            <label>Observaciones</label>
+            <textarea class="form-control" id="no_obs" placeholder="Descripción adicional…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Accesorios recibidos</div>
+        <div class="check-grid">
+          ${['mica','carga','pantalla','botones','sim','caja','cable','adaptador','funda'].map(a=>`
+            <label class="check-item"><input type="checkbox" id="no_${a}"/><span>${a.charAt(0).toUpperCase()+a.slice(1)}</span></label>
+          `).join('')}
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Garantía</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>¿Tiene garantía?</label>
+            <select class="form-control" id="no_garantia">
+              <option value="false">No</option>
+              <option value="true">Sí</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fecha boleta</label>
+            <input class="form-control" id="no_fecha_boleta" type="date"/>
+          </div>
+          <div class="form-group">
+            <label>Agente *</label>
+            <input class="form-control" id="no_agente" placeholder="Iniciales, ej. JV" maxlength="5"/>
+          </div>
+          <div class="form-group">
+            <label>Plazo estimado</label>
+            <input class="form-control" id="no_plazo" type="date"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  openModal('nuevaOrdenModal');
+}
+
+function selNuevaCanal(canal, el) {
+  nuevaOrdenCanal = canal;
+  document.querySelectorAll('.canal-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const showLoader = canal === 'P' || canal === 'E';
+  document.getElementById('nuevaOrdenLoader').style.display = showLoader ? 'flex' : 'none';
+  document.getElementById('nuevaOrdenForm').style.display = 'block';
+}
+
+function updateModelos() {
+  const prod = document.getElementById('no_producto').value;
+  const sel  = document.getElementById('no_modelo');
+  const opts = PRODUCTOS[prod] || [];
+  sel.innerHTML = opts.length
+    ? opts.map(m=>`<option>${m}</option>`).join('')
+    : '<option value="">Seleccionar producto primero</option>';
+}
+
+function toggleOtroField(selectId, wrapId) {
+  const value = document.getElementById(selectId)?.value;
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  wrap.style.display = value === 'Otro' ? 'block' : 'none';
+}
+
+async function cargarSolicitud() {
+  const num = document.getElementById('numSolicitud').value.trim();
+  if (!num) { toast('Ingresa el número de solicitud', 'warning'); return; }
+  const tipo = nuevaOrdenCanal;
+  try {
+    const data = await apiFetch(`/api/solicitudes/${encodeURIComponent(num)}?tipo=${tipo}`);
+    if (data.nombre)  document.getElementById('no_nombre').value  = data.nombre;
+    if (data.correo)  document.getElementById('no_correo').value  = data.correo;
+    if (data.rut)     document.getElementById('no_rut').value     = data.rut;
+    if (data.modelo)  document.getElementById('no_modelo').value  = data.modelo;
+    if (data.color)   document.getElementById('no_color').value   = data.color;
+    if (data.falla)   document.getElementById('no_falla1').value  = data.falla;
+    if (data.imei)    document.getElementById('no_imei').value    = data.imei;
+    toast('Datos cargados desde Registro ' + tipo, 'success');
+  } catch(e) {
+    toast('No se encontró el número de solicitud', 'error');
+  }
+}
+
+async function submitNuevaOrden() {
+  if (!nuevaOrdenCanal) { toast('Selecciona el canal de ingreso', 'warning'); return; }
+  const nombre  = document.getElementById('no_nombre')?.value.trim();
+  const correo  = document.getElementById('no_correo')?.value.trim();
+  const producto = document.getElementById('no_producto')?.value;
+  const modelo  = document.getElementById('no_modelo')?.value;
+  const origen  = document.getElementById('no_origen')?.value;
+  const origenOtro = document.getElementById('no_origen_otro')?.value.trim();
+  const colorValue = document.getElementById('no_color')?.value;
+  const colorOtro = document.getElementById('no_color_otro')?.value.trim();
+  const falla1  = document.getElementById('no_falla1')?.value;
+  const agente  = document.getElementById('no_agente')?.value.trim();
+  if (!nombre||!correo||!producto||!modelo||!origen||!falla1||!agente) {
+    toast('Completa los campos obligatorios (*)', 'warning');
+    return;
+  }
+  if (origen === 'Otro' && !origenOtro) {
+    toast('Completa el origen cuando seleccionas "Otro"', 'warning');
+    return;
+  }
+  if (colorValue === 'Otro' && !colorOtro) {
+    toast('Completa el color cuando seleccionas "Otro"', 'warning');
+    return;
+  }
+  const payload = {
+    canal: nuevaOrdenCanal, nombre, correo, producto, modelo, falla1, agente,
+    numero_solicitud: document.getElementById('numSolicitud')?.value.trim() || null,
+    rut: document.getElementById('no_rut')?.value || null,
+    imei: document.getElementById('no_imei')?.value || null,
+    origen: origen === 'Otro' ? origenOtro : origen,
+    origen_otro: origen === 'Otro' ? origenOtro : null,
+    color: colorValue === 'Otro' ? colorOtro : (colorValue || null),
+    color_otro: colorValue === 'Otro' ? colorOtro : null,
+    falla2: document.getElementById('no_falla2')?.value || null,
+    obs: document.getElementById('no_obs')?.value || null,
+    garantia: document.getElementById('no_garantia')?.value === 'true',
+    fecha_boleta: document.getElementById('no_fecha_boleta')?.value || null,
+    plazo: document.getElementById('no_plazo')?.value || null,
+  };
+  ['mica','carga','pantalla','botones','sim','caja','cable','adaptador','funda'].forEach(a => {
+    payload[a] = document.getElementById(`no_${a}`)?.checked || false;
+  });
+  try {
+    const res = await apiFetch('/api/ordenes', { method:'POST', body: JSON.stringify(payload) });
+    closeModal('nuevaOrdenModal');
+    toast(`Orden ${res.num_orden} creada`, 'success');
+    loadOrdenes();
+    loadDashboard();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+/* ─────────────────────────────────────
+   INIT
+───────────────────────────────────── */
+(async () => {
+  const ok = await checkAuth();
+  if (!ok) return;
+  await loadDashboard();
+})();
+</script>
+</body>
+</html>
