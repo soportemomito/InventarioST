@@ -1235,7 +1235,50 @@ const auth        = getAuth(firebaseApp);
 const db          = getFirestore(firebaseApp);
 const provider    = new GoogleAuthProvider();
 
+// ════════════════════════════════════════════════════════
+//  Enlace Inventario (esta app) ↔ ST en otro dominio Vercel
+//  - localStorage.soymomo_st_dash_url = URL completa del dash ST, ej:
+//    https://tu-st.vercel.app/st/dash.html
+//  - localStorage.soymomo_inventario_url = URL base del inventario (esta app), ej:
+//    https://tu-inventario.vercel.app  (sin /index.html; se añade ?continue=st)
+//  Entre dos *.vercel.app el token va en #st_token=… (sessionStorage no se comparte).
+// ════════════════════════════════════════════════════════
+const LS_ST_DASH_URL = 'soymomo_st_dash_url';
+const LS_INVENTARIO_URL = 'soymomo_inventario_url';
 
+function getExternalStDashUrl() {
+  try {
+    const q = new URLSearchParams(location.search).get('st_dash');
+    if (q && q.startsWith('http')) return q.trim().replace(/\/$/, '');
+    const s = localStorage.getItem(LS_ST_DASH_URL);
+    if (s && s.startsWith('http')) return s.trim().replace(/\/$/, '');
+  } catch (_) {}
+  return '';
+}
+
+async function redirectToStDash() {
+  const token = await auth.currentUser.getIdToken();
+  const ext = getExternalStDashUrl();
+  if (ext) {
+    const clean = ext.split('#')[0];
+    const inv = encodeURIComponent(location.origin);
+    window.location.href = clean + '#st_token=' + encodeURIComponent(token) + '&inv=' + inv;
+    return;
+  }
+  sessionStorage.setItem('st_token', token);
+  window.location.href = './st/dash.html';
+}
+
+window.__soymomoSetStDashUrl = (url) => {
+  try {
+    if (url && url.startsWith('http')) localStorage.setItem(LS_ST_DASH_URL, url.trim());
+  } catch (_) {}
+};
+window.__soymomoSetInventarioUrl = (url) => {
+  try {
+    if (url && url.startsWith('http')) localStorage.setItem(LS_INVENTARIO_URL, url.trim());
+  } catch (_) {}
+};
 
 // ── Estado global ──
 let currentUser    = null;
@@ -1340,9 +1383,21 @@ onAuthStateChanged(auth, async (user) => {
   const userRole = String(userData?.role || '').toLowerCase();
   isAdmin = ADMIN_EMAILS_SET.has(normalizedUserEmail) || userRole === 'admin';
 
-  // Ocultar pantalla de login y mostrar selector de módulo
+  // Ocultar pantalla de login
   document.getElementById('auth-wall').style.display         = 'none';
   document.getElementById('landing').style.display           = 'none';
+
+  const continueMod = new URLSearchParams(window.location.search).get('continue');
+  if (continueMod === 'st' || continueMod === 'st/dash.html') {
+    history.replaceState({}, '', window.location.pathname);
+    try {
+      await redirectToStDash();
+    } catch (e) {
+      console.error('redirect ST:', e);
+    }
+    return;
+  }
+
   document.getElementById('module-selector').style.display   = 'flex';
 
   // Rellenar módulo selector
@@ -2341,10 +2396,8 @@ window.switchModule = async (target) => {
   }
   if (target === 'st') {
     try {
-      const token = await auth.currentUser.getIdToken();
-      sessionStorage.setItem('st_token', token);
-      window.location.href = './st/dash.html';
-    } catch(e) {
+      await redirectToStDash();
+    } catch (e) {
       console.error('Error obteniendo token para ST:', e);
     }
   }
