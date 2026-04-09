@@ -435,27 +435,6 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
   </div>
 </div>
 
-<!-- Send email confirm modal -->
-<div class="modal-backdrop" id="emailModal">
-  <div class="modal" style="max-width:440px;">
-    <div class="modal-header">
-      <span class="modal-title">Enviar correo</span>
-      <button class="modal-close" onclick="closeModal('emailModal')">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="color:#374151;margin-bottom:14px;" id="emailModalDesc"></p>
-      <div class="form-group">
-        <label>URL de evidencias (Drive, opcional)</label>
-        <input class="form-control" id="emailEvidenciasUrl" type="url" placeholder="https://drive.google.com/…"/>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('emailModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarEnvioEmail()">Enviar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal: fila Cambios ST -->
 <div class="modal-backdrop" id="cambioModal">
   <div class="modal" style="max-width:480px;">
@@ -542,6 +521,10 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 
     <div class="nav-section">
       <div class="nav-label">Herramientas</div>
+      <div class="nav-item" data-view="mailst" onclick="switchView('mailst')">
+        <span class="nav-icon">✉</span>
+        <span>Envío correos</span>
+      </div>
       <a class="nav-item" href="../index.html" style="text-decoration:none;">
         <span class="nav-icon">📦</span>
         <span>Inventario repuestos</span>
@@ -680,6 +663,94 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
           </div>
         </div>
         <div id="ordenesPager" style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"></div>
+      </div>
+
+      <!-- ── VIEW: ENVÍO CORREOS (tipo Excel / lotes) ── -->
+      <div class="view" id="view-mailst">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Envío correos ST</div>
+            <div class="page-sub">Mismo motor que el informe Google Docs (Apps Script). Pega N° de orden, carga datos desde Firestore, envía y luego limpia para otro lote. Las plantillas HTML del correo se pueden afinar en el script cuando adjuntes los cuerpos.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-header">
+            <span class="card-title">Entradas</span>
+            <span style="font-size:12px;color:#6b7280;">Canal E · sin garantía</span>
+          </div>
+          <div class="card-body" style="padding:16px 20px;">
+            <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.5;">Un N° por línea (ej. E12). Solo órdenes con canal <strong>E</strong>.</p>
+            <textarea class="form-control" id="stMailTa_entradas" style="min-height:72px;font-family:ui-monospace,monospace;font-size:13px;" placeholder="E1&#10;E2"></textarea>
+            <div class="form-group" style="margin-top:10px;">
+              <label style="font-size:12px;">URL evidencias (opcional, todo el lote)</label>
+              <input type="url" class="form-control" id="stMailEvid_entradas" placeholder="https://drive.google.com/…"/>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="correoStCargar('entradas')">Cargar órdenes</button>
+              <button type="button" class="btn btn-amber btn-sm" onclick="correoStEnviar('entradas')">Enviar correos</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="correoStLimpiar('entradas')">Limpiar</button>
+            </div>
+            <div class="table-wrap" style="margin-top:12px;">
+              <table>
+                <thead><tr><th>Orden</th><th>Cliente</th><th>Correo</th><th>Modelo</th><th>Estado / aviso</th></tr></thead>
+                <tbody id="stMailTbody_entradas"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-header">
+            <span class="card-title">Entradas recepción</span>
+            <span style="font-size:12px;color:#6b7280;">Canales P y S</span>
+          </div>
+          <div class="card-body" style="padding:16px 20px;">
+            <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.5;">Un N° por línea. Solo órdenes <strong>P</strong> o <strong>S</strong>.</p>
+            <textarea class="form-control" id="stMailTa_recepcion" style="min-height:72px;font-family:ui-monospace,monospace;font-size:13px;" placeholder="P1&#10;S2"></textarea>
+            <div class="form-group" style="margin-top:10px;">
+              <label style="font-size:12px;">URL evidencias (opcional)</label>
+              <input type="url" class="form-control" id="stMailEvid_recepcion" placeholder="https://…"/>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="correoStCargar('recepcion')">Cargar órdenes</button>
+              <button type="button" class="btn btn-amber btn-sm" onclick="correoStEnviar('recepcion')">Enviar correos</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="correoStLimpiar('recepcion')">Limpiar</button>
+            </div>
+            <div class="table-wrap" style="margin-top:12px;">
+              <table>
+                <thead><tr><th>Orden</th><th>Cliente</th><th>Correo</th><th>Modelo</th><th>Estado / aviso</th></tr></thead>
+                <tbody id="stMailTbody_recepcion"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-header">
+            <span class="card-title">Salidas</span>
+            <span style="font-size:12px;color:#6b7280;">Cualquier canal · mismo informe por ahora</span>
+          </div>
+          <div class="card-body" style="padding:16px 20px;">
+            <p style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.5;">Para retiros / cierres. Puedes pegar P, E o S. El cuerpo del mail sigue el de informe hasta que pegues plantillas distintas en Apps Script.</p>
+            <textarea class="form-control" id="stMailTa_salidas" style="min-height:72px;font-family:ui-monospace,monospace;font-size:13px;" placeholder="P1&#10;E3"></textarea>
+            <div class="form-group" style="margin-top:10px;">
+              <label style="font-size:12px;">URL evidencias (opcional)</label>
+              <input type="url" class="form-control" id="stMailEvid_salidas" placeholder="https://…"/>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="correoStCargar('salidas')">Cargar órdenes</button>
+              <button type="button" class="btn btn-amber btn-sm" onclick="correoStEnviar('salidas')">Enviar correos</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="correoStLimpiar('salidas')">Limpiar</button>
+            </div>
+            <div class="table-wrap" style="margin-top:12px;">
+              <table>
+                <thead><tr><th>Orden</th><th>Cliente</th><th>Correo</th><th>Modelo</th><th>Estado / aviso</th></tr></thead>
+                <tbody id="stMailTbody_salidas"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ── VIEW: CAMBIOS GARANTÍA ST (tabla local — piloto) ── -->
