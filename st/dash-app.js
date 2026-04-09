@@ -1190,14 +1190,7 @@ function abrirNuevaOrden() {
       </div>
       <div class="form-section">
         <div class="form-section-title">Garantía, boleta y plazo</div>
-        <div id="no_comprobante_p_strip" style="display:none;margin:0 0 14px;padding:10px 14px;background:linear-gradient(100deg,#ecfdf5,#f0fdf4);border:1px solid #6ee7b7;border-radius:12px;">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span style="font-size:10px;font-weight:800;color:#047857;letter-spacing:0.06em;">BOLETA · CANAL P</span>
-            <a id="no_comprobante_tab_link" class="btn btn-ghost btn-sm" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;padding:5px 12px;border-radius:999px;background:#fff;border:1px solid #34d399;color:#065f46;font-weight:600;">Ver comprobante ↗</a>
-            <input type="hidden" id="no_comprobante_url" value=""/>
-            <input type="url" id="no_comprobante_micro" class="form-control" placeholder="Pegar enlace si falta" style="flex:1;min-width:160px;max-width:280px;font-size:12px;height:34px;padding:6px 10px;" oninput="syncComprobanteMicro()"/>
-          </div>
-        </div>
+        <div id="no_comprobante_host" style="display:none;"></div>
         <div class="form-grid">
           <div class="form-group" id="no_garantia_group">
             <label id="no_garantia_label">¿Tiene garantía?</label>
@@ -1244,6 +1237,27 @@ function syncNuevaOrdenGarantiaUI() {
   }
 }
 
+/** Solo canal P: inserta el bloque boleta/comprobante; E y S no tienen URL en el formulario. */
+function mountComprobantePStrip(canal) {
+  const host = document.getElementById('no_comprobante_host');
+  if (!host) return;
+  if (canal !== 'P') {
+    host.innerHTML = '';
+    host.style.display = 'none';
+    return;
+  }
+  host.style.display = 'block';
+  host.innerHTML =
+    '<div style="margin:0 0 14px;padding:10px 14px;background:linear-gradient(100deg,#ecfdf5,#f0fdf4);border:1px solid #6ee7b7;border-radius:12px;">' +
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+    '<span style="font-size:10px;font-weight:800;color:#047857;letter-spacing:0.06em;">BOLETA · CANAL P</span>' +
+    '<a id="no_comprobante_tab_link" class="btn btn-ghost btn-sm" href="#" target="_blank" rel="noopener" style="display:none;font-size:12px;padding:5px 12px;border-radius:999px;background:#fff;border:1px solid #34d399;color:#065f46;font-weight:600;">Ver comprobante ↗</a>' +
+    '<input type="hidden" id="no_comprobante_url" value=""/>' +
+    '<input type="url" id="no_comprobante_micro" class="form-control" placeholder="Pegar enlace si falta" style="flex:1;min-width:160px;max-width:280px;font-size:12px;height:34px;padding:6px 10px;" oninput="syncComprobanteMicro()"/>' +
+    '</div></div>';
+  refreshComprobantePUI();
+}
+
 function refreshComprobantePUI() {
   const link = document.getElementById('no_comprobante_tab_link');
   const hidden = document.getElementById('no_comprobante_url');
@@ -1274,15 +1288,7 @@ function selNuevaCanal(canal, el) {
   document.getElementById('nuevaOrdenLoader').style.display = showLoader ? 'flex' : 'none';
   document.getElementById('nuevaOrdenForm').style.display = 'block';
   syncNuevaOrdenGarantiaUI();
-  const strip = document.getElementById('no_comprobante_p_strip');
-  const h = document.getElementById('no_comprobante_url');
-  const micro = document.getElementById('no_comprobante_micro');
-  if (strip) strip.style.display = canal === 'P' ? 'block' : 'none';
-  if (canal !== 'P' && h && micro) {
-    h.value = '';
-    micro.value = '';
-  }
-  refreshComprobantePUI();
+  mountComprobantePStrip(canal);
 }
 
 function updateModelos() {
