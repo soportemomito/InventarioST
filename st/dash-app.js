@@ -1401,9 +1401,14 @@ function abrirNuevaOrden() {
       <div class="form-section">
         <div class="form-section-title">Diagnóstico / presupuesto (opcional)</div>
         <div class="form-grid">
-          <div class="form-group span2">
-            <label>Solución / trabajo a realizar</label>
-            <textarea class="form-control" id="no_solucion" rows="2" placeholder="Ej: Cambio de módulo, reinstalación…"></textarea>
+          <div class="form-group">
+            <label>Solución</label>
+            <select class="form-control" id="no_solucion">
+              <option value="">— Seleccionar —</option>
+              <option value="Enviar diagnóstico">Enviar diagnóstico</option>
+              <option value="Cambio">Cambio</option>
+              <option value="Reparación">Reparación</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Presupuesto (CLP)</label>
