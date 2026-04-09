@@ -13,39 +13,53 @@ body{
   min-height:100%;
   font-family:'Inter',system-ui,sans-serif;
   font-size:15px;line-height:1.5;
-  background:linear-gradient(145deg,#5b21b6 0%,#6d28e9 40%,#7c3aed 100%);
-  padding:24px 16px 100px;
+  background:#f4f0ff;
+  padding:0 16px 100px;
   -webkit-font-smoothing:antialiased;
   color:#1a0a2e;
 }
-input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline:none;}
+input,select,textarea,button{font-family:inherit;-webkit-appearance:none;appearance:none;outline:none;}
 
-.shell{max-width:480px;margin:0 auto;}
+.shell{max-width:480px;margin:0 auto;padding-top:0;}
 
-/* HEADER */
-.header{text-align:center;padding:4px 0 28px;}
-.brand{
-  display:inline-flex;align-items:center;gap:10px;
-  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);
-  border-radius:14px;padding:8px 16px;margin-bottom:22px;backdrop-filter:blur(10px);
+/* HERO / BANNER */
+.hero{
+  margin:0 -16px 24px;
+  padding:28px 20px 32px;
+  background:linear-gradient(180deg,#fff 0%,#faf5ff 100%);
+  border-bottom:1px solid #e9d5ff;
+  box-shadow:0 4px 24px rgba(91,33,182,0.06);
+  text-align:center;
 }
-.brand img{width:32px;height:32px;border-radius:8px;object-fit:cover;}
-.brand-name{font-weight:700;font-size:14px;color:#fff;letter-spacing:-0.2px;}
-.header h1{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.5px;line-height:1.2;margin-bottom:8px;}
-.header h1 span{color:#e9d5ff;}
-.header p{font-size:13px;color:rgba(255,255,255,0.72);max-width:300px;margin:0 auto;}
+.hero-logo{
+  display:block;
+  width:min(100%,340px);
+  height:auto;
+  max-height:120px;
+  object-fit:contain;
+  margin:0 auto 16px;
+  border-radius:16px;
+  box-shadow:0 8px 32px rgba(109,40,233,0.12);
+}
+.hero h1{font-size:24px;font-weight:800;color:#2b0a3d;letter-spacing:-0.4px;line-height:1.2;margin:0 0 8px;}
+.hero h1 span{color:#7c3aed;}
+.hero p{font-size:14px;color:#6b5c8a;max-width:320px;margin:0 auto;line-height:1.5;}
+
+/* HEADER (legacy spacing) */
+.header{display:none;}
 
 /* CANAL BADGE */
 .canal-badge{
   display:inline-flex;align-items:center;gap:6px;
-  background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);
-  border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;color:#fff;
+  background:#fff;border:1px solid #e9d5ff;
+  border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:#5b21b6;
+  box-shadow:0 2px 8px rgba(91,33,182,0.06);
 }
-.canal-dot{width:7px;height:7px;border-radius:50%;background:#86efac;flex-shrink:0;}
+.canal-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;}
 
 /* PROGRESS */
-.progress-bar{height:3px;background:rgba(255,255,255,0.2);border-radius:10px;margin-bottom:24px;overflow:hidden;}
-.progress-fill{height:100%;background:#fff;border-radius:10px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);}
+.progress-bar{height:4px;background:#e9d5ff;border-radius:10px;margin-bottom:24px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:10px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);}
 
 /* STEPS */
 .steps{display:flex;align-items:center;margin-bottom:28px;padding:0 4px;}
@@ -54,15 +68,15 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
   width:30px;height:30px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:12px;font-weight:700;
-  border:2px solid rgba(255,255,255,0.35);color:rgba(255,255,255,0.55);
-  background:rgba(255,255,255,0.08);transition:all 0.3s;position:relative;z-index:1;
+  border:2px solid #ddd6fe;color:#a89bc0;
+  background:#fff;transition:all 0.3s;position:relative;z-index:1;
 }
-.step.active .step-num{border-color:#fff;background:rgba(255,255,255,0.25);color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,0.1);}
+.step.active .step-num{border-color:#7c3aed;background:#ede9fe;color:#5b21b6;box-shadow:0 0 0 3px rgba(124,58,237,0.15);}
 .step.done .step-num{border-color:#86efac;background:#86efac;color:#065f46;}
-.step-label{font-size:10px;font-weight:500;color:rgba(255,255,255,0.45);white-space:nowrap;}
-.step.active .step-label{color:rgba(255,255,255,0.9);}
-.step.done .step-label{color:rgba(255,255,255,0.65);}
-.step-line{flex:1;height:1px;background:rgba(255,255,255,0.2);margin-top:-17px;max-width:50px;transition:background 0.3s;}
+.step-label{font-size:10px;font-weight:500;color:#a89bc0;white-space:nowrap;}
+.step.active .step-label{color:#6d28d9;}
+.step.done .step-label{color:#15803d;}
+.step-line{flex:1;height:1px;background:#e9d5ff;margin-top:-17px;max-width:50px;transition:background 0.3s;}
 .step-line.done{background:#86efac;}
 
 /* CARD */
@@ -150,7 +164,8 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
 .bottom-bar{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;
   max-width:480px;padding:12px 16px 28px;
-  background:linear-gradient(to top,rgba(88,28,210,0.98) 55%,transparent);
+  background:linear-gradient(to top,#f4f0ff 65%,rgba(244,240,255,0));
+  border-top:1px solid #ede9fe;
   display:flex;gap:10px;z-index:50;
 }
 .btn{
@@ -164,24 +179,24 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
 .btn-primary:active{transform:scale(0.98);}
 .btn-primary:disabled{opacity:0.45;transform:none;box-shadow:none;cursor:not-allowed;}
 .btn-back{
-  width:52px;flex-shrink:0;background:rgba(255,255,255,0.18);
-  border:1.5px solid rgba(255,255,255,0.3);color:#fff;border-radius:13px;
+  width:52px;flex-shrink:0;background:#fff;
+  border:1.5px solid #e9d5ff;color:#6d28d9;border-radius:13px;
 }
-.btn-back:hover{background:rgba(255,255,255,0.28);}
+.btn-back:hover{background:#faf5ff;}
 
 /* SUCCESS */
 .success-screen{display:none;text-align:center;padding:48px 0 40px;}
 .success-screen.active{display:block;animation:fadeIn 0.35s ease;}
 .success-icon{
   width:76px;height:76px;border-radius:50%;
-  background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);
+  background:#ede9ff;border:2px solid #c4b5fd;
   display:flex;align-items:center;justify-content:center;
   margin:0 auto 24px;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
 }
 @keyframes popIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
-.success-icon svg{width:36px;height:36px;color:#fff;}
-.success-screen h2{font-size:24px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-0.4px;}
-.success-screen p{font-size:13px;color:rgba(255,255,255,0.75);max-width:300px;margin:0 auto 28px;line-height:1.6;}
+.success-icon svg{width:36px;height:36px;color:#7c3aed;}
+.success-screen h2{font-size:24px;font-weight:800;color:#2b0a3d;margin-bottom:10px;letter-spacing:-0.4px;}
+.success-screen p{font-size:13px;color:#6b5c8a;max-width:300px;margin:0 auto 28px;line-height:1.6;}
 .ticket{background:#fff;border-radius:16px;padding:22px;margin:0 auto 28px;text-align:left;box-shadow:0 4px 24px rgba(0,0,0,0.2);}
 .ticket-num{font-size:13px;font-weight:600;color:#a89bc0;text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
 .ticket-id{font-size:28px;font-weight:800;color:#7c3aed;text-align:center;margin-bottom:18px;letter-spacing:-0.5px;}
@@ -191,11 +206,11 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
 .ticket-val{color:#1a0a2e;font-weight:600;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .btn-reset{
   display:inline-flex;align-items:center;gap:8px;
-  background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);
-  color:#fff;border-radius:12px;padding:12px 24px;font-weight:600;font-size:14px;cursor:pointer;
+  background:#fff;border:1.5px solid #e9d5ff;
+  color:#5b21b6;border-radius:12px;padding:12px 24px;font-weight:600;font-size:14px;cursor:pointer;
   transition:all 0.18s;
 }
-.btn-reset:hover{background:rgba(255,255,255,0.28);}
+.btn-reset:hover{background:#faf5ff;}
 
 /* OFFLINE */
 .offline-banner{
@@ -215,14 +230,11 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
     Sin conexión — necesitas internet para enviar tu solicitud.
   </div>
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="brand">
-      <img id="brand-logo" src="" alt="SoyMomo">
-      <span class="brand-name">Servicio Técnico</span>
-    </div>
+  <!-- HERO -->
+  <div class="hero">
+    <img id="brand-logo" class="hero-logo" src="" alt="SoyMomo Servicio Técnico">
     <h1>Registra tu <span>equipo</span></h1>
-    <p>Completa el formulario y te avisaremos cuando esté listo.</p>
+    <p>Ingreso a revisión — completa los pasos y te contactaremos por correo.</p>
   </div>
 
   <!-- CANAL BADGE -->
@@ -273,11 +285,12 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
             <div class="input-wrap"><input type="text" id="f-rut" placeholder="12.345.678-9"></div>
           </div>
           <div class="field">
-            <label>IMEI / N° Serie <span class="opt">(opcional)</span></label>
+            <label>IMEI / ID <span class="opt">(opcional)</span></label>
             <div class="input-wrap"><input type="text" id="f-imei" placeholder="N° de serie del dispositivo"></div>
           </div>
         </div>
         <div class="field-hint">Relojes: Ajustes → Info. del dispositivo → ID del dispositivo.</div>
+        <div class="field-hint">App SoyMomo Watch: Ajustes → Info. del dispositivo → ID del dispositivo.</div>
       </div>
     </div>
   </div>
@@ -356,15 +369,15 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
             <span class="color-name">Celeste</span>
           </div>
           <div class="color-cell">
-            <div class="color-opt" style="background:#f59e0b;" onclick="selectColor(this,'lilium')"></div>
-            <span class="color-name">lilium</span>
+            <div class="color-opt" style="background:#f567d6;" onclick="selectColor(this,'lilium')"></div>
+            <span class="color-name">Rosado</span>
           </div>
           <div class="color-cell">
-            <div class="color-opt" style="background:#1f2937;" onclick="selectColor(this,'Midnight')"></div>
+            <div class="color-opt" style="background:#457bc7;" onclick="selectColor(this,'Midnight')"></div>
             <span class="color-name">Midnight</span>
           </div>
           <div class="color-cell">
-            <div class="color-opt" style="background:#fb7185;" onclick="selectColor(this,'Coral')"></div>
+            <div class="color-opt" style="background:#ff5771;" onclick="selectColor(this,'Coral')"></div>
             <span class="color-name">Coral</span>
           </div>
           <div class="color-cell">
@@ -481,7 +494,19 @@ input,select,textarea,button{font-family:inherit;-webkit-appearance:none;outline
 // ══════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════
-const API_BASE = 'http://localhost:3000';
+const DEFAULT_API_BASE = 'http://localhost:3000';
+const LS_API_BASE_KEY = 'st_api_base_v1';
+function getApiBase() {
+  try {
+    const qp = new URLSearchParams(location.search).get('api');
+    if (qp) return qp.replace(/\/$/, '');
+  } catch (_) {}
+  try {
+    const s = localStorage.getItem(LS_API_BASE_KEY);
+    if (s) return s.replace(/\/$/, '');
+  } catch (_) {}
+  return DEFAULT_API_BASE;
+}
 const LOGO_URL = 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
 
 const MODELOS = {
@@ -714,7 +739,7 @@ async function submit() {
   };
 
   try {
-    const res = await fetch(API_BASE + '/api/validacion', {
+    const res = await fetch(getApiBase() + '/api/validacion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
