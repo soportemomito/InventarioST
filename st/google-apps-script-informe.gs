@@ -21,22 +21,14 @@
  *   todo queda en el script ligado al libro. Implementar → Aplicación web y usa esa URL /exec
  *   en el dash. Las funciones que recorren filas siguen igual; el dash solo usa doPost.
  *
- * Configuración:
- * 1) Propiedades del proyecto → ST_SECRET = mismo valor que en st/dash-app.js (Config. informe Docs)
- * 2) Implementar → Aplicación web — Ejecutar como: yo | Acceso: quien corresponda
- * 3) URL …/exec → INFORME_SCRIPT_URL o modal del dash
+ * Sin secreto compartido (uso interno). Restringe en Implementar quién puede invocar la Web App.
+ *
+ * Configuración: Implementar → Aplicación web — Ejecutar como: yo | Acceso: quien corresponda.
+ * URL …/exec → INFORME_SCRIPT_URL o modal del dash.
  */
 
 function jsonOut_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function checkSecret_(body) {
-  var want = PropertiesService.getScriptProperties().getProperty('ST_SECRET');
-  if (!want || body.secret !== want) {
-    return 'No autorizado: configura ST_SECRET en Propiedades del proyecto (y el mismo valor en dash-app.js)';
-  }
-  return null;
 }
 
 var TEMPLATE_BY_CANAL = {
@@ -106,7 +98,7 @@ function doGet() {
     '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ST informe · Web App</title></head><body style="font-family:system-ui,sans-serif;padding:24px;max-width:520px;line-height:1.5;">' +
     '<h2 style="margin:0 0 12px;">Web App activa</h2>' +
     '<p>Esta dirección está bien publicada. El panel Servicio Técnico la usa con <strong>POST</strong> (acciones <code>generar</code> y <code>enviar</code>), no al abrirla aquí en el navegador.</p>' +
-    '<p style="color:#666;font-size:14px;">Pega la misma URL en el dash: <strong>Herramientas → Config. informe Docs</strong>.</p>' +
+    '<p style="color:#666;font-size:14px;">URL en <code>dash-app.js</code> o <strong>Herramientas → Config. informe Docs</strong>.</p>' +
     '</body></html>';
   return HtmlService.createHtmlOutput(html).setTitle('ST informe');
 }
@@ -114,8 +106,6 @@ function doGet() {
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData && e.postData.contents ? e.postData.contents : '{}');
-    var bad = checkSecret_(body);
-    if (bad) return jsonOut_({ error: bad });
 
     var action = String(body.action || '');
     var orden = body.orden || {};
