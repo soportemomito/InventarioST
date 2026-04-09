@@ -161,7 +161,6 @@ let ordenesCache = [];
 let currentOrden = null;
 let pendingAprobacion = { id: null, canal: null };
 let pendingRechazoId = null;
-let emailTarget = null;
 let nuevaOrdenCanal = null;
 
 function tsToMillis(v) {
@@ -338,6 +337,7 @@ const VIEW_TITLES = {
   dashboard: 'Dashboard',
   validacion: 'Proceso de validación',
   ordenes: 'Órdenes',
+  mailst: 'Envío correos',
   cambios: 'Cambios garantía ST',
 };
 
@@ -1160,7 +1160,6 @@ function renderOrdenModal(o) {
 
   document.getElementById('ordenModalFooter').innerHTML = `
     <button class="btn btn-ghost" onclick="closeModal('ordenModal')">Cerrar</button>
-    <button class="btn btn-amber btn-sm" onclick="abrirEnvioEmail('${o.id}', ${JSON.stringify(o.correo)}, '${o.canal}')">✉ Enviar correo</button>
     <button class="btn btn-ghost btn-sm" onclick="generarInforme('${o.id}')">📄 Generar informe</button>
     ${o.informe_url ? `<a href="${escapeAttr(o.informe_url)}" target="_blank" class="btn btn-green btn-sm">📥 Ver informe</a>` : ''}
   `;
@@ -1194,50 +1193,126 @@ async function cambiarEstado(id) {
   }
 }
 
-function abrirEnvioEmail(id, correo, canal) {
-  emailTarget = id;
-  const labels = { P: 'Garantía (tipo P)', E: 'Sin Garantía (tipo E)', S: 'Presencial (tipo S)' };
-  document.getElementById('emailModalDesc').textContent = `Se enviará un correo tipo ${labels[canal] || canal} a ${correo}.`;
-  document.getElementById('emailEvidenciasUrl').value = '';
-  openModal('emailModal');
-}
-
-async function confirmarEnvioEmail() {
-  const id = emailTarget;
-  const evidencias = document.getElementById('emailEvidenciasUrl')?.value.trim() || '';
-  closeModal('emailModal');
-  if (!id) return;
+async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, tipoCorreo) {
   const urlOk = getInformeScriptUrl();
   if (!urlOk || !/^https:\/\//i.test(urlOk)) {
-    toast(informeConfigFaltaMsg(), 'warning', 6000);
+    throw new Error(informeConfigFaltaMsg());
+  }
+  const d = await getDoc(doc(db, COL_O, ordenId));
+  if (!d.exists()) throw new Error('Orden no encontrada');
+  const o = normalizeOrden(d.id, d.data());
+  const orden = buildInformePayloadFromOrden(o);
+  const j = await postInformeScript({
+    action: 'enviar',
+    orden,
+    informe_url: o.informe_url || '',
+    evidencias_url: evidenciasUrl || '',
+    tipo_correo: tipoCorreo || '',
+  });
+  if (j.informe_url && j.informe_url !== o.informe_url) {
+    await updateDoc(doc(db, COL_O, ordenId), { informe_url: j.informe_url });
+  }
+  return j;
+}
+
+function correoStCanalOk(kind, canal) {
+  const c = String(canal || '').toUpperCase();
+  if (kind === 'entradas') return c === 'E';
+  if (kind === 'recepcion') return c === 'P' || c === 'S';
+  return true;
+}
+
+async function lookupOrdenPorNumero(num) {
+  const snap = await getDocs(query(collection(db, COL_O), where('num_orden', '==', num), limit(1)));
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { id: d.id, data: d.data() };
+}
+
+async function correoStCargar(kind) {
+  const ta = document.getElementById(`stMailTa_${kind}`);
+  const tbody = document.getElementById(`stMailTbody_${kind}`);
+  if (!ta || !tbody) return;
+  const nums = ta.value.split(/[\n\r,;]+/).map((s) => s.trim()).filter(Boolean);
+  tbody.innerHTML = '';
+  if (!nums.length) {
+    toast('Escribe al menos un N° de orden', 'warning');
     return;
   }
   try {
-    toast('Enviando correo…', 'info');
-    const d = await getDoc(doc(db, COL_O, id));
-    if (!d.exists()) throw new Error('Orden no encontrada');
-    const o = normalizeOrden(d.id, d.data());
-    const orden = buildInformePayloadFromOrden(o);
-    const j = await postInformeScript({
-      action: 'enviar',
-      orden,
-      informe_url: o.informe_url || '',
-      evidencias_url: evidencias,
-    });
-    if (j.informe_url && j.informe_url !== o.informe_url) {
-      await updateDoc(doc(db, COL_O, id), { informe_url: j.informe_url });
+    for (const num of nums) {
+      const hit = await lookupOrdenPorNumero(num);
+      const tr = document.createElement('tr');
+      if (!hit) {
+        tr.innerHTML = `<td>${escapeAttr(num)}</td><td colspan="4" style="color:#dc2626">No encontrada</td>`;
+        tbody.appendChild(tr);
+        continue;
+      }
+      const o = normalizeOrden(hit.id, hit.data);
+      const canalOk = correoStCanalOk(kind, o.canal);
+      tr.dataset.ordenId = hit.id;
+      if (!canalOk) tr.dataset.canalError = '1';
+      const modelo = `${escapeAttr(o.producto || '—')} ${escapeAttr(o.modelo || '')}`.trim();
+      const estadoCell = canalOk
+        ? escapeAttr(o.estado || '—')
+        : `<span style="color:#d97706">Canal ${escapeAttr(o.canal)} no corresponde a este bloque</span>`;
+      tr.innerHTML = `
+        <td><strong>${escapeAttr(o.num_orden || num)}</strong></td>
+        <td>${escapeAttr(o.nombre || '—')}</td>
+        <td>${escapeAttr(o.correo || '—')}</td>
+        <td>${modelo}</td>
+        <td>${estadoCell}</td>`;
+      tbody.appendChild(tr);
     }
-    toast('Correo enviado', 'success');
-    if (currentOrden && currentOrden.id === id) {
-      const d2 = await getDoc(doc(db, COL_O, id));
-      if (d2.exists()) {
-        currentOrden = normalizeOrden(d2.id, d2.data());
-        renderOrdenModal(currentOrden);
+    toast('Órdenes cargadas', 'success');
+  } catch (e) {
+    toast(e.message || 'Error al cargar', 'error');
+  }
+}
+
+async function correoStEnviar(kind) {
+  const tbody = document.getElementById(`stMailTbody_${kind}`);
+  const evid = document.getElementById(`stMailEvid_${kind}`)?.value.trim() || '';
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr[data-orden-id]');
+  if (!rows.length) {
+    toast('Primero pulsa «Cargar órdenes» con números válidos', 'warning');
+    return;
+  }
+  let ok = 0;
+  let skip = 0;
+  let fail = 0;
+  try {
+    for (const tr of rows) {
+      if (tr.dataset.canalError === '1') {
+        skip++;
+        continue;
+      }
+      const id = tr.dataset.ordenId;
+      try {
+        await enviarCorreoInformeOrden(id, evid, kind);
+        ok++;
+      } catch (err) {
+        fail++;
+        console.error(err);
       }
     }
+    const parts = [];
+    if (ok) parts.push(`${ok} enviado(s)`);
+    if (skip) parts.push(`${skip} omitido(s) por canal`);
+    if (fail) parts.push(`${fail} error(es)`);
+    toast(parts.join(' · ') || 'Nada que enviar', ok && !fail ? 'success' : fail ? 'error' : 'warning', 5000);
   } catch (e) {
-    toast(e.message || 'No se pudo enviar el correo', 'error');
+    toast(e.message || 'Error', 'error');
   }
+}
+
+function correoStLimpiar(kind) {
+  document.getElementById(`stMailTa_${kind}`).value = '';
+  const tb = document.getElementById(`stMailTbody_${kind}`);
+  if (tb) tb.innerHTML = '';
+  const ev = document.getElementById(`stMailEvid_${kind}`);
+  if (ev) ev.value = '';
 }
 
 async function generarInforme(_id) {
@@ -1900,9 +1975,10 @@ Object.assign(window, {
   abrirOrden,
   guardarBoletaOrden,
   cambiarEstado,
-  abrirEnvioEmail,
-  confirmarEnvioEmail,
   generarInforme,
+  correoStCargar,
+  correoStEnviar,
+  correoStLimpiar,
   abrirInformeConfigModal,
   guardarInformeConfig,
   limpiarInformeConfigLocal,
