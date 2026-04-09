@@ -39,7 +39,7 @@ En **Firestore** conviven dos usos distintos del mismo proyecto (`soymomo-invent
 
 ### Formulario `st/ingreso.html` y errores de permisos / Auth
 
-El ingreso hace **`addDoc` sin iniciar sesión**. En **Firestore → Reglas** debe existir un **`allow create`** en `st_validaciones` **sin** exigir `request.auth` (solo validando campos), como en **`st/firestore-rules-st.txt`**. Así se evita «Missing or insufficient permissions» y también **`auth/admin-restricted-operation`** (ese aparecía si se usaba `signInAnonymously` con Anónimo deshabilitado).
+El ingreso hace **`addDoc` sin iniciar sesión** y asigna **N° de ingreso** (`P1`, `E2`…) vía transacción en **`st_meta/seq_P`**, **`seq_E`**, **`seq_S`**. En **Firestore → Reglas** copia **`st/firestore-rules-st.txt`** (incluye `numero_seguimiento` en `st_validaciones` y reglas de incremento +1 en esos docs). Así se evita «Missing or insufficient permissions» y **`auth/admin-restricted-operation`** (ese aparecía si se usaba `signInAnonymously` con Anónimo deshabilitado).
 
 Lectura/actualización de validaciones y todo lo del dash sigue con **`request.auth != null`**.
 
@@ -62,6 +62,8 @@ En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se co
 - Si el navegador bloquea `fetch` por **CORS** hacia `script.google.com`, habrá que usar JSONP o un proxy server-side.
 
 Plantilla de Apps Script: **`st/google-apps-script-solicitud-lookup.gs`** (`FIELD_BY_HEADER_P` / `FIELD_BY_HEADER_E` según `CANAL`). **P** incluye enlace del **comprobante** (columna de archivo del formulario). No se mapean teléfono, dirección, observaciones sueltas, transporte, orden ST ni OT. **E** conserva segundo dispositivo en texto auxiliar. **Implementar → nueva versión** en cada libro.
+
+**Informe Google Docs + correo (dash):** copia **`st/google-apps-script-informe.gs`** a un proyecto Apps Script, define la propiedad **`ST_SECRET`**, publica como **Aplicación web** y pega la URL `/exec` y el mismo secreto en **`INFORME_SCRIPT_URL`** y **`INFORME_SCRIPT_SECRET`** dentro de **`st/dash-app.js`**. Los botones **Generar informe** y **Enviar correo** llaman a ese endpoint (plantillas Drive según canal **P/S** vs **E**).
 
 **Si el dash muestra error tipo `Sheets: No hay columna de N° solicitud en fila 1`:** suele ser fila 1 sin encabezados reconocibles; con la plantilla nueva se usa la columna C como respaldo. Si tu layout no es C, edita `INDICE_FALLBACK_COL_NUM_SOLICITUD` en Apps Script (0 = A, 2 = C).
 
