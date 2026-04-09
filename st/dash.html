@@ -445,18 +445,14 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
     <div class="modal-body">
       <p id="informeCfgStatus" style="font-size:12px;color:#6b7280;margin-bottom:14px;line-height:1.5;"></p>
       <p style="font-size:13px;color:#374151;margin-bottom:16px;line-height:1.55;">
-        En tu <strong>Google Sheet de ST</strong>: <strong>Extensiones → Apps Script</strong> (el mismo proyecto donde tienes las funciones por hoja). Pega ahí <code style="font-size:11px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">google-apps-script-informe.gs</code>, propiedad <strong>ST_SECRET</strong>, luego <strong>Implementar → Aplicación web</strong>. Copia la URL <code style="font-size:11px;">…/exec</code> y el secreto aquí abajo.
+        En tu <strong>Google Sheet de ST</strong>: <strong>Extensiones → Apps Script</strong>, pega <code style="font-size:11px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">google-apps-script-informe.gs</code>, <strong>Implementar → Aplicación web</strong>. Si la URL ya está en <code style="font-size:10px;">dash-app.js</code>, no hace falta guardar aquí.
       </p>
       <div class="form-group">
         <label>URL Web App (…/exec)</label>
         <input class="form-control" id="informeCfgUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"/>
       </div>
-      <div class="form-group" style="margin-top:12px;">
-        <label>Secreto (ST_SECRET)</label>
-        <input class="form-control" id="informeCfgSecret" type="password" placeholder="Misma clave que en Apps Script" autocomplete="off"/>
-      </div>
       <p style="font-size:11px;color:#9ca3af;margin-top:14px;line-height:1.45;">
-        Se guarda solo en <strong>este navegador</strong> (localStorage). En equipos compartidos evita guardar el secreto aquí y edita <code style="font-size:10px;">INFORME_SCRIPT_*</code> en el archivo subido al servidor.
+        Opcional: guardar solo la URL en <strong>este navegador</strong> para otro entorno sin tocar el código.
       </p>
     </div>
     <div class="modal-footer" style="flex-wrap:wrap;justify-content:space-between;">
