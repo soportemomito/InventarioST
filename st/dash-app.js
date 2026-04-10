@@ -532,7 +532,6 @@ function setInventarioLinkHref() {
   const sep = indexHref.includes('?') ? '&' : '?';
   const invHref = `${indexHref}${sep}continue=inventario`;
   document.getElementById('stNavInventario')?.setAttribute('href', invHref);
-  document.getElementById('stTopInvLink')?.setAttribute('href', invHref);
 }
 
 function userRecordIsAdminSt(u) {
@@ -2917,7 +2916,7 @@ function cambiosStNorm(s) {
 }
 
 /**
- * Tabla Cambios ST: últimas filas arriba; sin filas totalmente vacías.
+ * Tabla Cambios ST: orden de la hoja (primera fila de datos arriba); sin filas totalmente vacías.
  * Verde si la primera columna indica LISTO. Rojo si la primera columna es NO o «Entregado a operaciones» = NO.
  */
 function renderCambiosSTTable() {
@@ -2948,8 +2947,7 @@ function renderCambiosSTTable() {
       '" style="text-align:center;padding:24px;color:#9ca3af;">Sin filas (o sin coincidencias con el filtro).</td></tr>';
     return;
   }
-  const listRev = [...list].reverse();
-  tbody.innerHTML = listRev
+  tbody.innerHTML = list
     .map((r) => {
       const h0 = headers[0];
       const firstRaw = String(r[h0] ?? '').trim();
