@@ -19,10 +19,8 @@ Internal web app for **SoyMomo** to manage spare-parts inventory, stock movement
 
 ### Post-login navigation
 
-- **Default:** approved users are redirected **straight to the ST dashboard** (`./st/dash.html` or an external ST URL if configured). The purple **module selector** (Inventory vs ST) is **skipped**.
-- **To show the selector** (choose Inventory or ST), open the app with  
-  **`?continue=inv`** or **`?continue=inventario`** (e.g. `index.html?continue=inv`).
-- If redirect to ST fails, the code falls back to showing the module selector.
+- **Default:** after a successful login, **approved** users always see the purple **module selector** and choose **Inventory** or **Technical Service (ST)**. This avoids automatic redirects that could fail or feel like a crash.
+- From there, **Servicio Técnico** runs `redirectToStDash()` (same site `./st/dash.html` or external URL from `soymomo_st_dash_url`).
 
 ---
 
@@ -40,7 +38,7 @@ Internal web app for **SoyMomo** to manage spare-parts inventory, stock movement
 
 | Path | Role |
 |------|------|
-| `index.html` | Login, inventory app, module selector when `?continue=inv` |
+| `index.html` | Login, module selector, inventory app |
 | `st/dash.html` | ST operations UI |
 | `st/dash-app.js` | ST logic, Firestore queries, `fetch` to Apps Script Web Apps |
 | `st/ingreso.html` | Public ST intake form |
