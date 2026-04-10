@@ -1235,6 +1235,11 @@ const auth        = getAuth(firebaseApp);
 const db          = getFirestore(firebaseApp);
 const provider    = new GoogleAuthProvider();
 
+/** Evita ver la landing de login mientras IndexedDB restaura la sesión (vuelta ST → inventario). */
+if (typeof auth.authStateReady === 'function') {
+  await auth.authStateReady();
+}
+
 // ════════════════════════════════════════════════════════
 //  Enlace Inventario (esta app) ↔ ST en otro dominio Vercel
 //  - localStorage.soymomo_st_dash_url = URL completa del dash ST, ej:
@@ -1343,7 +1348,16 @@ window.doSignOut = async () => {
 };
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
+  if (!user) {
+    currentUser = null;
+    isAdmin = false;
+    try {
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('module-selector').style.display = 'none';
+      document.getElementById('landing').style.display = 'flex';
+    } catch (_) {}
+    return;
+  }
 
   const userRef  = doc(db, 'users', user.uid);
   const userSnap = await getDoc(userRef);
