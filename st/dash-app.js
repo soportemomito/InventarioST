@@ -1275,7 +1275,11 @@ async function confirmarAprobacion() {
         num_orden = `${canal}${newVal}`;
       }
       transaction.set(serRef, { ...counts, [canal]: newVal }, { merge: true });
-      transaction.set(seqRef, { n: newVal }, { merge: true });
+      /* Si newVal ya es el n guardado en seq_* (ingreso público reservó el mismo N°), no reescribir seq:
+         las reglas exigen n >= anterior y affectedKeys solo n; un no-op o mismo valor puede denegar. */
+      if (!seqSnap.exists() || newVal !== seqN) {
+        transaction.set(seqRef, { n: newVal }, { merge: true });
+      }
       const newOrdenRef = doc(collection(db, COL_O));
       const garantia = isP ? true : document.getElementById('ap_garantia').value === 'true';
       transaction.set(newOrdenRef, {
@@ -2752,7 +2756,9 @@ async function submitNuevaOrden() {
       if (newVal < minSuf) newVal = minSuf;
       const num_orden = `${canal}${newVal}`;
       transaction.set(serRef, { ...counts, [canal]: newVal }, { merge: true });
-      transaction.set(seqRef, { n: newVal }, { merge: true });
+      if (!seqSnap.exists() || newVal !== seqN) {
+        transaction.set(seqRef, { n: newVal }, { merge: true });
+      }
       const newOrdenRef = doc(collection(db, COL_O));
       transaction.set(newOrdenRef, {
         num_orden,
