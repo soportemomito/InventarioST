@@ -102,8 +102,41 @@ a{color:inherit;text-decoration:none;}
 }
 .agent-out:hover{background:rgba(255,255,255,0.1);color:#fff;}
 
+/* ── SHELL: main + user bar (derecha) ── */
+.st-shell{
+  flex:1;display:flex;flex-direction:row;min-width:0;overflow:hidden;
+  align-items:stretch;
+}
 /* ── MAIN ── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* ── USER BAR (derecha, estilo inventario / tokens ST) ── */
+.st-userbar{
+  width:260px;min-width:260px;flex-shrink:0;
+  background:linear-gradient(180deg,#f5edff 0%,#ede4ff 100%);
+  border-left:1px solid #d6c7ff;
+  display:flex;flex-direction:column;padding:14px 16px;gap:12px;
+  box-shadow:-4px 0 16px rgba(109,40,233,0.06);
+}
+.st-userbar-top{display:flex;align-items:center;gap:12px;}
+.st-userbar-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#7c3aed,#6d28e9);
+  color:#fff;font-size:15px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border:2px solid #fff;box-shadow:0 2px 8px rgba(109,40,233,0.2);
+}
+.st-userbar-meta{flex:1;min-width:0;}
+.st-userbar-name{font-weight:600;font-size:14px;color:#2b0a3d;line-height:1.25;word-break:break-word;}
+.st-userbar-role{font-size:11px;color:#5a3b6e;margin-top:2px;}
+.st-userbar-out{
+  width:100%;margin-top:4px;
+  padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;
+  background:#fee2e2;color:#991b1b;border:1px solid #fecaca;
+  cursor:pointer;transition:background .15s;
+}
+.st-userbar-out:hover{background:#fecaca;}
+.st-userbar-hint{font-size:10px;color:#6b4c7a;line-height:1.4;}
 
 /* ── TOPBAR ── */
 .topbar{
@@ -364,6 +397,13 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .sidebar{display:none;}
+  .st-shell{flex-direction:column;}
+  .st-userbar{
+    width:100%;min-width:0;order:-1;border-left:none;border-bottom:1px solid #d6c7ff;
+    flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 14px;
+  }
+  .st-userbar-top{flex:1;min-width:0;}
+  .st-userbar-out{width:auto;margin-top:0;padding:6px 12px;}
   .grid-2{grid-template-columns:1fr;}
   .form-grid{grid-template-columns:1fr;}
   .form-group.span2{grid-column:span 1;}
@@ -374,6 +414,15 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:#9ca3af;}
+
+/* Cambios ST — filas por estado */
+.cambios-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.cambios-table-wrap table{font-size:12px;}
+.cambios-table-wrap th,.cambios-table-wrap td{white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+tr.cambios-irr td{background:#fee2e2 !important;}
+tr.cambios-rep td{background:#dcfce7 !important;}
+tr.cambios-ent-si td{opacity:0.72;}
+tr.cambios-ent-no td{font-weight:500;}
 </style>
 </head>
 <body>
@@ -447,32 +496,77 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
   </div>
 </div>
 
-<!-- Modal: fila Cambios ST -->
-<div class="modal-backdrop" id="cambioModal">
-  <div class="modal" style="max-width:480px;">
+<!-- Modal: formulario Cambios ST (coincide con Google Form) -->
+<div class="modal-backdrop" id="cambiosStModal">
+  <div class="modal" style="max-width:720px;">
     <div class="modal-header">
-      <span class="modal-title" id="cambioModalTitle">Cambio ST</span>
-      <button class="modal-close" onclick="closeModal('cambioModal')">×</button>
+      <span class="modal-title">Ingresar cambio — Cambios ST</span>
+      <button class="modal-close" onclick="closeModal('cambiosStModal')">×</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <p style="font-size:12px;color:#6b4c7a;margin-bottom:14px;">Todos los campos son obligatorios. Los nombres de columna deben coincidir con la hoja «Cambios ST».</p>
       <div class="form-grid">
-        <div class="form-group">
-          <label>N° orden ST *</label>
-          <input class="form-control" id="cm_orden" placeholder="Ej: P12345"/>
+        <div class="form-group span2">
+          <label>Correo electrónico *</label>
+          <input class="form-control" id="cst_correo" type="email" required/>
         </div>
         <div class="form-group">
-          <label>Cliente *</label>
-          <input class="form-control" id="cm_cliente" placeholder="Nombre"/>
+          <label>N ORDEN *</label>
+          <input class="form-control" id="cst_n_orden" required/>
         </div>
         <div class="form-group span2">
-          <label>Correo *</label>
-          <input class="form-control" id="cm_correo" type="email" placeholder="correo@ejemplo.cl"/>
+          <label>TECNICO *</label>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+            <label class="check-item"><input type="radio" name="cst_tecnico" value="Álvaro"/> Álvaro</label>
+            <label class="check-item"><input type="radio" name="cst_tecnico" value="Sergio"/> Sergio</label>
+            <label class="check-item"><input type="radio" name="cst_tecnico" value="__otro"/> Otro</label>
+            <input class="form-control" id="cst_tecnico_otro" placeholder="Otro técnico" style="max-width:200px;display:none;"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>CONTIENE CAJA *</label>
+          <div style="display:flex;gap:12px;"><label class="check-item"><input type="radio" name="cst_caja" value="Sí"/> Sí</label><label class="check-item"><input type="radio" name="cst_caja" value="No"/> No</label></div>
+        </div>
+        <div class="form-group">
+          <label>CONTIENE SIM *</label>
+          <div style="display:flex;gap:12px;"><label class="check-item"><input type="radio" name="cst_sim" value="Sí"/> Sí</label><label class="check-item"><input type="radio" name="cst_sim" value="No"/> No</label></div>
+        </div>
+        <div class="form-group span2">
+          <label>NUMERO DE INGRESOS EXTRA A SERVICIO TECNICO *</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <label class="check-item"><input type="radio" name="cst_ingresos" value="0"/> 0</label>
+            <label class="check-item"><input type="radio" name="cst_ingresos" value="1"/> 1</label>
+            <label class="check-item"><input type="radio" name="cst_ingresos" value="2"/> 2</label>
+            <label class="check-item"><input type="radio" name="cst_ingresos" value="__otro"/> Otro</label>
+            <input class="form-control" id="cst_ingresos_otro" placeholder="Número" style="max-width:120px;display:none;"/>
+          </div>
+        </div>
+        <div class="form-group span2">
+          <label>TIPO DE FALLA * (marca una o más)</label>
+          <div class="check-grid" id="cst_falla_grid"></div>
+          <input class="form-control" id="cst_falla_otro" placeholder="Otro (texto)" style="margin-top:8px;display:none;"/>
+        </div>
+        <div class="form-group">
+          <label>IMEI (RELOJ) *</label>
+          <input class="form-control" id="cst_imei" required/>
+        </div>
+        <div class="form-group">
+          <label>ESTADO DEL DISPOSITIVO *</label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;"><label class="check-item"><input type="radio" name="cst_estado_dev" value="Reparable"/> Reparable</label><label class="check-item"><input type="radio" name="cst_estado_dev" value="Irreparable"/> Irreparable</label></div>
+        </div>
+        <div class="form-group">
+          <label>FORMULARIO DE CAMBIOS ST *</label>
+          <div style="display:flex;gap:12px;"><label class="check-item"><input type="radio" name="cst_form" value="Listo"/> Listo</label><label class="check-item"><input type="radio" name="cst_form" value="No"/> No</label></div>
+        </div>
+        <div class="form-group">
+          <label>ENTREGADO A OPERACIONES *</label>
+          <div style="display:flex;gap:12px;"><label class="check-item"><input type="radio" name="cst_entregado" value="Sí"/> Sí</label><label class="check-item"><input type="radio" name="cst_entregado" value="No"/> No</label></div>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('cambioModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarCambioRow()">Guardar</button>
+      <button class="btn btn-ghost" onclick="closeModal('cambiosStModal')">Cancelar</button>
+      <button class="btn btn-primary" id="cstSubmitBtn" onclick="submitCambiosStForm()"><span>Guardar en hoja</span></button>
     </div>
   </div>
 </div>
@@ -543,18 +637,9 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
       </a>
     </div>
 
-    <div class="sidebar-bottom">
-      <div class="agent-pill">
-        <div class="agent-avatar" id="agentAvatarSidebar">?</div>
-        <div>
-          <div class="agent-name" id="agentNameSidebar">—</div>
-          <div class="agent-role">Técnico</div>
-        </div>
-        <button class="agent-out" onclick="salir()">Salir</button>
-      </div>
-    </div>
   </aside>
 
+  <div class="st-shell">
   <!-- MAIN -->
   <div class="main">
     <!-- TOPBAR -->
@@ -585,7 +670,6 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
           <div class="stat-card"><div class="stat-label">Total órdenes</div><div class="stat-value">—</div></div>
           <div class="stat-card"><div class="stat-label">En revisión</div><div class="stat-value">—</div></div>
           <div class="stat-card"><div class="stat-label">Listos p/entrega</div><div class="stat-value">—</div></div>
-          <div class="stat-card"><div class="stat-label">Pendiente presup.</div><div class="stat-value">—</div></div>
           <div class="stat-card"><div class="stat-label">Validación pend.</div><div class="stat-value">—</div></div>
         </div>
 
@@ -650,7 +734,6 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
             <option>Listo</option>
             <option>Entregado</option>
             <option>No reparado</option>
-            <option>Pendiente presupuesto</option>
           </select>
           <select class="filter-input" id="ordenCanal" onchange="loadOrdenes()">
             <option value="">Todos los canales</option>
@@ -786,33 +869,32 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
         </div>
       </div>
 
-      <!-- ── VIEW: CAMBIOS GARANTÍA ST (tabla local — piloto) ── -->
+      <!-- ── VIEW: CAMBIOS ST (Google Sheet) ── -->
       <div class="view" id="view-cambios">
         <div class="page-header">
           <div>
-            <div class="page-title">Cambios garantía ST</div>
-            <div class="page-sub">Vista tipo hoja «Mail Pendientes» — datos en este navegador hasta conectar API/Firebase</div>
+            <div class="page-title">Cambios ST</div>
+            <div class="page-sub">Datos desde la hoja «Cambios ST». Configura la Web App en <code style="font-size:11px;">localStorage st_cambios_st_script_url</code> o <code style="font-size:11px;">CAMBIOS_ST_SCRIPT_URL</code> en dash-app.js.</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm" onclick="loadCambiosST()">↺ Actualizar</button>
-            <button class="btn btn-primary btn-sm" onclick="abrirModalCambio()">+ Agregar fila</button>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalCambiosSt()">+ Ingresar cambio</button>
           </div>
         </div>
-        <div class="card" style="margin-bottom:16px;padding:14px 18px;font-size:12px;color:#6b7280;line-height:1.5;">
-          <strong style="color:#374151;">Referencia Excel:</strong>
-          <a href="https://docs.google.com/spreadsheets/d/1G0BgG84J0OJiJ7SWZyMfGxgMjJsFg56JuwpKuWznjQ4/edit?usp=sharing" target="_blank" rel="noopener" style="color:var(--p600);">hoja de cambios</a>.
-          El envío real de correo quedará en backend (mismo criterio que Apps Script). Aquí puedes marcar «Listo» y previsualizar el HTML del mail.
+        <div class="card" style="margin-bottom:16px;padding:14px 18px;font-size:12px;color:#5a3b6e;line-height:1.5;background:#f5edff;border:1px solid #d6c7ff;">
+          <strong style="color:#2b0a3d;">Hoja:</strong>
+          <a href="https://docs.google.com/spreadsheets/d/1G0BgG84J0OJiJ7SWZyMfGxgMjJsFg56JuwpKuWznjQ4/edit" target="_blank" rel="noopener" style="color:#6d28e9;">Abrir spreadsheet</a>
+          · Publica <code style="font-size:10px;">google-apps-script-cambios-st.gs</code> y pega la URL <code style="font-size:10px;">/exec</code>.
+        </div>
+        <div class="filters" style="margin-bottom:12px;">
+          <input class="filter-input" type="search" id="cambiosFilter" placeholder="Filtrar por N ORDEN o TECNICO…" oninput="debouncedRenderCambiosST()"/>
         </div>
         <div class="card">
-          <div class="card-body table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Orden ST</th><th>Cliente</th><th>Correo</th><th>Estado</th><th>Correo enviado</th><th></th>
-                </tr>
-              </thead>
+          <div class="card-body cambios-table-wrap">
+            <table id="cambiosSheetTable">
+              <thead id="cambiosThead"><tr><th>Cargando…</th></tr></thead>
               <tbody id="cambiosTbody">
-                <tr class="loading-row"><td colspan="6"><span class="spinner spinner-dark"></span></td></tr>
+                <tr class="loading-row"><td><span class="spinner spinner-dark"></span></td></tr>
               </tbody>
             </table>
           </div>
@@ -821,6 +903,19 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 
     </div><!-- /content -->
   </div><!-- /main -->
+
+  <aside class="st-userbar" id="stUserbar" aria-label="Usuario">
+    <div class="st-userbar-top">
+      <div class="st-userbar-avatar" id="stUserbarAvatar">?</div>
+      <div class="st-userbar-meta">
+        <div class="st-userbar-name" id="stUserbarName">—</div>
+        <div class="st-userbar-role" id="stUserbarRole">Servicio Técnico SoyMomo</div>
+      </div>
+    </div>
+    <p class="st-userbar-hint">Sesión vinculada al inventario. Usa <strong>Inventario repuestos</strong> en el menú izquierdo para volver al módulo de stock.</p>
+    <button type="button" class="st-userbar-out" onclick="salir()">Cerrar sesión</button>
+  </aside>
+  </div><!-- /st-shell -->
 </div><!-- /app -->
 
 <script type="module" src="./dash-app.js"></script>
