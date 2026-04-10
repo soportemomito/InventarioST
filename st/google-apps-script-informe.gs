@@ -498,3 +498,21 @@ function doPost(e) {
     return jsonOut_({ error: String(err.message || err) });
   }
 }
+
+/**
+ * Si la Web App dice que falta https://www.googleapis.com/auth/documents:
+ * Abre script.google.com en incógnito (o solo la cuenta que DESPLIEGA la Web App).
+ * Ejecutar → autorizarDocumentos → acepta permisos. Luego autorizarPlantillaSalida.
+ * Implementar → Gestionar implementaciones → Web app → Nueva versión → Implementar.
+ * Si persiste: myaccount.google.com/permissions → revoca acceso a Apps Script del proyecto → repetir Ejecutar.
+ */
+function autorizarDocumentos() {
+  var p = templateFor_('P');
+  DocumentApp.openById(p.templateId);
+  var e = templateFor_('E');
+  DocumentApp.openById(e.templateId);
+}
+
+function autorizarPlantillaSalida() {
+  DocumentApp.openById(SALIDA_ST_TEMPLATE_ID);
+}
