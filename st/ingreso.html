@@ -817,9 +817,12 @@ window.STSendValidacion = async (payload) => {
     throw new Error('Canal inválido');
   }
   const seqRef = doc(db, 'st_meta', `seq_${canal}`);
+  const SEQ_FLOOR = { P: 0, E: 0, S: 9999 };
   const numero_seguimiento = await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(seqRef);
-    const prev = snap.exists() ? Number(snap.data().n) || 0 : 0;
+    const raw = snap.exists() ? Number(snap.data().n) || 0 : 0;
+    const floor = SEQ_FLOOR[canal] ?? 0;
+    const prev = Math.max(raw, floor);
     const next = prev + 1;
     transaction.set(seqRef, { n: next }, { merge: true });
     return `${canal}${next}`;
