@@ -1,5 +1,8 @@
 Pegar estos match dentro de tus reglas Firestore (junto a products, movements, users, etc.).
 
+IMPORTANTE: hasta que NO publiques estas reglas en Firebase Console → Firestore → Reglas, el formulario
+público verá «Missing or insufficient permissions» al enviar.
+
 Formulario st/ingreso.html escribe SIN iniciar sesión (addDoc directo). El dash ST usa Google → request.auth != null.
 
 NO uses signInAnonymously en ingreso si el proyecto tiene Anónimo deshabilitado (error auth/admin-restricted-operation).
@@ -10,13 +13,18 @@ NO uses signInAnonymously en ingreso si el proyecto tiene Anónimo deshabilitado
         && request.resource.data.canal is string
         && request.resource.data.canal in ['P', 'E', 'S']
         && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
         && request.resource.data.correo is string
+        && request.resource.data.correo.size() > 3
         && request.resource.data.producto is string
+        && request.resource.data.producto.size() > 0
         && request.resource.data.modelo is string
+        && request.resource.data.modelo.size() > 0
         && request.resource.data.falla1 is string
         && request.resource.data.obs is string
+        && request.resource.data.obs.size() >= 10
         && request.resource.data.numero_seguimiento is string
-        && request.resource.data.numero_seguimiento.matches('^[PES][0-9]{1,9}$');
+        && request.resource.data.numero_seguimiento.matches('^[PES][0-9]{1,12}$');
 
       // Personal: leer / actualizar / borrar solo autenticado
       allow read, update, delete: if request.auth != null;
