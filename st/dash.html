@@ -394,9 +394,26 @@ textarea.form-control{height:80px;padding:10px 12px;resize:vertical;}
 .tab{padding:6px 14px;border-radius:var(--radius-xs);font-size:13px;font-weight:500;color:#6b7280;cursor:pointer;transition:all var(--transition);}
 .tab.active{background:#fff;color:var(--p600);box-shadow:var(--shadow);}
 
-/* ── RESPONSIVE ── */
+/* Menú móvil: la sidebar se ocultaba sin forma de abrirla */
+.st-menu-btn{
+  display:none;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:var(--radius-sm);
+  background:#f3f4f6;border:1px solid #e5e7eb;font-size:18px;
+  flex-shrink:0;margin-right:4px;color:#374151;
+}
+.st-menu-btn:hover{background:#e5e7eb;}
+.sidebar-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);
+  z-index:70;
+}
+body.st-nav-open .sidebar-backdrop{display:block;}
 @media(max-width:900px){
+  .st-menu-btn{display:inline-flex;}
   .sidebar{display:none;}
+  body.st-nav-open .sidebar{
+    display:flex;position:fixed;left:0;top:0;bottom:0;z-index:80;
+    max-height:100vh;box-shadow:8px 0 32px rgba(0,0,0,0.25);
+  }
   .st-shell{flex-direction:column;}
   .st-userbar{
     width:100%;min-width:0;order:-1;border-left:none;border-bottom:1px solid #d6c7ff;
@@ -426,6 +443,8 @@ tr.cambios-ent-no td{font-weight:500;}
 </style>
 </head>
 <body>
+
+<div class="sidebar-backdrop" id="stSidebarBackdrop" aria-hidden="true"></div>
 
 <!-- Toast container -->
 <div class="toast-wrap" id="toastWrap"></div>
@@ -602,24 +621,24 @@ tr.cambios-ent-no td{font-weight:500;}
 
     <div class="nav-section">
       <div class="nav-label">Panel</div>
-      <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+      <div class="nav-item active" data-view="dashboard" role="button" tabindex="0">
         <span class="nav-icon">📊</span>
         <span>Dashboard</span>
       </div>
-      <div class="nav-item" data-view="validacion" onclick="switchView('validacion')">
+      <div class="nav-item" data-view="validacion" role="button" tabindex="0">
         <span class="nav-icon">📥</span>
         <span>Proceso de validación</span>
         <span class="nav-badge hidden" id="valBadge">0</span>
       </div>
-      <div class="nav-item" data-view="ordenes" onclick="switchView('ordenes')">
+      <div class="nav-item" data-view="ordenes" role="button" tabindex="0">
         <span class="nav-icon">📋</span>
         <span>Órdenes</span>
       </div>
-      <div class="nav-item" data-view="cambios" onclick="switchView('cambios')">
+      <div class="nav-item" data-view="cambios" role="button" tabindex="0">
         <span class="nav-icon">🔄</span>
         <span>Cambios garantía ST</span>
       </div>
-      <div class="nav-item" data-view="nueva" onclick="abrirNuevaOrden()">
+      <div class="nav-item" data-view="nueva" role="button" tabindex="0">
         <span class="nav-icon">➕</span>
         <span>Nueva orden</span>
       </div>
@@ -627,11 +646,11 @@ tr.cambios-ent-no td{font-weight:500;}
 
     <div class="nav-section">
       <div class="nav-label">Herramientas</div>
-      <div class="nav-item" data-view="mailst" onclick="switchView('mailst')">
+      <div class="nav-item" data-view="mailst" role="button" tabindex="0">
         <span class="nav-icon">✉</span>
         <span>Envío correos</span>
       </div>
-      <a class="nav-item" href="../index.html?continue=inventario&amp;open=inv" style="text-decoration:none;">
+      <a class="nav-item" id="stNavInventario" href="../index.html?continue=inventario&amp;open=inv" style="text-decoration:none;">
         <span class="nav-icon">📦</span>
         <span>Inventario repuestos</span>
       </a>
@@ -644,13 +663,14 @@ tr.cambios-ent-no td{font-weight:500;}
   <div class="main">
     <!-- TOPBAR -->
     <div class="topbar">
+      <button type="button" class="st-menu-btn" id="stMenuBtn" aria-label="Abrir menú">☰</button>
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
       <div id="api-hint" style="font-size:11px;color:#9ca3af;max-width:320px;display:none;" title="Datos en Firestore; enlace desde inventario con Firebase"></div>
       <div class="topbar-search" id="topbarSearchWrap" style="display:none;">
         <span style="color:#9ca3af;font-size:14px;">🔍</span>
-        <input type="text" id="topbarSearch" placeholder="Buscar orden, cliente, IMEI…" oninput="debouncedSearch()"/>
+        <input type="text" id="topbarSearch" placeholder="Buscar orden, cliente, IMEI…"/>
       </div>
-      <button class="btn btn-primary" onclick="abrirNuevaOrden()">+ Nueva orden</button>
+      <button type="button" class="btn btn-primary" id="stTopNuevaOrden">+ Nueva orden</button>
     </div>
 
     <!-- CONTENT -->
