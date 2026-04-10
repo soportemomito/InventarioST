@@ -430,7 +430,7 @@ function setInventarioLinkHref() {
   try {
     base = (localStorage.getItem(LS_INVENTARIO_URL) || '').trim();
   } catch (_) {}
-  const path = 'index.html?continue=inventario&open=inv';
+  const path = 'index.html';
   if (base.startsWith('http')) {
     const clean = base.replace(/\/$/, '');
     a.href = `${clean}/${path}`;
