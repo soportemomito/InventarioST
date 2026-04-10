@@ -697,7 +697,7 @@ tr:hover td{background:#faf5ff;}
     <!-- Cards de módulos -->
     <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;">
 
-      <div class="mod-card" id="mod-inv-btn" style="background:#fff;border:2px solid #e9d5ff;">
+      <div class="mod-card" id="mod-inv-btn" style="background:#fff;border:2px solid #e9d5ff;cursor:pointer;">
         <div class="mod-icon">📦</div>
         <div class="mod-title" style="color:#2b0a3d;">Inventario</div>
         <div class="mod-sub">Control de stock y trazabilidad de repuestos</div>
@@ -1401,21 +1401,6 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('auth-wall').style.display         = 'none';
   document.getElementById('landing').style.display           = 'none';
 
-  const _qs = new URLSearchParams(window.location.search);
-  const continueMod = _qs.get('continue');
-  const goInventarioOnly = continueMod === 'inv' || continueMod === 'inventario';
-  const openInvDirect =
-    goInventarioOnly && (_qs.get('open') === 'inv' || _qs.get('open') === '1');
-  if (!goInventarioOnly) {
-    history.replaceState({}, '', window.location.pathname);
-    try {
-      await redirectToStDash();
-    } catch (e) {
-      console.error('redirect ST:', e);
-      document.getElementById('module-selector').style.display = 'flex';
-    }
-    return;
-  }
   history.replaceState({}, '', window.location.pathname);
 
   // Rellenar módulo selector
@@ -1456,12 +1441,6 @@ onAuthStateChanged(auth, async (user) => {
   if (cfgSnap.exists() && cfgSnap.data().globalMin) {
     globalMin = cfgSnap.data().globalMin;
     document.getElementById('global-min').value = globalMin;
-  }
-
-  // Desde ST: ?continue=inventario&open=inv → entrar directo al inventario (sin selector)
-  if (openInvDirect) {
-    await switchModule('inventario');
-    return;
   }
 
   document.getElementById('module-selector').style.display = 'flex';
