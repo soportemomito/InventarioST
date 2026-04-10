@@ -82,12 +82,14 @@ service cloud.firestore {
         && request.auth == null
         && request.resource.data.keys().hasOnly(['n'])
         && request.resource.data.n == 1;
+      /* Permite +1 habitual o saltos mayores (ej. alinear S con correlativo ≥10000). */
       allow update: if isSeqDoc()
         && request.auth == null
         && request.resource.data.keys().hasOnly(['n'])
         && request.resource.data.n is int
         && resource.data.n is int
-        && request.resource.data.n == resource.data.n + 1;
+        && request.resource.data.n > resource.data.n
+        && request.resource.data.n <= resource.data.n + 50000;
       allow delete: if false;
       allow create, update, delete: if !isSeqDoc() && request.auth != null;
     }
