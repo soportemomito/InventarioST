@@ -21,6 +21,7 @@ Internal web app for **SoyMomo** to manage spare-parts inventory, stock movement
 
 - **Default:** after a successful login, **approved** users always see the purple **module selector** and choose **Inventory** or **Technical Service (ST)**. This avoids automatic redirects that could fail or feel like a crash.
 - From there, **Servicio Técnico** runs `redirectToStDash()` (same site `./st/dash.html` or external URL from `soymomo_st_dash_url`).
+- **`index.html`** calls **`auth.authStateReady()`** (when available) early in the Firebase module so the session from IndexedDB is restored before UI routing, reducing a misleading login flash when coming back from ST.
 
 ---
 
@@ -56,6 +57,32 @@ Internal web app for **SoyMomo** to manage spare-parts inventory, stock movement
 - **`INFORME_SCRIPT_URL`**: informe / email Web App; can be overridden with `localStorage` key `st_informe_script_url`.
 - **`CAMBIOS_ST_SCRIPT_URL`**: Cambios ST Web App; can be overridden with `st_cambios_st_script_url`.
 - **External ST host:** `localStorage` `soymomo_st_dash_url` (or `__soymomoSetStDashUrl`) when inventory and ST are on different origins.
+- **Back to inventory from ST:** sidebar link targets `../index.html` (or `soymomo_inventario_url` + `/index.html` when ST and inventory use different origins).
+
+---
+
+## ST dashboard client (`st/dash-app.js`)
+
+The ST panel is a **native ES module**. Keep these points in mind when editing:
+
+| Topic | Behavior |
+|--------|----------|
+| **Navigation** | Sidebar uses **event delegation** instead of inline `onclick`, so handlers work reliably with `type="module"`. |
+| **Firebase init** | Uses **`getApps()` / `getApp()`** so the default app is not double-initialized. |
+| **Auth restore** | **`auth.authStateReady()`** runs before waiting for `currentUser` so persisted sessions load cleanly. |
+| **Firestore reads** | Dashboard and auth checks wrap queries in **timeouts** and use **`Promise.allSettled`** where appropriate so one slow or failing query does not leave the UI stuck on spinners forever. |
+| **Syntax** | **Never declare the same function twice** at module scope (e.g. duplicate `escapeAttr`). That causes a **parse error** and the **entire script fails**—symptoms: frozen loaders, stats stay `—`, menu appears dead. |
+| **Mobile (~≤900px)** | Sidebar is off-canvas; a **☰** control in the top bar opens it, with a backdrop tap to close. |
+
+---
+
+## Deploying (e.g. Vercel)
+
+1. Connect the Git repository to Vercel and set the **root directory** to the folder that contains **`index.html`** at the site root (and the `st/` folder).
+2. Pushing to the **production branch** (often `main`) creates a new deployment; the one labeled **Current** under Production is what users hit.
+3. After changing **`st/dash-app.js`**, ask testers to **hard-refresh** the ST URL (e.g. `Ctrl+F5` on `/st/dash.html`) so the browser does not keep an old cached module.
+
+Build logs may show a **Node `engines` warning** from `package.json`; it is informational unless the build actually fails.
 
 ---
 
