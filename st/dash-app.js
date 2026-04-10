@@ -2,7 +2,7 @@
  * Panel ST — datos en Cloud Firestore (colecciones st_validaciones, st_ordenes).
  * Misma app Firebase que el inventario; el usuario debe entrar con sesión de Google ya activa.
  */
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   getFirestore,
@@ -34,9 +34,19 @@ const COL_V = 'st_validaciones';
 const COL_O = 'st_ordenes';
 const META_SERIAL = 'st_meta';
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+/** Evita que getDocs/getCount queden colgados sin red / Firestore bloqueado. */
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(label + ': sin respuesta en ' + ms / 1000 + 's')), ms);
+    }),
+  ]);
+}
 
 const LS_INVENTARIO_URL = 'soymomo_inventario_url';
 
@@ -271,6 +281,9 @@ function setFirestoreHint() {
 }
 
 async function waitForFirebaseUser(maxMs = 12000) {
+  if (typeof auth.authStateReady === 'function') {
+    await auth.authStateReady();
+  }
   if (auth.currentUser) return auth.currentUser;
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => {
@@ -317,9 +330,13 @@ async function checkAuth() {
   if (av) av.textContent = initials;
   if (nm) nm.textContent = AGENT.name;
   try {
-    await getCountFromServer(query(collection(db, COL_V), limit(1)));
+    await withTimeout(
+      getCountFromServer(query(collection(db, COL_V), limit(1))),
+      25000,
+      'Firestore'
+    );
   } catch (e) {
-    toast('Firestore: ' + (e.code || e.message) + '. Revisa reglas de seguridad.', 'error');
+    toast('Firestore: ' + (e.code || e.message) + '. Revisa reglas, red o índices.', 'error', 7000);
     return false;
   }
   setInventarioLinkHref();
@@ -556,19 +573,99 @@ async function postInformeScript(bodyObj) {
   return j;
 }
 
-async function loadDashboard() {
-  document.getElementById('dashFecha').textContent =
-    'Hoy, ' + new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+function renderDashboardLoadError(msg) {
+  const safe = escapeAttr(String(msg || 'Error desconocido'));
+  const df = document.getElementById('dashFecha');
+  if (df) {
+    df.textContent =
+      'Hoy, ' + new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+  const grid = document.getElementById('statsGrid');
+  if (grid) {
+    grid.innerHTML = `<div class="stat-card" style="grid-column:1/-1;max-width:100%;">
+      <div class="stat-label" style="color:#dc2626;">No se pudieron cargar los datos</div>
+      <div class="stat-value" style="font-size:13px;font-weight:500;white-space:normal;line-height:1.4;">${safe}</div>
+      <div class="stat-sub">Revisa la consola (F12), la red o vuelve a entrar desde Inventario → Servicio Técnico.</div>
+    </div>`;
+  }
+  const tb = document.getElementById('recentTbody');
+  if (tb) {
+    tb.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:#991b1b;font-size:13px;">${safe}</td></tr>`;
+  }
+  const dv = document.getElementById('dashValList');
+  if (dv) {
+    dv.innerHTML = `<div style="padding:24px;text-align:center;color:#991b1b;font-size:13px;">${safe}</div>`;
+  }
+}
 
+function aggCount_(res) {
+  if (res.status !== 'fulfilled') return null;
   try {
-    const [totalSnap, pendVSnap, revSnap, listoSnap, pendItemsSnap, ordenesSnap] = await Promise.all([
-      getCountFromServer(collection(db, COL_O)),
-      getCountFromServer(query(collection(db, COL_V), where('estado', '==', 'pendiente'))),
-      getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'En revisión'))),
-      getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'Listo'))),
-      getDocs(query(collection(db, COL_V), where('estado', '==', 'pendiente'), limit(200))),
-      getDocs(query(collection(db, COL_O), orderBy('fecha', 'desc'), limit(120))),
+    return res.value.data().count;
+  } catch {
+    return null;
+  }
+}
+
+async function loadDashboard() {
+  const qMs = 28000;
+  try {
+    const df = document.getElementById('dashFecha');
+    if (df) {
+      df.textContent =
+        'Hoy, ' + new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+
+    const results = await Promise.allSettled([
+      withTimeout(getCountFromServer(collection(db, COL_O)), qMs, 'Total órdenes'),
+      withTimeout(
+        getCountFromServer(query(collection(db, COL_V), where('estado', '==', 'pendiente'))),
+        qMs,
+        'Validación pendiente'
+      ),
+      withTimeout(
+        getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'En revisión'))),
+        qMs,
+        'En revisión'
+      ),
+      withTimeout(
+        getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'Listo'))),
+        qMs,
+        'Listos'
+      ),
+      withTimeout(
+        getDocs(query(collection(db, COL_V), where('estado', '==', 'pendiente'), limit(200))),
+        qMs,
+        'Lista validaciones'
+      ),
+      withTimeout(
+        getDocs(query(collection(db, COL_O), orderBy('fecha', 'desc'), limit(120))),
+        qMs,
+        'Órdenes recientes'
+      ),
     ]);
+
+    const failMsgs = results
+      .map((r, i) =>
+        r.status === 'rejected'
+          ? (r.reason && r.reason.message) || String(r.reason)
+          : null
+      )
+      .filter(Boolean);
+    if (failMsgs.length === results.length) {
+      throw new Error(failMsgs[0] || 'Todas las consultas fallaron');
+    }
+    if (failMsgs.length) {
+      console.warn('[ST dash] Consultas parciales:', failMsgs);
+      toast('Algunos datos tardaron o fallaron. Revisa la red o índices Firestore.', 'warning', 5500);
+    }
+
+    const pendItemsSnap =
+      results[4].status === 'fulfilled' ? results[4].value : { docs: [] };
+    const ordenesSnap =
+      results[5].status === 'fulfilled'
+        ? results[5].value
+        : { forEach: () => {} };
 
     const today = new Date().toISOString().slice(0, 10);
     let hoyIngresos = 0;
@@ -611,10 +708,10 @@ async function loadDashboard() {
       }));
 
     const stats = {
-      total: totalSnap.data().count,
-      en_revision: revSnap.data().count,
-      listo: listoSnap.data().count,
-      validacion_pendiente: pendVSnap.data().count,
+      total: aggCount_(results[0]) ?? '—',
+      en_revision: aggCount_(results[2]) ?? '—',
+      listo: aggCount_(results[3]) ?? '—',
+      validacion_pendiente: aggCount_(results[1]) ?? '—',
       validacion_pendiente_items: pendList,
       hoy: { ingresos: hoyIngresos },
       recientes,
@@ -624,15 +721,20 @@ async function loadDashboard() {
     renderRecentOrders(stats.recientes || []);
     renderDashVal(stats.validacion_pendiente_items || []);
     const badge = document.getElementById('valBadge');
-    const cnt = stats.validacion_pendiente || 0;
-    badge.textContent = cnt;
-    badge.classList.toggle('hidden', cnt === 0);
-  } catch (e) {
-    if (e.code === 'failed-precondition') {
-      toast('Firestore: falta índice compuesto. Abre el enlace del error en la consola del navegador.', 'error');
-    } else {
-      toast('Error cargando estadísticas: ' + e.message, 'error');
+    if (badge) {
+      const rawPend = stats.validacion_pendiente;
+      const cnt = typeof rawPend === 'number' ? rawPend : 0;
+      badge.textContent = cnt;
+      badge.classList.toggle('hidden', cnt === 0);
     }
+  } catch (e) {
+    console.error('loadDashboard', e);
+    if (e.code === 'failed-precondition') {
+      toast('Firestore: falta índice compuesto. Abre el enlace en la consola (F12).', 'error', 8000);
+    } else {
+      toast('Error cargando dashboard: ' + (e.message || e), 'error', 7000);
+    }
+    renderDashboardLoadError(e.message || e.code || e);
   }
 }
 
@@ -2095,10 +2197,6 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;');
 }
 
-function escapeAttr(s) {
-  return String(s || '').replace(/"/g, '&quot;');
-}
-
 /**
  * Inicializa checkboxes TIPO DE FALLA y listeners Otro (técnico / ingresos / falla).
  */
@@ -2384,7 +2482,13 @@ Object.assign(window, {
 
 setFirestoreHint();
 (async () => {
-  const ok = await checkAuth();
-  if (!ok) return;
-  await loadDashboard();
+  try {
+    const ok = await checkAuth();
+    if (!ok) return;
+    await loadDashboard();
+  } catch (e) {
+    console.error('[ST boot]', e);
+    toast('Error al iniciar el panel: ' + (e.message || e), 'error', 8000);
+    renderDashboardLoadError(e.message || e);
+  }
 })();
