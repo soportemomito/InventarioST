@@ -322,6 +322,7 @@ async function checkAuth() {
     toast('Firestore: ' + (e.code || e.message) + '. Revisa reglas de seguridad.', 'error');
     return false;
   }
+  setInventarioLinkHref();
   return true;
 }
 
@@ -340,10 +341,12 @@ function toast(msg, type = 'info', duration = 3500) {
 }
 
 function openModal(id) {
-  document.getElementById(id).classList.add('open');
+  const el = document.getElementById(id);
+  if (el) el.classList.add('open');
 }
 function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
 }
 
 const VIEW_TITLES = {
@@ -355,20 +358,85 @@ const VIEW_TITLES = {
 };
 
 function switchView(name) {
-  document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item[data-view]').forEach((n) => n.classList.remove('active'));
-  const view = document.getElementById(`view-${name}`);
-  if (view) view.classList.add('active');
-  const navItem = document.querySelector(`.nav-item[data-view="${name}"]`);
-  if (navItem) navItem.classList.add('active');
-  document.getElementById('topbarTitle').textContent = VIEW_TITLES[name] || name;
-  const searchViews = ['ordenes'];
-  document.getElementById('topbarSearchWrap').style.display = searchViews.includes(name) ? 'flex' : 'none';
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'validacion') loadValidacion();
-  if (name === 'ordenes') loadOrdenes();
-  if (name === 'cambios') loadCambiosST();
-  if (name === 'mailst') correoStOnEnterView();
+  try {
+    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item[data-view]').forEach((n) => n.classList.remove('active'));
+    const view = document.getElementById(`view-${name}`);
+    if (view) view.classList.add('active');
+    const navItem = document.querySelector(`.nav-item[data-view="${name}"]`);
+    if (navItem) navItem.classList.add('active');
+    const tt = document.getElementById('topbarTitle');
+    if (tt) tt.textContent = VIEW_TITLES[name] || name;
+    const searchViews = ['ordenes'];
+    const sw = document.getElementById('topbarSearchWrap');
+    if (sw) sw.style.display = searchViews.includes(name) ? 'flex' : 'none';
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'validacion') loadValidacion();
+    if (name === 'ordenes') loadOrdenes();
+    if (name === 'cambios') loadCambiosST();
+    if (name === 'mailst') correoStOnEnterView();
+  } catch (e) {
+    console.error('switchView', name, e);
+    toast('Error al cambiar de vista: ' + (e.message || e), 'error');
+  }
+}
+
+function stCloseMobileNav() {
+  document.body.classList.remove('st-nav-open');
+}
+
+/** Clic en sidebar vía delegación (onclick + type=module no siempre exponen funciones al handler inline). */
+function bindStSidebarNav() {
+  const side = document.querySelector('.sidebar');
+  if (!side) return;
+  side.addEventListener('click', (e) => {
+    const linkInv = e.target.closest('a#stNavInventario');
+    if (linkInv) {
+      stCloseMobileNav();
+      return;
+    }
+    const item = e.target.closest('.nav-item[data-view]');
+    if (!item || item.tagName === 'A') return;
+    e.preventDefault();
+    const v = item.getAttribute('data-view');
+    if (!v) return;
+    if (v === 'nueva') abrirNuevaOrden();
+    else switchView(v);
+    stCloseMobileNav();
+  });
+  side.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const item = e.target.closest('.nav-item[data-view]');
+    if (!item || item.tagName === 'A') return;
+    e.preventDefault();
+    item.click();
+  });
+}
+
+function bindStShellUi() {
+  document.getElementById('stMenuBtn')?.addEventListener('click', () => {
+    document.body.classList.toggle('st-nav-open');
+  });
+  document.getElementById('stSidebarBackdrop')?.addEventListener('click', stCloseMobileNav);
+  document.getElementById('stTopNuevaOrden')?.addEventListener('click', () => abrirNuevaOrden());
+  document.getElementById('topbarSearch')?.addEventListener('input', debouncedSearch);
+}
+
+/** Si inventario está en otro dominio, usa localStorage.soymomo_inventario_url para el enlace del menú. */
+function setInventarioLinkHref() {
+  const a = document.getElementById('stNavInventario');
+  if (!a) return;
+  let base = '';
+  try {
+    base = (localStorage.getItem(LS_INVENTARIO_URL) || '').trim();
+  } catch (_) {}
+  const path = 'index.html?continue=inventario&open=inv';
+  if (base.startsWith('http')) {
+    const clean = base.replace(/\/$/, '');
+    a.href = `${clean}/${path}`;
+  } else {
+    a.href = `../${path}`;
+  }
 }
 
 const ESTADO_BADGE = {
@@ -2266,6 +2334,10 @@ async function submitCambiosStForm() {
     }
   }
 }
+
+bindStSidebarNav();
+bindStShellUi();
+setInventarioLinkHref();
 
 Object.assign(window, {
   switchView,
