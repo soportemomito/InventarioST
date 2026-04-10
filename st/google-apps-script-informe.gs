@@ -1,54 +1,5 @@
 /**
- * Web App: generar Google Doc (plantilla orden de ingreso) y/o enviar por Gmail.
- * Lo usa el panel st/dash.html (Firestore) vía doPost; NO reemplaza tus funciones del Sheet.
- *
- * Tus scripts legacy (misma plantilla, misma carpeta de salida):
- *   generarInformesDocsConPlantillaEntrada     → hoja "Entrada recepción"
- *   generarInformesDocsConPlantillaEntradaPE  → hoja "Entradas"
- * Aquí los datos vienen en JSON desde el navegador; makeCopy va al MISMO folder que en Sheets:
- *
- *   Canal E (Sin garantía):  plantilla 1fcwUlvbcFSwDonKNCWlbjkISxPhpECOCbc78dhUOx9A
- *                            carpeta   1RGITbdAModR4aOIDNtfEor949CPLEv4B
- *                            nombre    "Informe Entrada {orden}"
- *   Canal P o S:             plantilla 1DlI3IA_E5nXtLKv370ULVUDSPpIl-j9GcqdYcfv4m5s
- *                            carpeta   1Ni9vY9JcJYCmf22MUJlj93aI6Z5Ecp4L
- *                            nombre    "Informe Entrada Recepción {orden}"
- *
- * Dónde pegar el código (recomendado, “por libro / por hoja”):
- *   Abre tu **mismo** Google Sheet de registro ST → Extensiones → Apps Script. Ahí ya tienes
- *   generarInformesDocsConPlantillaEntrada y …EntradaPE. Añade en ESE proyecto el contenido
- *   de este archivo (doPost + helpers). No necesitas un proyecto Apps Script “global” suelto:
- *   todo queda en el script ligado al libro. Implementar → Aplicación web y usa esa URL /exec
- *   en el dash. Las funciones que recorren filas siguen igual; el dash solo usa doPost.
- *
- * Sin secreto compartido (uso interno). Restringe en Implementar quién puede invocar la Web App.
- *
- * Configuración: Implementar → Aplicación web — Ejecutar como: yo | Acceso: quien corresponda.
- * URL …/exec → INFORME_SCRIPT_URL o modal del dash.
- *
- * ── Permiso DocumentApp.openById / Google Docs ──
- * Si aparece "No cuentas con el permiso… auth/documents":
- *   1) En el proyecto Apps Script: ⚙ Ajustes del proyecto → Ámbitos OAuth → añade
- *      https://www.googleapis.com/auth/documents (o copia st/appsscript.json con oauthScopes).
- *   2) Ejecuta una vez cualquier función del editor (p. ej. doGet) y acepta el consentimiento.
- *   3) Implementar → Nueva implementación de la aplicación web (para que la /exec use la nueva versión).
- *
- * ═══════════════════════════════════════════════════════════════════════════
- * CHECKLIST EN ORDEN (solo este archivo + Drive/Gmail)
- * ───────────────────────────────────────────────────────────────────────────
- * 1) Abre el proyecto Apps Script (ideal: el vinculado a tu Sheet de registro ST).
- * 2) Pega o fusiona TODO este .gs (doGet, doPost, helpers). Guarda (Ctrl+S).
- * 3) Ámbitos OAuth: Proyecto → ⚙ Ajustes → Ámbitos, o sube manifest appsscript.json
- *    del repo (debe incluir …/auth/documents, drive, gmail si envías correos).
- * 4) En el editor: elige función doGet → Ejecutar → acepta permisos (cuenta que
- *    será "Ejecutar como" en la Web App).
- * 5) Cada plantilla Google Doc (IDs en TEMPLATE_BY_CANAL, SALIDA_ST_TEMPLATE_ID):
- *    compártela con esa misma cuenta (Editor) o que el Doc sea suyo.
- * 6) Implementar → Aplicación web → Nueva implementación → Ejecutar como: Yo →
- *    Acceso: según tu política (a veces "Cualquiera" para CORS desde el dash).
- * 7) Copia la URL que termina en /exec al panel ST (INFORME_SCRIPT_URL / modal).
- * 8) En cada plantilla Doc, el texto debe ser exactamente <<Orden>>, <<Nombre>>, …
- *    (ver applyPlaceholders_). Si cambias un marcador, añade replaceText aquí.
+ Este va en el registro de ST
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
