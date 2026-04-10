@@ -735,10 +735,13 @@ async function submit() {
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Enviar solicitud';
+    const code = err && err.code ? String(err.code) : '';
+    console.error('[ST ingreso]', code || '(sin código)', err);
     let msg = String(err && err.message ? err.message : err || '');
-    if (/insufficient permissions|permission-denied|Missing or insufficient permissions/i.test(msg)) {
+    if (/insufficient permissions|permission-denied|Missing or insufficient permissions/i.test(msg + ' ' + code)) {
       msg =
-        'No pudimos registrar tu solicitud por un tema de permisos del sistema. Por favor intenta más tarde o contacta a Soporte SoyMomo.';
+        'No pudimos registrar la solicitud (Firebase: permisos). Quien administra el proyecto debe publicar las reglas de Firestore actualizadas (colecciones st_validaciones y st_meta). En el navegador, F12 → Consola, revisa el error completo.' +
+        (code ? '\n\nCódigo: ' + code : '');
     }
     alert('No se pudo enviar tu solicitud:\n' + msg);
   }
