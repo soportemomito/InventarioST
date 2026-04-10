@@ -81,7 +81,7 @@ const SHEETS_EXEC_URL_E =
 
 /** Web App st/google-apps-script-informe.gs (Implementar → URL /exec) */
 const INFORME_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbyqS8JXVD_qavR6OMuxk2Bc0ob_62vcU4qT2V3a9R-LjfCIBNsED5xmWhgR5oYGbK3r9g/exec';
+  'https://script.google.com/macros/s/AKfycbz3Mz5_sc9jDpZlkDg13xw4qpgWQNJfi2_tjN3K9j2Uf1tRUfWGD7cjI5NmmgX9mE8c/exec';
 
 /** Opcional: localStorage.setItem('st_informe_script_url','https://…/exec') */
 const LS_INFORME_URL = 'st_informe_script_url';
@@ -146,9 +146,20 @@ function limpiarInformeConfigLocal() {
   }
 }
 
-const LS_CAMBIOS = 'st_cambios_garantia_v1';
-const LOGO_URL_CAMBIOS_ST =
-  'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdno4OXRqYWFwdW54ZWxvY24wdGk3OHdsMGJ0b3hwMmVpdmxzYTRkNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/DwJu8tKcfVX9aRPWsD/giphy.gif';
+const LS_CAMBIOS_SCRIPT_URL = 'st_cambios_st_script_url';
+/** Pega aquí la URL /exec tras publicar st/google-apps-script-cambios-st.gs */
+const CAMBIOS_ST_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbwboQyvtZYnwnU6OgkqV0Ck_wTf3jE5ILRP1N7UesKDeyeMqGVDt_ssC1mGTmLPFFDn/exec';
+/** @type {{ headers: string[], rows: Record<string,string>[] }} */
+let cambiosStCache = { headers: [], rows: [] };
+
+function getCambiosStScriptUrl() {
+  try {
+    const u = (localStorage.getItem(LS_CAMBIOS_SCRIPT_URL) || '').trim();
+    if (u && u.startsWith('http')) return u.replace(/\/$/, '');
+  } catch (_) {}
+  return (CAMBIOS_ST_SCRIPT_URL || '').trim().replace(/\/$/, '');
+}
 
 let TOKEN = '';
 let AGENT = null;
@@ -301,8 +312,10 @@ async function checkAuth() {
     .map((w) => w[0] || '')
     .join('')
     .toUpperCase();
-  document.getElementById('agentAvatarSidebar').textContent = initials;
-  document.getElementById('agentNameSidebar').textContent = AGENT.name;
+  const av = document.getElementById('stUserbarAvatar');
+  const nm = document.getElementById('stUserbarName');
+  if (av) av.textContent = initials;
+  if (nm) nm.textContent = AGENT.name;
   try {
     await getCountFromServer(query(collection(db, COL_V), limit(1)));
   } catch (e) {
@@ -364,7 +377,6 @@ const ESTADO_BADGE = {
   Listo: '<span class="badge badge-green">Listo ✓</span>',
   Entregado: '<span class="badge badge-gray">Entregado</span>',
   'No reparado': '<span class="badge badge-red">No reparado</span>',
-  'Pendiente presupuesto': '<span class="badge badge-purple">Pdte. presupuesto</span>',
 };
 
 function estadoBadge(e) {
@@ -481,12 +493,11 @@ async function loadDashboard() {
     'Hoy, ' + new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
 
   try {
-    const [totalSnap, pendVSnap, revSnap, listoSnap, presSnap, pendItemsSnap, ordenesSnap] = await Promise.all([
+    const [totalSnap, pendVSnap, revSnap, listoSnap, pendItemsSnap, ordenesSnap] = await Promise.all([
       getCountFromServer(collection(db, COL_O)),
       getCountFromServer(query(collection(db, COL_V), where('estado', '==', 'pendiente'))),
       getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'En revisión'))),
       getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'Listo'))),
-      getCountFromServer(query(collection(db, COL_O), where('estado', '==', 'Pendiente presupuesto'))),
       getDocs(query(collection(db, COL_V), where('estado', '==', 'pendiente'), limit(200))),
       getDocs(query(collection(db, COL_O), orderBy('fecha', 'desc'), limit(120))),
     ]);
@@ -535,7 +546,6 @@ async function loadDashboard() {
       total: totalSnap.data().count,
       en_revision: revSnap.data().count,
       listo: listoSnap.data().count,
-      pendiente_presup: presSnap.data().count,
       validacion_pendiente: pendVSnap.data().count,
       validacion_pendiente_items: pendList,
       hoy: { ingresos: hoyIngresos },
@@ -564,7 +574,6 @@ function renderStats(s) {
     { label: 'Total órdenes', value: s.total ?? '—', sub: `Hoy: ${s.hoy?.ingresos ?? 0} ingresadas` },
     { label: 'En revisión', value: s.en_revision ?? '—' },
     { label: 'Listos p/entrega', value: s.listo ?? '—', dot: '#16a34a' },
-    { label: 'Pdte. presupuesto', value: s.pendiente_presup ?? '—', dot: '#d97706' },
     { label: 'Validación pend.', value: s.validacion_pendiente ?? '—', dot: '#7c3aed' },
   ];
   grid.innerHTML = items
@@ -1150,7 +1159,7 @@ function renderOrdenModal(o) {
       <div class="form-section-title">Cambiar estado</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <select class="form-control" id="cambiarEstadoSel" style="width:auto;min-width:200px;">
-          ${['Ingresado', 'En revisión', 'Listo', 'Entregado', 'No reparado', 'Pendiente presupuesto']
+          ${['Ingresado', 'En revisión', 'Listo', 'Entregado', 'No reparado']
             .map((e) => `<option ${e === o.estado ? 'selected' : ''}>${e}</option>`)
             .join('')}
         </select>
@@ -1300,6 +1309,7 @@ async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, flujoCorreo) {
     informe_url: o.informe_url || '',
     evidencias_url: evidenciasUrl || '',
     flujo_correo: fc,
+    orden_status: o.estado || '',
   });
   if (j.informe_url && j.informe_url !== o.informe_url) {
     await updateDoc(doc(db, COL_O, ordenId), { informe_url: j.informe_url });
@@ -1425,6 +1435,7 @@ async function correoStEnviar(kind) {
       try {
         await enviarCorreoInformeOrden(id, evid, flujo);
         ok++;
+        await new Promise((r) => setTimeout(r, 500));
         correoStAppendLog(flujo, {
           orden: num,
           cliente,
@@ -1987,49 +1998,27 @@ async function submitNuevaOrden() {
   }
 }
 
-function readCambiosLS() {
-  try {
-    const raw = localStorage.getItem(LS_CAMBIOS);
-    return raw ? JSON.parse(raw) : [];
-  } catch (_) {
-    return [];
-  }
-}
+const CST_TIPO_FALLA_OPTS = [
+  'Firmware / Sistema Operativo',
+  'Bateria',
+  'Display',
+  'Touch',
+  'Parlante',
+  'Microfono',
+  'Botones (Encendido o Volumen)',
+  'Cámara',
+  'Antena',
+  'Cámara Baby Monitor (Lite o BMPRO2)',
+  'Color Dispositivo',
+  'No Enciende Monitor',
+  'No Enciende Cámara',
+  'No Carga',
+  'No Enciende',
+  'Usado',
+  'Otro',
+];
 
-function writeCambiosLS(rows) {
-  try {
-    localStorage.setItem(LS_CAMBIOS, JSON.stringify(rows));
-  } catch (_) {}
-}
-
-function loadCambiosST() {
-  const tbody = document.getElementById('cambiosTbody');
-  if (!tbody) return;
-  const rows = readCambiosLS();
-  if (!rows.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:24px;">Sin registros. Usa «+ Agregar fila» para pruebas piloto.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows
-    .map(
-      (r) => `
-    <tr>
-      <td><strong>${escapeHtml(r.orden)}</strong></td>
-      <td>${escapeHtml(r.cliente)}</td>
-      <td>${escapeHtml(r.correo)}</td>
-      <td>${r.estado === 'listo' ? '<span class="badge badge-green">Listo</span>' : '<span class="badge badge-amber">Pendiente</span>'}</td>
-      <td>${r.correo_enviado ? '✓' : '—'}</td>
-      <td style="white-space:nowrap;">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="marcarCambioListo('${r.id}')">Listo</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="previewCambioMail('${r.id}')">Ver mail</button>
-        <button type="button" class="btn btn-danger btn-sm" onclick="eliminarCambio('${r.id}')">✕</button>
-      </td>
-    </tr>
-  `
-    )
-    .join('');
-}
+let cambiosFilterDebounce = null;
 
 function escapeHtml(s) {
   return String(s || '')
@@ -2038,75 +2027,244 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;');
 }
 
-function abrirModalCambio() {
-  document.getElementById('cambioModalTitle').textContent = 'Nuevo cambio ST';
-  document.getElementById('cm_orden').value = '';
-  document.getElementById('cm_cliente').value = '';
-  document.getElementById('cm_correo').value = '';
-  openModal('cambioModal');
+function escapeAttr(s) {
+  return String(s || '').replace(/"/g, '&quot;');
 }
 
-function guardarCambioRow() {
-  const orden = document.getElementById('cm_orden').value.trim();
-  const cliente = document.getElementById('cm_cliente').value.trim();
-  const correo = document.getElementById('cm_correo').value.trim();
-  if (!orden || !cliente || !correo) {
-    toast('Completa orden, cliente y correo', 'warning');
+/**
+ * Inicializa checkboxes TIPO DE FALLA y listeners Otro (técnico / ingresos / falla).
+ */
+function initCambiosStFormControls() {
+  const grid = document.getElementById('cst_falla_grid');
+  if (grid && !grid.dataset.ready) {
+    grid.dataset.ready = '1';
+    grid.innerHTML = CST_TIPO_FALLA_OPTS.map(
+      (l) =>
+        `<label class="check-item"><input type="checkbox" name="cst_falla" value="${escapeAttr(l)}"/> ${escapeHtml(l)}</label>`
+    ).join('');
+  }
+  if (window.__cstFormListeners) return;
+  window.__cstFormListeners = true;
+  const syncTec = () => {
+    const v = document.querySelector('input[name="cst_tecnico"]:checked')?.value;
+    const o = document.getElementById('cst_tecnico_otro');
+    if (o) o.style.display = v === '__otro' ? 'block' : 'none';
+  };
+  const syncIng = () => {
+    const v = document.querySelector('input[name="cst_ingresos"]:checked')?.value;
+    const o = document.getElementById('cst_ingresos_otro');
+    if (o) o.style.display = v === '__otro' ? 'block' : 'none';
+  };
+  const syncFallaOtro = () => {
+    const chk = document.querySelector('input[name="cst_falla"][value="Otro"]');
+    const o = document.getElementById('cst_falla_otro');
+    if (o && chk) o.style.display = chk.checked ? 'block' : 'none';
+  };
+  document.querySelectorAll('input[name="cst_tecnico"]').forEach((r) => {
+    r.addEventListener('change', syncTec);
+  });
+  document.querySelectorAll('input[name="cst_ingresos"]').forEach((r) => {
+    r.addEventListener('change', syncIng);
+  });
+  document.getElementById('cst_falla_grid')?.addEventListener('change', syncFallaOtro);
+}
+
+/**
+ * Descarga filas desde Apps Script (action=listar_cambios).
+ */
+async function loadCambiosST() {
+  const base = getCambiosStScriptUrl();
+  const thead = document.getElementById('cambiosThead');
+  const tbody = document.getElementById('cambiosTbody');
+  if (!tbody) return;
+  if (!base) {
+    if (thead) thead.innerHTML = '<tr><th>Sin URL</th></tr>';
+    tbody.innerHTML =
+      '<tr><td style="padding:24px;color:#92400e;">Configura la Web App: en consola <code>localStorage.setItem(\'st_cambios_st_script_url\',\'https://…/exec\')</code> o edita CAMBIOS_ST_SCRIPT_URL en dash-app.js.</td></tr>';
+    toast('Falta URL de Apps Script para Cambios ST', 'warning');
     return;
   }
-  const rows = readCambiosLS();
-  const id = 'cm-' + Date.now();
-  rows.push({ id, orden, cliente, correo, estado: 'pendiente', correo_enviado: false });
-  writeCambiosLS(rows);
-  closeModal('cambioModal');
-  loadCambiosST();
-  toast('Fila guardada (solo en este navegador)', 'success');
-}
-
-function marcarCambioListo(id) {
-  const rows = readCambiosLS();
-  const r = rows.find((x) => x.id === id);
-  if (r) {
-    r.estado = 'listo';
-    writeCambiosLS(rows);
-    loadCambiosST();
-    toast('Marcado como listo', 'success');
+  tbody.innerHTML = '<tr class="loading-row"><td><span class="spinner spinner-dark"></span></td></tr>';
+  try {
+    const res = await fetch(`${base}?action=listar_cambios`);
+    const j = await res.json();
+    if (j.error) throw new Error(j.error);
+    cambiosStCache = { headers: j.headers || [], rows: j.rows || [] };
+    renderCambiosSTTable();
+    toast('Cambios ST actualizado', 'success', 2200);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td style="padding:24px;color:#b91c1c;">${escapeHtml(e.message)}</td></tr>`;
+    toast('Error cargando hoja: ' + e.message, 'error');
   }
 }
 
-function eliminarCambio(id) {
-  if (!confirm('¿Eliminar esta fila de prueba?')) return;
-  writeCambiosLS(readCambiosLS().filter((x) => x.id !== id));
-  loadCambiosST();
+function debouncedRenderCambiosST() {
+  clearTimeout(cambiosFilterDebounce);
+  cambiosFilterDebounce = setTimeout(() => renderCambiosSTTable(), 200);
 }
 
-function buildCambioEmailHtml({ cliente, orden }) {
-  return `
-<div style="background:#6d28e9; padding:30px 10px; font-family: Arial, sans-serif;">
-  <div style="max-width:600px; margin:auto; background:#f5edff; border-radius:12px; padding:30px;">
-    <div style="text-align:center; margin-bottom:25px;">
-      <img src="${LOGO_URL_CAMBIOS_ST}" alt="SoyMomo" width="180" />
-    </div>
-    <hr style="border:none; border-top:1px solid #d6c7ff; margin:30px 0;">
-    <h2 style="text-align:center; margin:0 0 10px 0; color:#2b0a3d;">Tu nuevo equipo ya está disponible ✅</h2>
-    <p style="text-align:center; color:#5a3b6e; font-size:14px; margin-bottom:25px;">El nuevo dispositivo está listo para retiro.</p>
-    <div style="background:#ede4ff; border:1px solid #d6c7ff; padding:20px; border-radius:10px; margin:25px 0;">
-      <p style="margin:0; font-size:14px; color:#2b0a3d; text-align:center;"><strong>Orden:</strong> ST ${escapeHtml(orden)}</p>
-    </div>
-    <p style="font-size:14px; color:#2b0a3d;">Hola <strong>${escapeHtml(cliente)}</strong></p>
-    <p style="font-size:14px; color:#2b0a3d; line-height:1.6;">Debido a la alta demanda, el stock presentó un retraso. Sin embargo, <strong>tu equipo ya se encuentra disponible para ser retirado.</strong></p>
-    <p style="font-size:14px; color:#2b0a3d;">Gracias por tu paciencia y confianza.</p>
-    <hr style="border:none; border-top:1px solid #d6c7ff; margin:30px 0;">
-    <p style="font-size:13px; color:#5a3b6e; text-align:center; margin:0;">Servicio Técnico SoyMomo</p>
-  </div>
-</div>`;
+/**
+ * Renderiza tabla con encabezados de la hoja y aplica clases por estado / entregado.
+ */
+function renderCambiosSTTable() {
+  const thead = document.getElementById('cambiosThead');
+  const tbody = document.getElementById('cambiosTbody');
+  if (!thead || !tbody) return;
+  const { headers, rows } = cambiosStCache;
+  const q = (document.getElementById('cambiosFilter')?.value || '').trim().toLowerCase();
+  let list = rows;
+  if (q) {
+    list = rows.filter((r) => {
+      const ord = String(r['N ORDEN'] || r['N° ORDEN'] || r['N orden'] || '').toLowerCase();
+      const tec = String(r['TECNICO'] || r['TÉCNICO'] || '').toLowerCase();
+      return ord.includes(q) || tec.includes(q);
+    });
+  }
+  if (!headers.length) {
+    thead.innerHTML = '<tr><th>—</th></tr>';
+    tbody.innerHTML =
+      '<tr><td style="text-align:center;padding:24px;color:#9ca3af;">La hoja está vacía o sin encabezados.</td></tr>';
+    return;
+  }
+  thead.innerHTML = `<tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
+  if (!list.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="' +
+      headers.length +
+      '" style="text-align:center;padding:24px;color:#9ca3af;">Sin filas (o sin coincidencias con el filtro).</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list
+    .map((r) => {
+      const est = String(r['ESTADO DEL DISPOSITIVO'] || '').toLowerCase();
+      const ent = String(r['ENTREGADO A OPERACIONES'] || '').toLowerCase();
+      let cls = '';
+      if (est.includes('irreparable')) cls += ' cambios-irr';
+      else if (est.includes('reparable')) cls += ' cambios-rep';
+      if (ent === 'sí' || ent === 'si') cls += ' cambios-ent-si';
+      else if (ent === 'no') cls += ' cambios-ent-no';
+      return (
+        `<tr class="${cls.trim()}">` +
+        headers.map((h) => `<td title="${escapeAttr(r[h] || '')}">${escapeHtml(r[h] || '')}</td>`).join('') +
+        `</tr>`
+      );
+    })
+    .join('');
 }
 
-function previewCambioMail(id) {
-  const r = readCambiosLS().find((x) => x.id === id);
-  if (!r) return;
-  document.getElementById('cambioPreviewBody').innerHTML = buildCambioEmailHtml({ cliente: r.cliente, orden: r.orden });
-  openModal('cambioPreviewModal');
+function abrirModalCambiosSt() {
+  initCambiosStFormControls();
+  document.getElementById('cst_correo').value = '';
+  document.getElementById('cst_n_orden').value = '';
+  document.querySelectorAll('input[name="cst_tecnico"]').forEach((x) => (x.checked = false));
+  document.querySelectorAll('input[name="cst_caja"]').forEach((x) => (x.checked = false));
+  document.querySelectorAll('input[name="cst_sim"]').forEach((x) => (x.checked = false));
+  document.querySelectorAll('input[name="cst_ingresos"]').forEach((x) => (x.checked = false));
+  document.querySelectorAll('input[name="cst_falla"]').forEach((x) => (x.checked = false));
+  document.getElementById('cst_tecnico_otro').value = '';
+  document.getElementById('cst_ingresos_otro').value = '';
+  document.getElementById('cst_falla_otro').value = '';
+  document.getElementById('cst_imei').value = '';
+  document.querySelectorAll('input[name="cst_estado_dev"]').forEach((x) => (x.checked = false));
+  document.querySelectorAll('input[name="cst_form"]').forEach((x) => (x.checked = false));
+  document.querySelectorAll('input[name="cst_entregado"]').forEach((x) => (x.checked = false));
+  openModal('cambiosStModal');
+}
+
+/**
+ * Envía fila nueva a Apps Script (append_cambio).
+ */
+async function submitCambiosStForm() {
+  const base = getCambiosStScriptUrl();
+  if (!base) {
+    toast('Falta URL Web App Cambios ST', 'warning');
+    return;
+  }
+  const correo = document.getElementById('cst_correo')?.value.trim();
+  const nOrden = document.getElementById('cst_n_orden')?.value.trim();
+  const tecEl = document.querySelector('input[name="cst_tecnico"]:checked');
+  let tecnico = tecEl ? tecEl.value : '';
+  if (tecnico === '__otro') tecnico = document.getElementById('cst_tecnico_otro')?.value.trim() || '';
+  const caja = document.querySelector('input[name="cst_caja"]:checked')?.value || '';
+  const sim = document.querySelector('input[name="cst_sim"]:checked')?.value || '';
+  const ingEl = document.querySelector('input[name="cst_ingresos"]:checked');
+  let ingresos = ingEl ? ingEl.value : '';
+  if (ingresos === '__otro') ingresos = document.getElementById('cst_ingresos_otro')?.value.trim() || '';
+  const fallas = [...document.querySelectorAll('input[name="cst_falla"]:checked')].map((x) => x.value);
+  const fallaOtroTxt = document.getElementById('cst_falla_otro')?.value.trim() || '';
+  if (fallas.includes('Otro') && fallaOtroTxt) {
+    const i = fallas.indexOf('Otro');
+    fallas[i] = 'Otro: ' + fallaOtroTxt;
+  }
+  const tipoFalla = fallas.join('; ');
+  const imei = document.getElementById('cst_imei')?.value.trim() || '';
+  const estDev = document.querySelector('input[name="cst_estado_dev"]:checked')?.value || '';
+  const formSt = document.querySelector('input[name="cst_form"]:checked')?.value || '';
+  const entregado = document.querySelector('input[name="cst_entregado"]:checked')?.value || '';
+
+  if (
+    !correo ||
+    !nOrden ||
+    !tecnico ||
+    !caja ||
+    !sim ||
+    ingresos === '' ||
+    !tipoFalla ||
+    !imei ||
+    !estDev ||
+    !formSt ||
+    !entregado
+  ) {
+    toast('Completa todos los campos obligatorios (*)', 'warning');
+    return;
+  }
+
+  const row = {
+    'Correo electrónico': correo,
+    'N ORDEN': nOrden,
+    TECNICO: tecnico,
+    'CONTIENE CAJA': caja,
+    'CONTIENE SIM': sim,
+    'NUMERO DE INGRESOS EXTRA A SERVICIO TECNICO': ingresos,
+    'TIPO DE FALLA': tipoFalla,
+    'IMEI (RELOJ)': imei,
+    'ESTADO DEL DISPOSITIVO': estDev,
+    'FORMULARIO DE CAMBIOS ST': formSt,
+    'ENTREGADO A OPERACIONES': entregado,
+  };
+
+  const btn = document.getElementById('cstSubmitBtn');
+  const prev = btn?.innerHTML;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner spinner-dark"></span> Guardando…';
+  }
+  try {
+    const res = await fetch(base, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'append_cambio', row }),
+    });
+    const text = await res.text();
+    let j;
+    try {
+      j = JSON.parse(text);
+    } catch {
+      throw new Error(text.slice(0, 200));
+    }
+    if (!res.ok || j.error) throw new Error(j.error || 'Error');
+    closeModal('cambiosStModal');
+    toast('Fila agregada en «Cambios ST»', 'success');
+    await loadCambiosST();
+  } catch (e) {
+    toast('No se pudo guardar: ' + e.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = prev || '<span>Guardar en hoja</span>';
+    }
+  }
 }
 
 Object.assign(window, {
@@ -2146,11 +2304,9 @@ Object.assign(window, {
   submitNuevaOrden,
   togglePlazoOtro,
   loadCambiosST,
-  abrirModalCambio,
-  guardarCambioRow,
-  marcarCambioListo,
-  eliminarCambio,
-  previewCambioMail,
+  debouncedRenderCambiosST,
+  abrirModalCambiosSt,
+  submitCambiosStForm,
   salir,
 });
 
