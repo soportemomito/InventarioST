@@ -78,10 +78,13 @@ service cloud.firestore {
         return docId == 'seq_P' || docId == 'seq_E' || docId == 'seq_S';
       }
       allow read: if isSeqDoc() || request.auth != null;
+      /* Primer alta del contador: el formulario público puede inicializar n (p. ej. S en 10000 si no existía doc). */
       allow create: if isSeqDoc()
         && request.auth == null
         && request.resource.data.keys().hasOnly(['n'])
-        && request.resource.data.n == 1;
+        && request.resource.data.n is int
+        && request.resource.data.n >= 1
+        && request.resource.data.n <= 200000;
       /* Permite +1 habitual o saltos mayores (ej. alinear S con correlativo ≥10000). */
       allow update: if isSeqDoc()
         && request.auth == null
