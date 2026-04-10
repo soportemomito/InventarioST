@@ -69,6 +69,11 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null;
     }
 
+    /*
+     * Órdenes ST: el dash guarda informe_url / informe_salida_url y borradores de salida vía updateDoc.
+     * La generación y el envío de correo ocurren en Apps Script (Web App); Firestore solo persiste URLs y datos de orden.
+     * No depende de st_meta/seq_* ni de users.status (solo hace falta request.auth != null).
+     */
     match /st_ordenes/{docId} {
       allow read, write: if request.auth != null;
     }
@@ -78,21 +83,22 @@ service cloud.firestore {
         return docId == 'seq_P' || docId == 'seq_E' || docId == 'seq_S';
       }
       allow read: if isSeqDoc() || request.auth != null;
-      /* Primer alta del contador: el formulario público puede inicializar n (p. ej. S en 10000 si no existía doc). */
+      /*
+       * Contadores seq_* (N° correlativo): formulario público + panel al aprobar ingreso.
+       * No intervienen en generar informe entrada/salida ni envío de correos (eso es st_ordenes + Apps Script).
+       */
       allow create: if isSeqDoc()
-        && request.auth == null
         && request.resource.data.keys().hasOnly(['n'])
         && request.resource.data.n is int
         && request.resource.data.n >= 1
         && request.resource.data.n <= 200000;
-      /* Permite +1 habitual o saltos mayores (ej. alinear S con correlativo ≥10000). */
+      /* >= permite alinear con número ya reservado; el cliente evita escritura si newVal == seqN. */
       allow update: if isSeqDoc()
-        && request.auth == null
-        && request.resource.data.keys().hasOnly(['n'])
         && request.resource.data.n is int
         && resource.data.n is int
-        && request.resource.data.n > resource.data.n
-        && request.resource.data.n <= resource.data.n + 50000;
+        && request.resource.data.n >= resource.data.n
+        && request.resource.data.n <= resource.data.n + 50000
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['n']);
       allow delete: if false;
       allow create, update, delete: if !isSeqDoc() && request.auth != null;
     }
