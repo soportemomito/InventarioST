@@ -19,7 +19,9 @@ import {
   serverTimestamp,
   runTransaction,
   getCountFromServer,
+  arrayUnion,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDzCUE7t1T3oyM48jej8gWTRU_n2Cb1hec',
@@ -34,9 +36,47 @@ const COL_V = 'st_validaciones';
 const COL_O = 'st_ordenes';
 const META_SERIAL = 'st_meta';
 
+/** Sufijo mínimo del correlativo por canal (S arranca en 10000). */
+const ORDEN_SUFFIX_MIN = { P: 1, E: 1, S: 10000 };
+
+const ST_ADMIN_EMAILS = new Set(
+  ['soporte@soymomo.com', 'alvarovillena7@gmail.com'].map((e) => e.toLowerCase())
+);
+
+/** Se rellena en checkAuth leyendo users/{uid} (mismo criterio que index.html para role). */
+let stAdminFromFirestore = false;
+
+function isStAdminUser() {
+  const e = (AGENT?.email || '').toLowerCase().trim();
+  if (ST_ADMIN_EMAILS.has(e)) return true;
+  return stAdminFromFirestore;
+}
+
+/** Presupuesto: acepta 45000, 45.000, 45 000, 45000,5 (coma decimal). */
+function parsePresupuestoCLP(raw) {
+  if (raw == null) return null;
+  let t = String(raw).trim();
+  if (!t) return null;
+  t = t.replace(/\s/g, '');
+  if (t.includes(',') && t.includes('.')) {
+    if (t.lastIndexOf(',') > t.lastIndexOf('.')) t = t.replace(/\./g, '').replace(',', '.');
+    else t = t.replace(/,/g, '');
+  } else if (t.includes(',')) {
+    const parts = t.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) t = parts[0].replace(/\./g, '') + '.' + parts[1];
+    else t = t.replace(/,/g, '');
+  } else {
+    t = t.replace(/\./g, '');
+  }
+  const n = Number(t);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n);
+}
+
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 /** Evita que getDocs/getCount queden colgados sin red / Firestore bloqueado. */
 function withTimeout(promise, ms, label) {
@@ -180,6 +220,8 @@ let ordenesTotal = 0;
 let ordenesDebounce = null;
 let ordenesCache = [];
 let currentOrden = null;
+/** Si true, el modal incluye el flujo técnico (salida, evidencias) y al abrir Ingresado → En revisión. */
+let ordenModalFromTecnico = false;
 let pendingAprobacion = { id: null, canal: null };
 let pendingRechazoId = null;
 let nuevaOrdenCanal = null;
@@ -271,15 +313,6 @@ async function fetchSolicitudFromSheets(num, tipo) {
   return data;
 }
 
-function setFirestoreHint() {
-  const el = document.getElementById('api-hint');
-  if (!el) return;
-  el.style.display = '';
-  el.innerHTML =
-    '<span title="ST usa Firestore: st_validaciones (ingreso) y st_ordenes (dash). No son products/movements. Colecciones st_* solo aparecen en la consola tras el primer documento.">Datos: <strong>Firebase</strong><code style="font-size:10px;margin:0 4px;">st_validaciones · st_ordenes</code>' +
-    ' · Sheets <span style="color:#64748b;">P/E</span></span>';
-}
-
 async function waitForFirebaseUser(maxMs = 12000) {
   if (typeof auth.authStateReady === 'function') {
     await auth.authStateReady();
@@ -325,10 +358,43 @@ async function checkAuth() {
     .map((w) => w[0] || '')
     .join('')
     .toUpperCase();
-  const av = document.getElementById('stUserbarAvatar');
-  const nm = document.getElementById('stUserbarName');
-  if (av) av.textContent = initials;
+  const nm = document.getElementById('stInvUserbarName') || document.getElementById('stUserbarName');
+  const img = document.getElementById('stInvUserbarImg');
+  const ini = document.getElementById('stInvUserbarInit');
+  const photo = auth.currentUser?.photoURL;
   if (nm) nm.textContent = AGENT.name;
+  if (img && ini) {
+    if (photo) {
+      img.src = photo;
+      img.alt = AGENT.name || '';
+      img.style.display = 'block';
+      ini.style.display = 'none';
+    } else {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+      ini.style.display = 'flex';
+      ini.textContent = initials;
+    }
+  }
+  const av = document.getElementById('stUserbarAvatar');
+  if (av) av.textContent = initials;
+  stAdminFromFirestore = false;
+  try {
+    const uid = auth.currentUser?.uid;
+    if (uid) {
+      const uSnap = await getDoc(doc(db, 'users', uid));
+      if (uSnap.exists()) {
+        const role = String(uSnap.data().role || '').toLowerCase();
+        if (role === 'admin') stAdminFromFirestore = true;
+      }
+    }
+  } catch (_) {
+    /* sin permiso o offline: solo lista de correos */
+  }
+  const admL = document.getElementById('stUserbarAdminLink');
+  const admBadge = document.getElementById('stUserbarAdminBadge');
+  if (admL) admL.style.display = isStAdminUser() ? 'inline-flex' : 'none';
+  if (admBadge) admBadge.style.display = isStAdminUser() ? 'inline-block' : 'none';
   try {
     await withTimeout(
       getCountFromServer(query(collection(db, COL_V), limit(1))),
@@ -370,6 +436,7 @@ const VIEW_TITLES = {
   dashboard: 'Dashboard',
   validacion: 'Proceso de validación',
   ordenes: 'Órdenes',
+  tecnico: 'Técnico',
   mailst: 'Envío correos',
   cambios: 'Cambios garantía ST',
 };
@@ -392,6 +459,10 @@ function switchView(name) {
     if (name === 'ordenes') loadOrdenes();
     if (name === 'cambios') loadCambiosST();
     if (name === 'mailst') correoStOnEnterView();
+    if (name === 'tecnico') {
+      loadTecnicoOrdenes();
+      correoStRenderLogTable('salida_tec');
+    }
   } catch (e) {
     console.error('switchView', name, e);
     toast('Error al cambiar de vista: ' + (e.message || e), 'error');
@@ -441,19 +512,18 @@ function bindStShellUi() {
 
 /** Si inventario está en otro dominio, usa localStorage.soymomo_inventario_url para el enlace del menú. */
 function setInventarioLinkHref() {
-  const a = document.getElementById('stNavInventario');
-  if (!a) return;
   let base = '';
   try {
     base = (localStorage.getItem(LS_INVENTARIO_URL) || '').trim();
   } catch (_) {}
   const path = 'index.html';
-  if (base.startsWith('http')) {
-    const clean = base.replace(/\/$/, '');
-    a.href = `${clean}/${path}`;
-  } else {
-    a.href = `../${path}`;
-  }
+  const indexHref = base.startsWith('http') ? `${base.replace(/\/$/, '')}/${path}` : `../${path}`;
+  const sep = indexHref.includes('?') ? '&' : '?';
+  const invHref = `${indexHref}${sep}continue=inventario`;
+  const admHref = `${indexHref}${sep}continue=admin`;
+  document.getElementById('stNavInventario')?.setAttribute('href', invHref);
+  document.getElementById('stUserbarInvLink')?.setAttribute('href', invHref);
+  document.getElementById('stUserbarAdminLink')?.setAttribute('href', admHref);
 }
 
 const ESTADO_BADGE = {
@@ -483,6 +553,13 @@ function escapeAttr(s) {
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;');
+}
+
+function escapeTextarea(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function formatPlazoOrden(o) {
@@ -520,6 +597,10 @@ function buildInformePayloadFromOrden(o) {
     o.presupuesto != null && o.presupuesto !== ''
       ? '$' + Number(o.presupuesto).toLocaleString('es-CL')
       : '—';
+  const evidSal =
+    Array.isArray(o.salida_evidencias_urls) && o.salida_evidencias_urls.length
+      ? o.salida_evidencias_urls.filter(Boolean).join('\n')
+      : '';
   return {
     canal: o.canal,
     orden: String(o.num_orden || ''),
@@ -551,6 +632,7 @@ function buildInformePayloadFromOrden(o) {
     plazost: formatPlazoOrden(o),
     observaciones2: o.obs2 || '—',
     presupuesto: pres,
+    evidencias_salida: evidSal,
   };
 }
 
@@ -977,9 +1059,15 @@ function abrirAprobacion(id, canal) {
       </div>
     </div>
     <div class="form-section">
-      <div class="form-section-title">Observaciones internas (opcional)</div>
+      <div class="form-section-title">Observaciones internas (solo equipo / no va al cliente)</div>
       <div class="form-group">
-        <textarea class="form-control" id="ap_obs2" placeholder="Notas del técnico para la orden…"></textarea>
+        <textarea class="form-control" id="ap_obs_internas" rows="3" placeholder="Notas internas para el técnico…"></textarea>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">Observaciones 2 · informe (<<Observaciones2>> en Docs / correos)</div>
+      <div class="form-group">
+        <textarea class="form-control" id="ap_obs2" rows="3" placeholder="Texto que se rellena en plantilla de informe…"></textarea>
       </div>
     </div>
   `;
@@ -1024,25 +1112,32 @@ async function confirmarAprobacion() {
         .toUpperCase()
         .slice(0, 1);
       const serRef = doc(db, META_SERIAL, 'ordenes');
+      const seqRef = doc(db, META_SERIAL, `seq_${canal}`);
       const serSnap = await transaction.get(serRef);
+      const seqSnap = await transaction.get(seqRef);
       const counts = serSnap.exists() ? serSnap.data() : { P: 0, E: 0, S: 0 };
+      const seqN = seqSnap.exists() ? Number(seqSnap.data().n) || 0 : 0;
+      const floorVal = canal === 'S' ? 9999 : 0;
+      const ordBase = Math.max(counts[canal] || 0, seqN, floorVal);
+      const minSuf = ORDEN_SUFFIX_MIN[canal] ?? 1;
       const preRaw = v.numero_seguimiento != null ? String(v.numero_seguimiento).trim() : '';
-      const preOk =
-        preRaw &&
-        /^[PES]\d+$/.test(preRaw) &&
-        preRaw.charAt(0) === canal &&
-        parseInt(preRaw.slice(1), 10) >= 1;
+      let preOk =
+        !!preRaw && /^[PES]\d+$/.test(preRaw) && preRaw.charAt(0) === canal;
+      const nPre = preOk ? parseInt(preRaw.slice(1), 10) : 0;
+      if (preOk && nPre < minSuf) preOk = false;
       let num_orden;
-      if (preOk) {
+      let newVal;
+      /* Usar el N° del formulario solo si no va por debajo del correlativo ya reservado (seq/ordenes). */
+      if (preOk && nPre >= ordBase) {
         num_orden = preRaw;
-        const nPre = parseInt(preRaw.slice(1), 10);
-        const prev = counts[canal] || 0;
-        transaction.set(serRef, { ...counts, [canal]: Math.max(prev, nPre) }, { merge: true });
+        newVal = nPre;
       } else {
-        const next = (counts[canal] || 0) + 1;
-        transaction.set(serRef, { ...counts, [canal]: next }, { merge: true });
-        num_orden = `${canal}${next}`;
+        newVal = ordBase + 1;
+        if (newVal < minSuf) newVal = minSuf;
+        num_orden = `${canal}${newVal}`;
       }
+      transaction.set(serRef, { ...counts, [canal]: newVal }, { merge: true });
+      transaction.set(seqRef, { n: newVal }, { merge: true });
       const newOrdenRef = doc(collection(db, COL_O));
       const garantia = isP ? true : document.getElementById('ap_garantia').value === 'true';
       transaction.set(newOrdenRef, {
@@ -1068,7 +1163,8 @@ async function confirmarAprobacion() {
         plazo: plazoInfo.plazo,
         plazo_dias_habiles: plazoInfo.plazo_dias_habiles,
         plazo_otro: plazoInfo.plazo_otro,
-        obs2: document.getElementById('ap_obs2').value || null,
+        obs_internas: document.getElementById('ap_obs_internas')?.value.trim() || null,
+        obs2: document.getElementById('ap_obs2')?.value.trim() || null,
         ...acc,
         solucion: null,
         presupuesto: null,
@@ -1219,21 +1315,39 @@ function goPage(pageIndex) {
   loadOrdenes();
 }
 
-async function abrirOrden(id) {
+async function abrirOrden(id, opts) {
+  ordenModalFromTecnico = !!(opts && opts.fromTecnico);
   openModal('ordenModal');
   document.getElementById('ordenModalTitle').textContent = 'Cargando…';
   document.getElementById('ordenModalBody').innerHTML =
     '<div style="text-align:center;padding:40px;"><span class="spinner spinner-dark"></span></div>';
   document.getElementById('ordenModalFooter').innerHTML = '';
   try {
-    const d = await getDoc(doc(db, COL_O, id));
+    let d = await getDoc(doc(db, COL_O, id));
     if (!d.exists()) throw new Error('Orden no encontrada');
-    const o = normalizeOrden(d.id, d.data());
+    let o = normalizeOrden(d.id, d.data());
+    if (ordenModalFromTecnico && o.estado === 'Ingresado') {
+      await updateDoc(doc(db, COL_O, id), {
+        estado: 'En revisión',
+        tecnico_revision_at: serverTimestamp(),
+        tecnico_revision_por: AGENT?.email || null,
+      });
+      d = await getDoc(doc(db, COL_O, id));
+      o = normalizeOrden(d.id, d.data());
+      toast('Orden pasó a En revisión', 'success');
+      loadTecnicoOrdenes();
+      loadOrdenes();
+      loadDashboard();
+    }
     currentOrden = o;
     renderOrdenModal(o);
   } catch (e) {
     document.getElementById('ordenModalBody').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
   }
+}
+
+function abrirOrdenTecnico(id) {
+  abrirOrden(id, { fromTecnico: true });
 }
 
 function renderOrdenModal(o) {
@@ -1301,7 +1415,8 @@ function renderOrdenModal(o) {
         <div class="detail-item"><span class="detail-key">Falla principal</span><span class="detail-val">${o.falla1}</span></div>
         ${o.falla2 ? `<div class="detail-item"><span class="detail-key">Falla secundaria</span><span class="detail-val">${o.falla2}</span></div>` : ''}
         ${o.obs ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Obs. cliente</span><span class="detail-val">${o.obs}</span></div>` : ''}
-        ${o.obs2 ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Obs. técnico</span><span class="detail-val">${o.obs2}</span></div>` : ''}
+        ${o.obs_internas ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Obs. internas (equipo)</span><span class="detail-val">${o.obs_internas}</span></div>` : ''}
+        ${o.obs2 ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-key">Obs. 2 · informe</span><span class="detail-val">${o.obs2}</span></div>` : ''}
       </div>
     </div>
 
@@ -1322,6 +1437,49 @@ function renderOrdenModal(o) {
       </div>
     </div>
     `
+        : ''
+    }
+
+    ${
+      ordenModalFromTecnico
+        ? (() => {
+            const urlsTxt = Array.isArray(o.salida_evidencias_urls)
+              ? o.salida_evidencias_urls.filter(Boolean).join('\n')
+              : '';
+            return `
+    <div class="form-section" style="border:1px solid #d6c7ff;border-radius:10px;padding:16px;background:#faf8ff;">
+      <div class="form-section-title">🔧 Servicio técnico · Salida</div>
+      <p style="font-size:12px;color:#5a3b6e;margin-bottom:12px;line-height:1.5;">Al abrir desde <strong>Técnico</strong>, si la orden estaba <strong>Ingresado</strong>, pasa a <strong>En revisión</strong>. Genera el informe de salida (Google Docs), adjunta evidencias por URL o subiendo archivos, luego <strong>Marcar listo</strong> deja el estado en <strong>Listo</strong> (revisado en los correos).</p>
+      <div class="form-group">
+        <label>Informe de salida · texto &lt;&lt;Solución&gt;&gt; en el Doc</label>
+        <textarea class="form-control" id="tecSalidaSolucion" rows="4" placeholder="Diagnóstico, trabajo realizado…">${escapeTextarea(o.solucion || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>URLs de evidencias (una por línea; se envían al cliente si envías correo salida)</label>
+        <textarea class="form-control" id="tecSalidaUrls" rows="3" placeholder="https://…">${escapeTextarea(urlsTxt)}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Subir fotos o video (Firebase Storage · requiere <code style="font-size:11px;">storage.rules</code> desplegadas)</label>
+        <input type="file" class="form-control" id="tecSalidaFiles" multiple accept="image/*,video/*"/>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="subirEvidenciasTecnico('${o.id}')">Subir seleccionados</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="guardarBorradorSalidaTecnico('${o.id}')">Guardar borrador</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="generarInformeSalida('${o.id}')">📄 Generar Doc salida</button>
+        <button type="button" class="btn btn-green btn-sm" onclick="finalizarSalidaTecnico('${o.id}')">Marcar listo (revisado)</button>
+        <button type="button" class="btn btn-amber btn-sm" onclick="enviarCorreoSalidaCliente('${o.id}')">✉ Enviar correo salida</button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;line-height:1.6;">
+        ${
+          o.informe_salida_url
+            ? `<p><strong>Doc salida:</strong> <a href="${escapeAttr(o.informe_salida_url)}" target="_blank" rel="noopener">Abrir</a></p>`
+            : '<p style="color:#92400e;">Aún no hay informe de salida generado.</p>'
+        }
+        ${o.informe_url ? `<p><strong>Doc entrada:</strong> <a href="${escapeAttr(o.informe_url)}" target="_blank" rel="noopener">Abrir</a></p>` : ''}
+      </div>
+    </div>
+    `;
+          })()
         : ''
     }
 
@@ -1373,12 +1531,40 @@ async function cambiarEstado(id) {
   }
 }
 
-const MAIL_LOG_KEY = { entrada: 'st_mail_log_entrada', salida: 'st_mail_log_salida' };
+const MAIL_LOG_KEY = {
+  entrada: 'st_mail_log_entrada',
+  salida: 'st_mail_log_salida',
+  salida_tec: 'st_mail_log_salida_tec',
+};
+/** Carga/envío masivo: kind → log local y doc a mostrar. */
+const MAIL_KIND = {
+  entrada: { logFlujo: 'entrada', mailFlujo: 'entrada', docPick: 'entrada' },
+  salida: { logFlujo: 'salida', mailFlujo: 'salida', docPick: 'salida' },
+  salida_tec: { logFlujo: 'salida_tec', mailFlujo: 'salida', docPick: 'salida' },
+};
 const MAIL_TAB_IDS = ['entrada', 'log_entrada', 'salida', 'log_salida'];
+
+function correoStDocUrlForOrden(o, docPick) {
+  if (docPick === 'salida') {
+    const u = String(o.informe_salida_url || '').trim();
+    if (u) return u;
+    return String(o.informe_url || '').trim();
+  }
+  return String(o.informe_url || '').trim();
+}
+
+function correoStLogTbodyId(flujo) {
+  if (flujo === 'entrada') return 'stMailLogTbody_entrada';
+  if (flujo === 'salida') return 'stMailLogTbody_salida';
+  if (flujo === 'salida_tec') return 'stMailLogTbody_salida_tec';
+  return null;
+}
 
 function correoStLogRead(flujo) {
   try {
-    const raw = localStorage.getItem(MAIL_LOG_KEY[flujo]);
+    const key = MAIL_LOG_KEY[flujo];
+    if (!key) return [];
+    const raw = localStorage.getItem(key);
     const arr = raw ? JSON.parse(raw) : [];
     return Array.isArray(arr) ? arr : [];
   } catch {
@@ -1387,10 +1573,13 @@ function correoStLogRead(flujo) {
 }
 
 function correoStLogWrite(flujo, arr) {
-  localStorage.setItem(MAIL_LOG_KEY[flujo], JSON.stringify(arr.slice(0, 500)));
+  const key = MAIL_LOG_KEY[flujo];
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify(arr.slice(0, 500)));
 }
 
 function correoStAppendLog(flujo, entry) {
+  if (!MAIL_LOG_KEY[flujo]) return;
   const arr = correoStLogRead(flujo);
   arr.unshift({
     ts: Date.now(),
@@ -1406,7 +1595,8 @@ function correoStAppendLog(flujo, entry) {
 }
 
 function correoStRenderLogTable(flujo) {
-  const tbody = document.getElementById(flujo === 'entrada' ? 'stMailLogTbody_entrada' : 'stMailLogTbody_salida');
+  const tid = correoStLogTbodyId(flujo);
+  const tbody = tid ? document.getElementById(tid) : null;
   if (!tbody) return;
   const rows = correoStLogRead(flujo);
   if (!rows.length) {
@@ -1473,15 +1663,25 @@ async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, flujoCorreo) {
   const o = normalizeOrden(d.id, d.data());
   const orden = buildInformePayloadFromOrden(o);
   const fc = flujoCorreo === 'salida' ? 'salida' : 'entrada';
+  let docUrl =
+    fc === 'salida'
+      ? String(o.informe_salida_url || '').trim() || String(o.informe_url || '').trim()
+      : String(o.informe_url || '').trim();
+  let evid = String(evidenciasUrl || '').trim();
+  if (fc === 'salida' && !evid && Array.isArray(o.salida_evidencias_urls) && o.salida_evidencias_urls.length) {
+    evid = String(o.salida_evidencias_urls[0] || '').trim();
+  }
   const j = await postInformeScript({
     action: 'enviar',
     orden,
-    informe_url: o.informe_url || '',
-    evidencias_url: evidenciasUrl || '',
+    informe_url: docUrl,
+    evidencias_url: evid,
     flujo_correo: fc,
     orden_status: o.estado || '',
   });
-  if (j.informe_url && j.informe_url !== o.informe_url) {
+  if (j.informe_url && fc === 'salida') {
+    await updateDoc(doc(db, COL_O, ordenId), { informe_salida_url: j.informe_url });
+  } else if (j.informe_url && fc === 'entrada' && j.informe_url !== o.informe_url) {
     await updateDoc(doc(db, COL_O, ordenId), { informe_url: j.informe_url });
   }
   return j;
@@ -1502,6 +1702,8 @@ function correoStDocCell(informeUrl) {
 }
 
 async function correoStCargar(kind) {
+  const cfg = MAIL_KIND[kind];
+  if (!cfg) return;
   const ta = document.getElementById(`stMailTa_${kind}`);
   const tbody = document.getElementById(`stMailTbody_${kind}`);
   if (!ta || !tbody) return;
@@ -1534,7 +1736,7 @@ async function correoStCargar(kind) {
         <td>${equipo}</td>
         <td>${modelo}</td>
         <td>${color}</td>
-        <td>${correoStDocCell(o.informe_url)}</td>
+        <td>${correoStDocCell(correoStDocUrlForOrden(o, cfg.docPick))}</td>
         <td><strong>${escapeAttr(o.canal || '—')}</strong></td>
         <td style="font-size:12px;">${escapeAttr(o.estado || '—')}${warnCorreo}</td>`;
       tbody.appendChild(tr);
@@ -1546,7 +1748,10 @@ async function correoStCargar(kind) {
 }
 
 async function correoStEnviar(kind) {
-  const flujo = kind === 'salida' ? 'salida' : 'entrada';
+  const cfg = MAIL_KIND[kind];
+  if (!cfg) return;
+  const flujo = cfg.logFlujo;
+  const mailFlujo = cfg.mailFlujo;
   const tbody = document.getElementById(`stMailTbody_${kind}`);
   const evid = document.getElementById(`stMailEvid_${kind}`)?.value.trim() || '';
   if (!tbody) return;
@@ -1603,7 +1808,7 @@ async function correoStEnviar(kind) {
       }
 
       try {
-        await enviarCorreoInformeOrden(id, evid, flujo);
+        await enviarCorreoInformeOrden(id, evid, mailFlujo);
         ok++;
         await new Promise((r) => setTimeout(r, 500));
         correoStAppendLog(flujo, {
@@ -1672,6 +1877,176 @@ async function generarInforme(_id) {
     }
   } catch (e) {
     toast(e.message || 'No se pudo generar el informe', 'error');
+  }
+}
+
+function parseSalidaUrlsFromDom() {
+  const el = document.getElementById('tecSalidaUrls');
+  if (!el) return [];
+  return el.value
+    .split(/[\n\r]+/)
+    .map((s) => s.trim())
+    .filter((u) => /^https?:\/\//i.test(u));
+}
+
+async function guardarBorradorSalidaTecnico(ordenId) {
+  const solEl = document.getElementById('tecSalidaSolucion');
+  const sol = solEl ? solEl.value.trim() : undefined;
+  const urls = parseSalidaUrlsFromDom();
+  try {
+    const patch = { salida_evidencias_urls: urls };
+    if (sol !== undefined) patch.solucion = sol || null;
+    await updateDoc(doc(db, COL_O, ordenId), patch);
+    toast('Borrador guardado', 'success');
+    const d = await getDoc(doc(db, COL_O, ordenId));
+    if (!d.exists()) return;
+    const o = normalizeOrden(d.id, d.data());
+    if (currentOrden && currentOrden.id === ordenId) {
+      currentOrden = o;
+      renderOrdenModal(o);
+    }
+    loadTecnicoOrdenes();
+  } catch (e) {
+    toast(e.message || 'Error al guardar', 'error');
+  }
+}
+
+async function generarInformeSalida(ordenId) {
+  const urlOk = getInformeScriptUrl();
+  if (!urlOk || !/^https:\/\//i.test(urlOk)) {
+    toast(informeConfigFaltaMsg(), 'warning', 6000);
+    return;
+  }
+  try {
+    await guardarBorradorSalidaTecnico(ordenId);
+    toast('Generando informe de salida…', 'info');
+    const d = await getDoc(doc(db, COL_O, ordenId));
+    if (!d.exists()) throw new Error('Orden no encontrada');
+    const o = normalizeOrden(d.id, d.data());
+    const orden = buildInformePayloadFromOrden(o);
+    const j = await postInformeScript({
+      action: 'generar_salida',
+      orden,
+    });
+    await updateDoc(doc(db, COL_O, ordenId), { informe_salida_url: j.url });
+    toast('Informe de salida generado', 'success');
+    if (currentOrden && currentOrden.id === ordenId) {
+      const d2 = await getDoc(doc(db, COL_O, ordenId));
+      currentOrden = normalizeOrden(d2.id, d2.data());
+      renderOrdenModal(currentOrden);
+    }
+    loadTecnicoOrdenes();
+  } catch (e) {
+    toast(e.message || 'No se pudo generar el informe de salida', 'error');
+  }
+}
+
+async function finalizarSalidaTecnico(ordenId) {
+  try {
+    await guardarBorradorSalidaTecnico(ordenId);
+    const d = await getDoc(doc(db, COL_O, ordenId));
+    if (!d.exists()) throw new Error('Orden no encontrada');
+    const o = normalizeOrden(d.id, d.data());
+    if (!String(o.informe_salida_url || '').trim()) {
+      if (!confirm('No hay informe de salida en Firestore. ¿Marcar Listo igualmente?')) return;
+    }
+    await updateDoc(doc(db, COL_O, ordenId), {
+      estado: 'Listo',
+      tecnico_salida_at: serverTimestamp(),
+      tecnico_salida_por: AGENT?.email || null,
+    });
+    toast('Estado: Listo (revisado en correos)', 'success');
+    closeModal('ordenModal');
+    loadTecnicoOrdenes();
+    loadOrdenes();
+    loadDashboard();
+  } catch (e) {
+    toast(e.message || 'Error', 'error');
+  }
+}
+
+async function enviarCorreoSalidaCliente(ordenId) {
+  try {
+    await guardarBorradorSalidaTecnico(ordenId);
+    toast('Enviando correo…', 'info');
+    await enviarCorreoInformeOrden(ordenId, '', 'salida');
+    toast('Correo de salida enviado', 'success');
+  } catch (e) {
+    toast(e.message || 'No se pudo enviar', 'error');
+  }
+}
+
+async function subirEvidenciasTecnico(ordenId) {
+  const inp = document.getElementById('tecSalidaFiles');
+  if (!inp?.files?.length) {
+    toast('Selecciona uno o más archivos', 'warning');
+    return;
+  }
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    toast('Sin sesión', 'error');
+    return;
+  }
+  try {
+    toast('Subiendo…', 'info');
+    for (const file of inp.files) {
+      const safe = file.name.replace(/[^\w.\-]+/g, '_').slice(0, 120);
+      const path = `st_tecnico/${uid}/${ordenId}/${Date.now()}_${safe}`;
+      const r = ref(storage, path);
+      await uploadBytes(r, file, { contentType: file.type || 'application/octet-stream' });
+      const url = await getDownloadURL(r);
+      await updateDoc(doc(db, COL_O, ordenId), { salida_evidencias_urls: arrayUnion(url) });
+    }
+    inp.value = '';
+    toast('Archivos subidos', 'success');
+    const d = await getDoc(doc(db, COL_O, ordenId));
+    if (d.exists() && currentOrden && currentOrden.id === ordenId) {
+      currentOrden = normalizeOrden(d.id, d.data());
+      renderOrdenModal(currentOrden);
+    }
+    loadTecnicoOrdenes();
+  } catch (e) {
+    toast(e.message || 'Error al subir (¿reglas Storage?)', 'error');
+  }
+}
+
+async function loadTecnicoOrdenes() {
+  const tbody = document.getElementById('tecnicoOrdenesTbody');
+  if (!tbody) return;
+  const sel = document.getElementById('tecnicoFiltroEstado');
+  const filtro = sel ? sel.value : 'activas';
+  tbody.innerHTML =
+    '<tr class="loading-row"><td colspan="7"><span class="spinner spinner-dark"></span></td></tr>';
+  try {
+    const snap = await getDocs(query(collection(db, COL_O), orderBy('fecha', 'desc'), limit(200)));
+    let rows = snap.docs.map((d) => normalizeOrden(d.id, d.data()));
+    if (filtro === 'activas') {
+      rows = rows.filter((o) => o.estado === 'Ingresado' || o.estado === 'En revisión');
+    } else if (filtro === 'listo') {
+      rows = rows.filter((o) => o.estado === 'Listo');
+    }
+    /* filtro === 'todos': sin filtrar */
+    if (!rows.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6b7280;">Sin órdenes en este filtro.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows
+      .map(
+        (o) => `
+      <tr style="cursor:pointer;" onclick="abrirOrdenTecnico('${o.id}')">
+        <td><strong>${escapeAttr(o.num_orden)}</strong></td>
+        <td>${fmtDate(o.fecha)}</td>
+        <td><div style="font-weight:500;">${escapeAttr(o.nombre || '—')}</div><div style="font-size:11px;color:#6b7280;">${escapeAttr(o.correo || '')}</div></td>
+        <td>${escapeAttr(o.producto || '—')} ${escapeAttr(o.modelo || '')}</td>
+        <td>${estadoBadge(o.estado)}</td>
+        <td>${canalPill(o.canal)}</td>
+        <td><button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();abrirOrdenTecnico('${o.id}')">Abrir</button></td>
+      </tr>`
+      )
+      .join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#dc2626;padding:24px;">${escapeAttr(e.message)}</td></tr>`;
   }
 }
 
@@ -1801,26 +2176,30 @@ function abrirNuevaOrden() {
             </select>
           </div>
           <div class="form-group span2">
-            <label>Observaciones</label>
+            <label>Observaciones (cliente / ingreso)</label>
             <textarea class="form-control" id="no_obs" placeholder="Descripción adicional…"></textarea>
+          </div>
+          <div class="form-group span2">
+            <label>Nota interna (solo equipo, no al cliente)</label>
+            <textarea class="form-control" id="no_obs_internas" rows="2" placeholder="Instrucciones para el técnico…"></textarea>
+          </div>
+          <div class="form-group span2">
+            <label>Observaciones 2 · informe (&lt;&lt;Observaciones2&gt;&gt; en Docs)</label>
+            <textarea class="form-control" id="no_obs2" rows="2" placeholder="Texto que va a la plantilla de informe…"></textarea>
           </div>
         </div>
       </div>
       <div class="form-section">
         <div class="form-section-title">Diagnóstico / presupuesto (opcional)</div>
+        <p style="font-size:12px;color:#6b7280;margin:-6px 0 10px;line-height:1.45;">Texto libre para <strong>&lt;&lt;Solución&gt;&gt;</strong> en Google Docs. Ejemplos: Enviar diagnóstico, Cambio, Reparación…</p>
         <div class="form-grid">
-          <div class="form-group">
-            <label>Solución</label>
-            <select class="form-control" id="no_solucion">
-              <option value="">— Seleccionar —</option>
-              <option value="Enviar diagnóstico">Enviar diagnóstico</option>
-              <option value="Cambio">Cambio</option>
-              <option value="Reparación">Reparación</option>
-            </select>
+          <div class="form-group span2">
+            <label>Solución / diagnóstico</label>
+            <textarea class="form-control" id="no_solucion" rows="2" placeholder="Ej: Reparación · cambio módulo pantalla"></textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group span2">
             <label>Presupuesto (CLP)</label>
-            <input class="form-control" id="no_presupuesto" type="number" min="0" step="1" placeholder="Ej: 45000"/>
+            <input class="form-control" id="no_presupuesto" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej: 45000 o 45.000"/>
           </div>
         </div>
       </div>
@@ -2112,16 +2491,30 @@ async function submitNuevaOrden() {
   const canal = nuevaOrdenCanal;
   const garantia = canal === 'P' ? true : document.getElementById('no_garantia')?.value === 'true';
   const solucionNueva = document.getElementById('no_solucion')?.value.trim() || null;
-  const presRaw = document.getElementById('no_presupuesto')?.value.trim();
-  const presupuestoNueva = presRaw && Number.isFinite(Number(presRaw)) ? Number(presRaw) : null;
+  const presRaw = document.getElementById('no_presupuesto')?.value;
+  const presupuestoNueva = parsePresupuestoCLP(presRaw);
+  if (presRaw && String(presRaw).trim() && presupuestoNueva == null) {
+    toast('Presupuesto no válido; revisa el formato (ej. 45000 o 45.000) o déjalo vacío.', 'warning');
+    return;
+  }
+  const obsInternasNueva = document.getElementById('no_obs_internas')?.value.trim() || null;
+  const obs2Nueva = document.getElementById('no_obs2')?.value.trim() || null;
   try {
     const numOrden = await runTransaction(db, async (transaction) => {
       const serRef = doc(db, META_SERIAL, 'ordenes');
+      const seqRef = doc(db, META_SERIAL, `seq_${canal}`);
       const serSnap = await transaction.get(serRef);
+      const seqSnap = await transaction.get(seqRef);
       const counts = serSnap.exists() ? serSnap.data() : { P: 0, E: 0, S: 0 };
-      const next = (counts[canal] || 0) + 1;
-      transaction.set(serRef, { ...counts, [canal]: next }, { merge: true });
-      const num_orden = `${canal}${next}`;
+      const seqN = seqSnap.exists() ? Number(seqSnap.data().n) || 0 : 0;
+      const floorVal = canal === 'S' ? 9999 : 0;
+      const ordBase = Math.max(counts[canal] || 0, seqN, floorVal);
+      const minSuf = ORDEN_SUFFIX_MIN[canal] ?? 1;
+      let newVal = ordBase + 1;
+      if (newVal < minSuf) newVal = minSuf;
+      const num_orden = `${canal}${newVal}`;
+      transaction.set(serRef, { ...counts, [canal]: newVal }, { merge: true });
+      transaction.set(seqRef, { n: newVal }, { merge: true });
       const newOrdenRef = doc(collection(db, COL_O));
       transaction.set(newOrdenRef, {
         num_orden,
@@ -2137,6 +2530,8 @@ async function submitNuevaOrden() {
         falla1,
         falla2: document.getElementById('no_falla2')?.value || null,
         obs: document.getElementById('no_obs')?.value || null,
+        obs_internas: obsInternasNueva,
+        obs2: obs2Nueva,
         canal,
         estado: 'Ingresado',
         agente,
@@ -2300,11 +2695,13 @@ function renderCambiosSTTable() {
       '" style="text-align:center;padding:24px;color:#9ca3af;">Sin filas (o sin coincidencias con el filtro).</td></tr>';
     return;
   }
-  tbody.innerHTML = list
+  const listRev = [...list].reverse();
+  tbody.innerHTML = listRev
     .map((r) => {
       const est = String(r['ESTADO DEL DISPOSITIVO'] || '').toLowerCase();
       const ent = String(r['ENTREGADO A OPERACIONES'] || '').toLowerCase();
       let cls = '';
+      if (est.includes('listo')) cls += ' cambios-listo';
       if (est.includes('irreparable')) cls += ' cambios-irr';
       else if (est.includes('reparable')) cls += ' cambios-rep';
       if (ent === 'sí' || ent === 'si') cls += ' cambios-ent-si';
@@ -2453,9 +2850,16 @@ Object.assign(window, {
   loadOrdenes,
   goPage,
   abrirOrden,
+  abrirOrdenTecnico,
   guardarBoletaOrden,
   cambiarEstado,
   generarInforme,
+  generarInformeSalida,
+  guardarBorradorSalidaTecnico,
+  finalizarSalidaTecnico,
+  enviarCorreoSalidaCliente,
+  subirEvidenciasTecnico,
+  loadTecnicoOrdenes,
   correoStCargar,
   correoStEnviar,
   correoStLimpiar,
@@ -2480,7 +2884,6 @@ Object.assign(window, {
   salir,
 });
 
-setFirestoreHint();
 (async () => {
   try {
     const ok = await checkAuth();
