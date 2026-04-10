@@ -355,6 +355,7 @@ function switchView(name) {
   if (name === 'validacion') loadValidacion();
   if (name === 'ordenes') loadOrdenes();
   if (name === 'cambios') loadCambiosST();
+  if (name === 'mailst') correoStOnEnterView();
 }
 
 const ESTADO_BADGE = {
@@ -1193,7 +1194,97 @@ async function cambiarEstado(id) {
   }
 }
 
-async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, tipoCorreo) {
+const MAIL_LOG_KEY = { entrada: 'st_mail_log_entrada', salida: 'st_mail_log_salida' };
+const MAIL_TAB_IDS = ['entrada', 'log_entrada', 'salida', 'log_salida'];
+
+function correoStLogRead(flujo) {
+  try {
+    const raw = localStorage.getItem(MAIL_LOG_KEY[flujo]);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function correoStLogWrite(flujo, arr) {
+  localStorage.setItem(MAIL_LOG_KEY[flujo], JSON.stringify(arr.slice(0, 500)));
+}
+
+function correoStAppendLog(flujo, entry) {
+  const arr = correoStLogRead(flujo);
+  arr.unshift({
+    ts: Date.now(),
+    orden: entry.orden || '—',
+    cliente: entry.cliente || '—',
+    correo: entry.correo || '—',
+    equipo: entry.equipo || '—',
+    canal: entry.canal || '—',
+    ok: !!entry.ok,
+    mensaje: entry.mensaje || '',
+  });
+  correoStLogWrite(flujo, arr);
+}
+
+function correoStRenderLogTable(flujo) {
+  const tbody = document.getElementById(flujo === 'entrada' ? 'stMailLogTbody_entrada' : 'stMailLogTbody_salida');
+  if (!tbody) return;
+  const rows = correoStLogRead(flujo);
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="color:#6b7280;font-size:13px;">Sin registros aún.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows
+    .map((e) => {
+      const dt = new Date(e.ts);
+      const fecha = dt.toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
+      const badge = e.ok
+        ? '<span class="badge badge-green">Enviado</span>'
+        : '<span class="badge" style="background:#fee2e2;color:#991b1b">Error</span>';
+      return `<tr>
+        <td style="white-space:nowrap;font-size:12px;">${escapeAttr(fecha)}</td>
+        <td><strong>${escapeAttr(String(e.orden))}</strong></td>
+        <td>${escapeAttr(String(e.cliente))}</td>
+        <td style="font-size:12px;">${escapeAttr(String(e.correo))}</td>
+        <td>${escapeAttr(String(e.equipo))}</td>
+        <td>${escapeAttr(String(e.canal))}</td>
+        <td>${badge}</td>
+        <td style="font-size:12px;color:#4b5563;">${escapeAttr(String(e.mensaje || ''))}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
+function correoStSetTab(tab) {
+  MAIL_TAB_IDS.forEach((id) => {
+    const btn = document.querySelector(`[data-mailst-tab="${id}"]`);
+    const panel = document.getElementById(`mailst-panel-${id}`);
+    const on = id === tab;
+    if (btn) btn.classList.toggle('active', on);
+    if (panel) panel.classList.toggle('active', on);
+  });
+  if (tab === 'log_entrada') correoStRenderLogTable('entrada');
+  if (tab === 'log_salida') correoStRenderLogTable('salida');
+}
+
+function correoStOnEnterView() {
+  correoStRenderLogTable('entrada');
+  correoStRenderLogTable('salida');
+}
+
+function correoStVaciarLog(flujo) {
+  if (!confirm('¿Vaciar el log de esta pestaña en este navegador?')) return;
+  correoStLogWrite(flujo, []);
+  correoStRenderLogTable(flujo);
+  toast('Log vaciado', 'info');
+}
+
+function correoStEmailValido(s) {
+  const t = String(s || '').trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
+
+async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, flujoCorreo) {
   const urlOk = getInformeScriptUrl();
   if (!urlOk || !/^https:\/\//i.test(urlOk)) {
     throw new Error(informeConfigFaltaMsg());
@@ -1202,12 +1293,13 @@ async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, tipoCorreo) {
   if (!d.exists()) throw new Error('Orden no encontrada');
   const o = normalizeOrden(d.id, d.data());
   const orden = buildInformePayloadFromOrden(o);
+  const fc = flujoCorreo === 'salida' ? 'salida' : 'entrada';
   const j = await postInformeScript({
     action: 'enviar',
     orden,
     informe_url: o.informe_url || '',
     evidencias_url: evidenciasUrl || '',
-    tipo_correo: tipoCorreo || '',
+    flujo_correo: fc,
   });
   if (j.informe_url && j.informe_url !== o.informe_url) {
     await updateDoc(doc(db, COL_O, ordenId), { informe_url: j.informe_url });
@@ -1215,18 +1307,18 @@ async function enviarCorreoInformeOrden(ordenId, evidenciasUrl, tipoCorreo) {
   return j;
 }
 
-function correoStCanalOk(kind, canal) {
-  const c = String(canal || '').toUpperCase();
-  if (kind === 'entradas') return c === 'E';
-  if (kind === 'recepcion') return c === 'P' || c === 'S';
-  return true;
-}
-
 async function lookupOrdenPorNumero(num) {
   const snap = await getDocs(query(collection(db, COL_O), where('num_orden', '==', num), limit(1)));
   if (snap.empty) return null;
   const d = snap.docs[0];
   return { id: d.id, data: d.data() };
+}
+
+function correoStDocCell(informeUrl) {
+  const u = String(informeUrl || '').trim();
+  if (!u) return '<span style="color:#d97706;font-size:12px;">Sin doc · se genera al enviar</span>';
+  const safe = escapeAttr(u);
+  return `<a href="${safe}" target="_blank" rel="noopener" style="color:var(--p600);font-size:12px;">Abrir</a>`;
 }
 
 async function correoStCargar(kind) {
@@ -1244,24 +1336,27 @@ async function correoStCargar(kind) {
       const hit = await lookupOrdenPorNumero(num);
       const tr = document.createElement('tr');
       if (!hit) {
-        tr.innerHTML = `<td>${escapeAttr(num)}</td><td colspan="4" style="color:#dc2626">No encontrada</td>`;
+        tr.innerHTML = `<td></td><td>${escapeAttr(num)}</td><td colspan="8" style="color:#dc2626">No encontrada en Firestore</td>`;
         tbody.appendChild(tr);
         continue;
       }
       const o = normalizeOrden(hit.id, hit.data);
-      const canalOk = correoStCanalOk(kind, o.canal);
       tr.dataset.ordenId = hit.id;
-      if (!canalOk) tr.dataset.canalError = '1';
-      const modelo = `${escapeAttr(o.producto || '—')} ${escapeAttr(o.modelo || '')}`.trim();
-      const estadoCell = canalOk
-        ? escapeAttr(o.estado || '—')
-        : `<span style="color:#d97706">Canal ${escapeAttr(o.canal)} no corresponde a este bloque</span>`;
+      const equipo = escapeAttr(o.producto || '—');
+      const modelo = escapeAttr(o.modelo || '—');
+      const color = escapeAttr(o.color || '—');
+      const warnCorreo = !correoStEmailValido(o.correo) ? ' · revisar correo' : '';
       tr.innerHTML = `
+        <td><input type="checkbox" class="st-mail-sel" checked title="Incluir al enviar" aria-label="Incluir al enviar"/></td>
         <td><strong>${escapeAttr(o.num_orden || num)}</strong></td>
         <td>${escapeAttr(o.nombre || '—')}</td>
         <td>${escapeAttr(o.correo || '—')}</td>
+        <td>${equipo}</td>
         <td>${modelo}</td>
-        <td>${estadoCell}</td>`;
+        <td>${color}</td>
+        <td>${correoStDocCell(o.informe_url)}</td>
+        <td><strong>${escapeAttr(o.canal || '—')}</strong></td>
+        <td style="font-size:12px;">${escapeAttr(o.estado || '—')}${warnCorreo}</td>`;
       tbody.appendChild(tr);
     }
     toast('Órdenes cargadas', 'success');
@@ -1271,35 +1366,91 @@ async function correoStCargar(kind) {
 }
 
 async function correoStEnviar(kind) {
+  const flujo = kind === 'salida' ? 'salida' : 'entrada';
   const tbody = document.getElementById(`stMailTbody_${kind}`);
   const evid = document.getElementById(`stMailEvid_${kind}`)?.value.trim() || '';
   if (!tbody) return;
-  const rows = tbody.querySelectorAll('tr[data-orden-id]');
-  if (!rows.length) {
-    toast('Primero pulsa «Cargar órdenes» con números válidos', 'warning');
+  const rows = [...tbody.querySelectorAll('tr[data-orden-id]')];
+  const toSend = rows.filter((tr) => {
+    const cb = tr.querySelector('.st-mail-sel');
+    return cb && cb.checked;
+  });
+  if (!toSend.length) {
+    toast('No hay filas marcadas para enviar (o falta cargar órdenes válidas)', 'warning');
     return;
   }
   let ok = 0;
-  let skip = 0;
   let fail = 0;
   try {
-    for (const tr of rows) {
-      if (tr.dataset.canalError === '1') {
-        skip++;
+    for (const tr of toSend) {
+      const id = tr.dataset.ordenId;
+      let o;
+      try {
+        const d = await getDoc(doc(db, COL_O, id));
+        if (!d.exists()) throw new Error('Orden no encontrada');
+        o = normalizeOrden(d.id, d.data());
+      } catch (e) {
+        fail++;
+        correoStAppendLog(flujo, {
+          orden: id,
+          cliente: '—',
+          correo: '—',
+          equipo: '—',
+          canal: '—',
+          ok: false,
+          mensaje: e.message || 'Error al leer orden',
+        });
         continue;
       }
-      const id = tr.dataset.ordenId;
+      const num = o.num_orden || '—';
+      const cliente = o.nombre || '—';
+      const correo = (o.correo || '').trim();
+      const equipo = `${o.producto || ''} ${o.modelo || ''}`.trim() || '—';
+      const canal = o.canal || '—';
+
+      if (!correoStEmailValido(correo)) {
+        fail++;
+        correoStAppendLog(flujo, {
+          orden: num,
+          cliente,
+          correo: correo || '—',
+          equipo,
+          canal,
+          ok: false,
+          mensaje: 'Correo vacío o inválido',
+        });
+        continue;
+      }
+
       try {
-        await enviarCorreoInformeOrden(id, evid, kind);
+        await enviarCorreoInformeOrden(id, evid, flujo);
         ok++;
+        correoStAppendLog(flujo, {
+          orden: num,
+          cliente,
+          correo,
+          equipo,
+          canal,
+          ok: true,
+          mensaje: 'Correo enviado correctamente',
+        });
       } catch (err) {
         fail++;
         console.error(err);
+        correoStAppendLog(flujo, {
+          orden: num,
+          cliente,
+          correo,
+          equipo,
+          canal,
+          ok: false,
+          mensaje: err.message || 'Error al enviar',
+        });
       }
     }
+    correoStRenderLogTable(flujo);
     const parts = [];
     if (ok) parts.push(`${ok} enviado(s)`);
-    if (skip) parts.push(`${skip} omitido(s) por canal`);
     if (fail) parts.push(`${fail} error(es)`);
     toast(parts.join(' · ') || 'Nada que enviar', ok && !fail ? 'success' : fail ? 'error' : 'warning', 5000);
   } catch (e) {
@@ -1308,7 +1459,8 @@ async function correoStEnviar(kind) {
 }
 
 function correoStLimpiar(kind) {
-  document.getElementById(`stMailTa_${kind}`).value = '';
+  const ta = document.getElementById(`stMailTa_${kind}`);
+  if (ta) ta.value = '';
   const tb = document.getElementById(`stMailTbody_${kind}`);
   if (tb) tb.innerHTML = '';
   const ev = document.getElementById(`stMailEvid_${kind}`);
@@ -1979,6 +2131,8 @@ Object.assign(window, {
   correoStCargar,
   correoStEnviar,
   correoStLimpiar,
+  correoStSetTab,
+  correoStVaciarLog,
   abrirInformeConfigModal,
   guardarInformeConfig,
   limpiarInformeConfigLocal,
