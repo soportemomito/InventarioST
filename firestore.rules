@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Inventario (index.html): usuarios aprobados ---
+    function isApproved() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    // Debe coincidir con ADMIN_EMAILS + role en users (index.html)
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'soporte@soymomo.com' ||
+        request.auth.token.email == 'alvarovillena7@gmail.com' ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        )
+      );
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.status == 'pending';
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /config/{docId} {
+      allow read: if isApproved();
+      allow write: if isApproved();
+    }
+
+    match /products/{docId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isApproved();
+    }
+
+    match /movements/{docId} {
+      allow read: if isApproved();
+      allow create: if isApproved();
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
+
+    // --- Servicio técnico (st/ingreso.html + st/dash-app.js) ---
+    match /st_validaciones/{docId} {
+      allow create: if request.resource.data.estado == 'pendiente'
+        && request.resource.data.canal is string
+        && request.resource.data.canal in ['P', 'E', 'S']
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.correo is string
+        && request.resource.data.correo.size() > 3
+        && request.resource.data.producto is string
+        && request.resource.data.producto.size() > 0
+        && request.resource.data.modelo is string
+        && request.resource.data.modelo.size() > 0
+        && request.resource.data.falla1 is string
+        && request.resource.data.obs is string
+        && request.resource.data.obs.size() >= 10
+        && request.resource.data.numero_seguimiento is string
+        && request.resource.data.numero_seguimiento.matches('^[PES][0-9]{1,12}$');
+      allow read, update, delete: if request.auth != null;
+    }
+
+    match /st_ordenes/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /st_meta/{docId} {
+      function isSeqDoc() {
+        return docId == 'seq_P' || docId == 'seq_E' || docId == 'seq_S';
+      }
+      allow read: if isSeqDoc() || request.auth != null;
+      allow create: if isSeqDoc()
+        && request.auth == null
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n == 1;
+      allow update: if isSeqDoc()
+        && request.auth == null
+        && request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n is int
+        && resource.data.n is int
+        && request.resource.data.n == resource.data.n + 1;
+      allow delete: if false;
+      allow create, update, delete: if !isSeqDoc() && request.auth != null;
+    }
+
+    match /st_salidas/{docId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    match /st_email_log/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    match /st_usuarios/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}
