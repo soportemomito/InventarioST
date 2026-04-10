@@ -39,13 +39,15 @@ NO uses signInAnonymously en ingreso si el proyecto tiene Anónimo deshabilitado
         return docId == 'seq_P' || docId == 'seq_E' || docId == 'seq_S';
       }
 
-      // Contador público para N° de ingreso en el formulario (solo +1 en n)
+      // Contador público: create permite inicializar n (p. ej. S=10000); antes solo n==1 rompía ingreso sin doc previo.
       allow read: if isSeqDoc() || request.auth != null;
 
       allow create: if isSeqDoc()
         && request.auth == null
         && request.resource.data.keys().hasOnly(['n'])
-        && request.resource.data.n == 1;
+        && request.resource.data.n is int
+        && request.resource.data.n >= 1
+        && request.resource.data.n <= 200000;
 
       allow update: if isSeqDoc()
         && request.auth == null
