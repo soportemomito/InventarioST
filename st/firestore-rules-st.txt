@@ -59,3 +59,23 @@ NO uses signInAnonymously en ingreso si el proyecto tiene Anónimo deshabilitado
       // ordenes y demás meta: solo autenticados
       allow create, update, delete: if !isSeqDoc() && request.auth != null;
     }
+
+    // Informes de salida por técnico (panel ST — implementación progresiva)
+    match /st_salidas/{docId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Log de envíos de correo (entrada/salida) — escritura desde cliente autenticado
+    match /st_email_log/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // Perfiles ST (rol técnico / admin) — gestión recomendada con Admin SDK
+    match /st_usuarios/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
