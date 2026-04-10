@@ -102,100 +102,65 @@ a{color:inherit;text-decoration:none;}
 }
 .agent-out:hover{background:rgba(255,255,255,0.1);color:#fff;}
 
-/* ── SHELL: main + user bar (derecha) ── */
+/* ── SHELL: solo main (usuario en topbar) ── */
 .st-shell{
-  flex:1;display:flex;flex-direction:row;min-width:0;overflow:hidden;
-  align-items:stretch;
+  flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;
 }
-/* ── MAIN ── */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 
-/* ── USER BAR (derecha, barra tipo inventario: pill + acciones) ── */
-.st-userbar{
-  width:300px;min-width:260px;flex-shrink:0;
-  background:linear-gradient(180deg,#f5edff 0%,#ede4ff 100%);
-  border-left:1px solid #d6c7ff;
-  display:flex;flex-direction:column;padding:14px 12px;gap:12px;
-  box-shadow:-4px 0 16px rgba(109,40,233,0.06);
-  overflow-y:auto;
-}
-.st-inv-userbar-pill{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-  width:100%;padding:10px 14px;
-  background:rgba(255,255,255,0.92);backdrop-filter:blur(10px);
-  border:1px solid rgba(0,0,0,0.06);border-radius:999px;
+/* ── TOPBAR: usuario + acciones (móvil primero) ── */
+.topbar{
+  min-height:56px;
+  background:#fff;border-bottom:1px solid #e5e7eb;
+  display:flex;align-items:center;flex-wrap:wrap;padding:8px 16px;gap:8px 12px;
   box-shadow:0 1px 3px rgba(0,0,0,0.06);
 }
-.st-inv-userbar-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
-.st-inv-userbar-card .st-avatar-img,
-.st-inv-userbar-pill .st-avatar-img{
-  width:38px;height:38px;border-radius:50%;object-fit:cover;
-  border:2px solid #ddd;flex-shrink:0;display:none;
+.topbar-title{font-weight:700;font-size:16px;color:#1e1b4b;flex:1;min-width:140px;}
+.st-topbar-actions{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%;
+  justify-content:flex-end;
 }
-.st-inv-userbar-card .st-avatar-init,
-.st-inv-userbar-pill .st-avatar-init{
-  width:38px;height:38px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;background:#7c3aed;color:#fff;
+@media(min-width:900px){
+  .st-topbar-actions{width:auto;margin-left:auto;}
 }
-.st-inv-userbar-meta{min-width:0;}
-.st-inv-userbar-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.st-inv-userbar-name{color:#2b0a3d;font-weight:700;font-size:14px;line-height:1.2;word-break:break-word;}
-.st-userbar-admin-badge{
-  display:none;font-size:9px;padding:2px 8px;border-radius:4px;
+.st-top-user-pill{
+  display:flex;align-items:center;gap:8px;padding:6px 12px;max-width:min(100%,280px);
+  background:#faf8ff;border:1px solid #e9d5ff;border-radius:999px;
+}
+.st-top-avatar-img{
+  width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid #ddd;display:none;flex-shrink:0;
+}
+.st-top-avatar-init{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;background:#7c3aed;color:#fff;
+}
+.st-top-user-meta{min-width:0;}
+.st-top-user-name{font-weight:700;font-size:13px;color:#2b0a3d;line-height:1.2;word-break:break-word;}
+.st-top-admin-badge{
+  display:none;font-size:8px;padding:1px 6px;border-radius:4px;
   background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:800;
-  letter-spacing:.06em;text-transform:uppercase;
+  letter-spacing:.06em;text-transform:uppercase;vertical-align:middle;
 }
-.st-status-dot{
-  display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:4px;
-  vertical-align:middle;animation:st-pulse 2.2s ease-in-out infinite;
+.st-top-status{font-size:10px;color:#16a34a;font-weight:500;display:flex;align-items:center;gap:4px;margin-top:2px;}
+.st-top-status-dot{
+  width:6px;height:6px;border-radius:50%;background:#22c55e;
+  animation:st-pulse 2.2s ease-in-out infinite;
 }
 @keyframes st-pulse{
   0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5);}
-  50%{box-shadow:0 0 0 5px rgba(34,197,94,0);}
+  50%{box-shadow:0 0 0 4px rgba(34,197,94,0);}
 }
-.st-status-text{font-size:11px;color:#16a34a;font-weight:500;margin-top:2px;display:flex;align-items:center;}
-.st-inv-userbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;}
-.st-userbar-admin-link{
-  display:none;font-size:12px;padding:6px 12px;border-radius:9px;font-weight:600;
-  background:#7c3aed !important;color:#fff !important;text-decoration:none;align-items:center;gap:4px;
-  border:none;cursor:pointer;
+.st-btn-admin-top{
+  display:none;font-size:12px;padding:7px 12px;border-radius:9px;font-weight:600;
+  background:#7c3aed;color:#fff;border:none;cursor:pointer;
 }
-.st-userbar-admin-link:hover{filter:brightness(1.05);}
-.st-userbar-inv-btn{
-  font-size:12px;padding:6px 12px;border-radius:9px;font-weight:600;
-  background:#ede9fe;color:#5b21b6;border:1.5px solid #c4b5fd;cursor:pointer;transition:background .15s;
-  text-align:center;text-decoration:none;display:block;width:100%;
+.st-btn-admin-top:hover{filter:brightness(1.06);}
+.st-btn-salir-top{
+  font-size:12px;padding:7px 12px;border-radius:9px;font-weight:600;
+  background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;cursor:pointer;
 }
-.st-userbar-inv-btn:hover{background:#ddd6fe;}
-.st-userbar-out{
-  font-size:12px;padding:6px 12px;border-radius:9px;font-weight:600;
-  background:#fee2e2 !important;color:#b91c1c !important;border:1px solid #fecaca !important;
-  cursor:pointer;transition:background .15s;
-}
-.st-userbar-out:hover{background:#fecaca !important;}
-.st-userbar-hint{font-size:9px;color:#6b4c7a;line-height:1.35;opacity:.9;}
-/* legacy (si quedara algún nodo antiguo) */
-.st-userbar-top{display:flex;align-items:center;gap:12px;}
-.st-userbar-avatar{
-  width:44px;height:44px;border-radius:50%;
-  background:linear-gradient(135deg,#7c3aed,#6d28e9);
-  color:#fff;font-size:15px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  border:2px solid #fff;box-shadow:0 2px 8px rgba(109,40,233,0.2);
-}
-.st-userbar-meta{flex:1;min-width:0;}
-.st-userbar-name{font-weight:600;font-size:14px;color:#2b0a3d;line-height:1.25;word-break:break-word;}
-.st-userbar-role{font-size:11px;color:#5a3b6e;margin-top:2px;}
-
-/* ── TOPBAR ── */
-.topbar{
-  height:56px;min-height:56px;
-  background:#fff;border-bottom:1px solid #e5e7eb;
-  display:flex;align-items:center;padding:0 24px;gap:12px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.06);
-}
-.topbar-title{font-weight:700;font-size:16px;color:#1e1b4b;flex:1;}
+.nav-item-admin.hidden{display:none!important;}
+.st-admin-hint{font-size:11px;color:#6b4c7a;line-height:1.45;margin-bottom:12px;}
 .topbar-search{
   display:flex;align-items:center;gap:8px;
   background:#f9fafb;border:1px solid #e5e7eb;
@@ -323,7 +288,7 @@ select.filter-input{min-width:140px;cursor:pointer;}
   -webkit-overflow-scrolling:touch;
 }
 .modal-footer{
-  display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;
+  display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;flex-shrink:0;
   padding:16px 24px;border-top:1px solid #f3f4f6;background:#fafafa;
   border-radius:0 0 var(--radius) var(--radius);
 }
@@ -469,16 +434,6 @@ body.st-nav-open .sidebar-backdrop{display:block;}
     max-height:100vh;box-shadow:8px 0 32px rgba(0,0,0,0.25);
   }
   .st-shell{flex-direction:column;}
-  .st-userbar{
-    width:100%;min-width:0;order:-1;border-left:none;border-bottom:1px solid #d6c7ff;
-    flex-direction:column;align-items:stretch;padding:10px 12px;
-  }
-  .st-inv-userbar-pill{border-radius:16px;}
-  .st-inv-userbar-actions{width:100%;justify-content:flex-end;margin-top:4px;}
-  .st-userbar-inv-btn{width:100%;}
-  .st-userbar-hint{order:3;}
-  .st-userbar-top{flex:1;min-width:0;}
-  .st-userbar-out{width:auto;margin-top:0;padding:6px 12px;}
   .grid-2{grid-template-columns:1fr;}
   .form-grid{grid-template-columns:1fr;}
   .form-group.span2{grid-column:span 1;}
@@ -490,15 +445,16 @@ body.st-nav-open .sidebar-backdrop{display:block;}
 ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:#9ca3af;}
 
-/* Cambios ST — filas por estado */
+/* Cambios ST — tabla densa; LISTO / NO por primera columna (y respaldo columnas hoja) */
 .cambios-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.cambios-table-wrap table{font-size:10px;}
-.cambios-table-wrap th,.cambios-table-wrap td{white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;padding:6px 8px;}
+.cambios-table-wrap table{font-size:8px;}
+.cambios-table-wrap th,.cambios-table-wrap td{
+  white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;padding:4px 5px;line-height:1.25;
+}
 tr.cambios-irr td{background:#fee2e2 !important;}
-tr.cambios-listo td{background:#dcfce7 !important;color:#166534 !important;}
-tr.cambios-rep td{background:#dcfce7 !important;}
+tr.cambios-listo td{background:#dcfce7 !important;color:#14532d !important;}
+tr.cambios-col-no td{background:#fee2e2 !important;color:#991b1b !important;}
 tr.cambios-ent-si td{opacity:0.72;}
-tr.cambios-ent-no td{font-weight:500;}
 </style>
 </head>
 <body>
@@ -697,6 +653,10 @@ tr.cambios-ent-no td{font-weight:500;}
         <span class="nav-icon">🔧</span>
         <span>Técnico</span>
       </div>
+      <div class="nav-item nav-item-admin hidden" data-view="st_admin" id="stNavAdminItem" role="button" tabindex="0">
+        <span class="nav-icon">⚙</span>
+        <span>Admin · acceso</span>
+      </div>
       <div class="nav-item" data-view="cambios" role="button" tabindex="0">
         <span class="nav-icon">🔄</span>
         <span>Cambios garantía ST</span>
@@ -732,7 +692,27 @@ tr.cambios-ent-no td{font-weight:500;}
         <span style="color:#9ca3af;font-size:14px;">🔍</span>
         <input type="text" id="topbarSearch" placeholder="Buscar orden, cliente, IMEI…"/>
       </div>
-      <button type="button" class="btn btn-primary" id="stTopNuevaOrden">+ Nueva orden</button>
+      <div class="st-topbar-actions" id="stTopbarActions">
+        <a class="btn btn-ghost btn-sm" id="stTopInvLink" href="../index.html?continue=inventario" style="text-decoration:none;border:1.5px solid #c4b5fd;color:#5b21b6;">📦 Inventario</a>
+        <div class="st-top-user-pill" id="stTopUserPill">
+          <img class="st-top-avatar-img" id="stTopAvatarImg" alt="" width="34" height="34"/>
+          <div class="st-top-avatar-init" id="stTopAvatarInit">?</div>
+          <div class="st-top-user-meta">
+            <div>
+              <span class="st-top-user-name" id="stTopUserName">—</span>
+              <span class="st-top-admin-badge" id="stTopAdminBadge">Admin</span>
+            </div>
+            <div class="st-top-status"><span class="st-top-status-dot" aria-hidden="true"></span>Conectado</div>
+          </div>
+        </div>
+        <button type="button" class="st-btn-admin-top" id="stTopAdminBtn" title="Panel de administración de accesos">⚙ Admin</button>
+        <button type="button" class="st-btn-salir-top" onclick="salir()">⛔ Salir</button>
+        <button type="button" class="btn btn-primary" id="stTopNuevaOrden">+ Nueva orden</button>
+      </div>
+      <p class="st-admin-hint" style="width:100%;margin:0;padding:0 4px;">
+        Evidencias: despliega <strong>storage.rules</strong> (<code style="font-size:10px;">st_tecnico/</code>).
+        Informe Docs: en Apps Script vuelve a <strong>autorizar permisos</strong> si falla DocumentApp.
+      </p>
     </div>
 
     <!-- CONTENT -->
@@ -830,11 +810,11 @@ tr.cambios-ent-no td{font-weight:500;}
               <thead>
                 <tr>
                   <th>N° Orden</th><th>Fecha</th><th>Cliente</th>
-                  <th>Equipo</th><th>Estado</th><th>Canal</th><th>Agente</th><th></th>
+                  <th>Equipo</th><th>Estado</th><th>Canal</th><th>Agente</th><th></th><th></th>
                 </tr>
               </thead>
               <tbody id="ordenesTbody">
-                <tr class="loading-row"><td colspan="8"><span class="spinner spinner-dark"></span></td></tr>
+                <tr class="loading-row"><td colspan="9"><span class="spinner spinner-dark"></span></td></tr>
               </tbody>
             </table>
           </div>
@@ -869,11 +849,11 @@ tr.cambios-ent-no td{font-weight:500;}
             <table>
               <thead>
                 <tr>
-                  <th>N° Orden</th><th>Fecha</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Canal</th><th></th>
+                  <th>N° Orden</th><th>Fecha</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Canal</th><th></th><th></th>
                 </tr>
               </thead>
               <tbody id="tecnicoOrdenesTbody">
-                <tr class="loading-row"><td colspan="7"><span class="spinner spinner-dark"></span></td></tr>
+                <tr class="loading-row"><td colspan="8"><span class="spinner spinner-dark"></span></td></tr>
               </tbody>
             </table>
           </div>
@@ -1031,6 +1011,31 @@ tr.cambios-ent-no td{font-weight:500;}
         </div>
       </div>
 
+      <!-- ── VIEW: ADMIN ACCESO (mismo flujo que inventario) ── -->
+      <div class="view" id="view-st_admin">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Administración · accesos</div>
+            <div class="page-sub">Aprueba o rechaza solicitudes. Los administradores pueden dar rol admin al aprobar o después; quitar admin solo desde Firebase o código.</div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="loadStAdminPanel()">↺ Actualizar</button>
+        </div>
+        <div class="card" style="margin-bottom:16px;padding:14px 18px;background:#fffbeb;border:1px solid #fde68a;">
+          <div style="font-weight:700;color:#92400e;margin-bottom:6px;">⚙ Panel de administración</div>
+          <p style="font-size:13px;color:#78350f;line-height:1.5;margin:0;">Misma colección <code style="font-size:11px;">users</code> que el inventario. Solo ves esta vista si eres admin ST.</p>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><span class="card-title">Solicitudes pendientes</span></div>
+          <div class="card-body" id="stAdminPendingList" style="padding:16px 20px;"><p style="color:#9ca3af;">Cargando…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Usuarios con acceso aprobado</span></div>
+          <div class="card-body table-wrap" id="stAdminApprovedWrap" style="padding:16px 20px;">
+            <div id="stAdminApprovedList"><p style="color:#9ca3af;">Cargando…</p></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── VIEW: CAMBIOS ST (Google Sheet) ── -->
       <div class="view" id="view-cambios">
         <div class="page-header">
@@ -1065,28 +1070,6 @@ tr.cambios-ent-no td{font-weight:500;}
 
     </div><!-- /content -->
   </div><!-- /main -->
-
-  <aside class="st-userbar" id="stUserbar" aria-label="Usuario">
-    <div class="st-inv-userbar-pill">
-      <div class="st-inv-userbar-left">
-        <img class="st-avatar-img" id="stInvUserbarImg" alt="" width="38" height="38"/>
-        <div class="st-avatar-init" id="stInvUserbarInit">?</div>
-        <div class="st-inv-userbar-meta">
-          <div class="st-inv-userbar-name-row">
-            <span class="st-inv-userbar-name" id="stInvUserbarName">—</span>
-            <span class="st-userbar-admin-badge" id="stUserbarAdminBadge">Admin</span>
-          </div>
-          <div class="st-status-text"><span class="st-status-dot" aria-hidden="true"></span>Conectado</div>
-        </div>
-      </div>
-      <div class="st-inv-userbar-actions">
-        <a class="st-userbar-admin-link" id="stUserbarAdminLink" href="../index.html?continue=admin">⚙ Admin</a>
-        <button type="button" class="st-userbar-out" onclick="salir()">⛔ Salir</button>
-      </div>
-    </div>
-    <a class="st-userbar-inv-btn" id="stUserbarInvLink" href="../index.html?continue=inventario">📦 Inventario repuestos</a>
-    <p class="st-userbar-hint">Evidencias técnicas: despliega <strong>storage.rules</strong> (<code style="font-size:8px;">st_tecnico/</code>). Informe Docs: en Apps Script vuelve a <strong>autorizar permisos</strong> si falla DocumentApp.</p>
-  </aside>
   </div><!-- /st-shell -->
 </div><!-- /app -->
 
