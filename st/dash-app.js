@@ -139,7 +139,7 @@ const SHEETS_EXEC_URL_E =
 
 /** Web App st/google-apps-script-informe.gs (Implementar → URL /exec) */
 const INFORME_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbzj5p20Jq0GGXEVFf4OMiEHri_wyiI0eftg7hLPLGZ7M5B4j0q1aQoRFLT7GytAvrrw/exec';
+  'https://script.google.com/macros/s/AKfycbz7ZOM0QzVwOeSVeALF5hc9aFMyhQUhSdh5smV_4FfnS52so_zX6ENBjUXIQfNFxvmP0g/exec';
 
 /** Opcional: localStorage.setItem('st_informe_script_url','https://…/exec') */
 const LS_INFORME_URL = 'st_informe_script_url';
