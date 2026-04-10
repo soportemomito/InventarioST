@@ -735,7 +735,12 @@ async function submit() {
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Enviar solicitud';
-    alert('No se pudo enviar tu solicitud:\n' + err.message);
+    let msg = String(err && err.message ? err.message : err || '');
+    if (/insufficient permissions|permission-denied|Missing or insufficient permissions/i.test(msg)) {
+      msg =
+        'No pudimos registrar tu solicitud por un tema de permisos del sistema. Por favor intenta más tarde o contacta a Soporte SoyMomo.';
+    }
+    alert('No se pudo enviar tu solicitud:\n' + msg);
   }
 }
 
@@ -819,12 +824,38 @@ window.STSendValidacion = async (payload) => {
     transaction.set(seqRef, { n: next }, { merge: true });
     return `${canal}${next}`;
   });
-  const ref = await addDoc(collection(db, 'st_validaciones'), {
-    ...payload,
+  /** Documento explícito (tipos string) para que coincida con reglas Firestore y no fallen campos omitidos. */
+  const nombre = String(payload.nombre != null ? payload.nombre : '').trim();
+  const correo = String(payload.correo != null ? payload.correo : '').trim();
+  const producto = String(payload.producto != null ? payload.producto : '').trim();
+  const modelo = String(payload.modelo != null ? payload.modelo : '').trim();
+  const falla1 = String(payload.falla1 != null ? payload.falla1 : '').trim();
+  const obs = String(payload.obs != null ? payload.obs : '').trim();
+  const docData = {
+    nombre,
+    correo,
+    rut: payload.rut != null && String(payload.rut).trim() !== '' ? String(payload.rut).trim() : null,
+    imei: payload.imei != null && String(payload.imei).trim() !== '' ? String(payload.imei).trim() : null,
+    producto,
+    modelo,
+    origen: String(payload.origen != null ? payload.origen : '—'),
+    origen_otro:
+      payload.origen_otro != null && String(payload.origen_otro).trim() !== ''
+        ? String(payload.origen_otro).trim()
+        : null,
+    color: String(payload.color != null ? payload.color : '—'),
+    falla1,
+    falla2:
+      payload.falla2 != null && String(payload.falla2).trim() !== '' ? String(payload.falla2).trim() : null,
+    obs,
+    canal,
+    initials:
+      payload.initials != null && String(payload.initials).trim() !== '' ? String(payload.initials).trim() : null,
     estado: 'pendiente',
     numero_seguimiento,
     created_at: serverTimestamp(),
-  });
+  };
+  const ref = await addDoc(collection(db, 'st_validaciones'), docData);
   return { id: ref.id, numero_seguimiento };
 };
 </script>
