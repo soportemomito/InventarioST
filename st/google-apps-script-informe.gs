@@ -107,7 +107,151 @@ function emailVariantKey_(flujo, canal) {
   return f.toUpperCase() + '_' + c;
 }
 
-function buildEmailForVariant_(key, nombreEsc, num, docUrl, evid) {
+var LOGO_ENTRADA_PNG_ =
+  'https://soymomo.es/cdn/shop/files/logo_horizontal-01_1200x1200.png?v=1661959213';
+
+/** Normaliza estado de orden para la barra de progreso (bulk sender). */
+function normalizeOrdenStatusForProgress_(raw) {
+  var s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (s === 'recepcionado' || s === 'ingresado') return 'recepcionado';
+  if (s.indexOf('revision') >= 0 || s.indexOf('revisión') >= 0) return 'en revision';
+  if (s === 'revisado' || s === 'listo') return 'revisado';
+  return 'en revision';
+}
+
+/** Barra de pasos HTML (3 etapas) según estado Firestore. */
+function buildEntradaProgressHtml_(norm) {
+  var active = norm || 'en revision';
+  var c1 = active === 'recepcionado' ? '#2563eb' : '#e5e7eb';
+  var c2 = active === 'en revision' ? '#f59e0b' : '#e5e7eb';
+  var c3 = active === 'revisado' ? '#16a34a' : '#e5e7eb';
+  var t1 = active === 'recepcionado' ? '#1e40af' : '#9ca3af';
+  var t2 = active === 'en revision' ? '#92400e' : '#9ca3af';
+  var t3 = active === 'revisado' ? '#15803d' : '#9ca3af';
+  return (
+    '<div style="margin:24px 0;padding:16px;background:#fff;border:1px solid #d6c7ff;border-radius:10px;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:520px;margin:0 auto;">' +
+    '<tr>' +
+    '<td align="center" style="width:33%;vertical-align:top;">' +
+    '<div style="width:28px;height:28px;border-radius:50%;background:' +
+    c1 +
+    ';margin:0 auto 6px;line-height:28px;font-size:14px;color:#fff;">1</div>' +
+    '<div style="font-size:11px;font-weight:700;color:' +
+    t1 +
+    ';">Recepcionado</div></td>' +
+    '<td align="center" style="width:33%;vertical-align:top;">' +
+    '<div style="width:28px;height:28px;border-radius:50%;background:' +
+    c2 +
+    ';margin:0 auto 6px;line-height:28px;font-size:14px;color:#fff;">2</div>' +
+    '<div style="font-size:11px;font-weight:700;color:' +
+    t2 +
+    ';">En revisión</div></td>' +
+    '<td align="center" style="width:33%;vertical-align:top;">' +
+    '<div style="width:28px;height:28px;border-radius:50%;background:' +
+    c3 +
+    ';margin:0 auto 6px;line-height:28px;font-size:14px;color:#fff;">3</div>' +
+    '<div style="font-size:11px;font-weight:700;color:' +
+    t3 +
+    ';">Revisado</div></td>' +
+    '</tr></table></div>'
+  );
+}
+
+function buildEntradaEmailHtml_P(nombreEsc, orden, docUrl, evid, statusNorm) {
+  var prog = buildEntradaProgressHtml_(statusNorm);
+  var bodyMain =
+    'Te confirmamos que hemos recibido tu envío y el dispositivo ha sido ingresado a revisión por nuestro equipo especialista. Adjunto a este correo encontrarás la orden de ingreso con todos los detalles registrados al momento de la recepción.';
+  return (
+    '<div style="background:#6d28e9; padding:30px 10px; font-family: Arial, sans-serif;">' +
+    '<div style="max-width:600px; margin:auto; background:#f5edff; border-radius:12px; padding:30px;">' +
+    '<div style="text-align:center; margin-bottom:20px;"><img src="' +
+    LOGO_ENTRADA_PNG_ +
+    '" alt="SoyMomo" width="220" style="max-width:100%;height:auto;"/></div>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:22px 0;">' +
+    '<h2 style="text-align:center; margin:0 0 10px 0; color:#2b0a3d;">¡Hemos recepcionado tu dispositivo! 📦</h2>' +
+    '<p style="text-align:center; color:#5a3b6e; font-size:14px; margin-bottom:18px;">Tu equipo ha ingresado a nuestro servicio técnico</p>' +
+    prog +
+    '<div style="text-align:center;margin:18px 0;">' +
+    '<span style="display:inline-block;background:#ede4ff;border:1px solid #d6c7ff;color:#2b0a3d;font-size:15px;font-weight:700;padding:12px 22px;border-radius:10px;">N° de Orden: ' +
+    orden +
+    '</span></div>' +
+    '<p style="font-size:14px; color:#2b0a3d;">Hola <strong>' +
+    nombreEsc +
+    '</strong>,</p>' +
+    '<p style="font-size:14px; color:#2b0a3d; line-height:1.65;">' +
+    bodyMain +
+    '</p>' +
+    '<div style="text-align:center; margin:22px 0;">' +
+    '<a href="' +
+    docUrl +
+    '" target="_blank" style="background:#7c3aed; color:#ffffff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:bold; font-size:15px; display:inline-block;">Ver orden de ingreso</a></div>' +
+    (evid ? '<p style="text-align:center;font-size:13px;"><a href="' + evid + '" style="color:#6d28e9;">Enlace de evidencias</a></p>' : '') +
+    '<div style="background:#ede4ff; border:1px solid #d6c7ff; padding:16px; border-radius:10px; margin:20px 0;">' +
+    '<p style="margin:0; font-size:13px; color:#2b0a3d; text-align:center;">Plazo orientativo: <strong>5 días hábiles</strong> para el informe de salida.</p></div>' +
+    '<p style="font-size:13px;color:#5a3b6e;">Equipo SoyMomo — ¡Saludos cordiales!<br/><strong>Servicio Técnico SoyMomo</strong></p>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:24px 0;">' +
+    '<p style="font-size:12px; color:#6b4c7a; text-align:center; margin:0;">Servicio Técnico SoyMomo</p>' +
+    '</div></div>'
+  );
+}
+
+function buildEntradaEmailHtml_E(nombreEsc, orden, docUrl, evid, statusNorm) {
+  var prog = buildEntradaProgressHtml_(statusNorm);
+  var bodyMain =
+    'Te confirmamos que hemos recibido tu envío desde tu ubicación y el dispositivo ha sido ingresado a revisión. Adjunto encontrarás la orden de ingreso. En el informe de salida te indicaremos los pasos para el retorno del equipo.';
+  return (
+    '<div style="background:#6d28e9; padding:30px 10px; font-family: Arial, sans-serif;">' +
+    '<div style="max-width:600px; margin:auto; background:#f5edff; border-radius:12px; padding:30px;">' +
+    '<div style="text-align:center; margin-bottom:20px;"><img src="' +
+    LOGO_ENTRADA_PNG_ +
+    '" alt="SoyMomo" width="220" style="max-width:100%;height:auto;"/></div>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:22px 0;">' +
+    '<h2 style="text-align:center; margin:0 0 10px 0; color:#2b0a3d;">¡Hemos recepcionado tu dispositivo! 📦</h2>' +
+    '<p style="text-align:center; color:#5a3b6e; font-size:14px; margin-bottom:18px;">Tu equipo ha ingresado a nuestro servicio técnico</p>' +
+    prog +
+    '<div style="text-align:center;margin:18px 0;">' +
+    '<span style="display:inline-block;background:#ede4ff;border:1px solid #d6c7ff;color:#2b0a3d;font-size:15px;font-weight:700;padding:12px 22px;border-radius:10px;">N° de Orden: ' +
+    orden +
+    '</span></div>' +
+    '<p style="font-size:14px; color:#2b0a3d;">Hola <strong>' +
+    nombreEsc +
+    '</strong>,</p>' +
+    '<p style="font-size:14px; color:#2b0a3d; line-height:1.65;">' +
+    bodyMain +
+    '</p>' +
+    '<div style="text-align:center; margin:22px 0;">' +
+    '<a href="' +
+    docUrl +
+    '" target="_blank" style="background:#7c3aed; color:#ffffff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:bold; font-size:15px; display:inline-block;">Ver orden de ingreso</a></div>' +
+    (evid ? '<p style="text-align:center;font-size:13px;"><a href="' + evid + '" style="color:#6d28e9;">Enlace de evidencias</a></p>' : '') +
+    '<div style="background:#ede4ff; border:1px solid #d6c7ff; padding:16px; border-radius:10px; margin:20px 0;">' +
+    '<p style="margin:0; font-size:13px; color:#2b0a3d; text-align:center;">Plazo orientativo: <strong>5 días hábiles</strong> para el informe de salida (incluirá instrucciones de envío de retorno si aplica).</p></div>' +
+    '<p style="font-size:13px;color:#5a3b6e;">Equipo SoyMomo — ¡Saludos cordiales!<br/><strong>Servicio Técnico SoyMomo</strong></p>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:24px 0;">' +
+    '<p style="font-size:12px; color:#6b4c7a; text-align:center; margin:0;">Servicio Técnico SoyMomo</p>' +
+    '</div></div>'
+  );
+}
+
+function buildEntradaEmailHtml_S(nombreEsc, orden, docUrl, evid, statusNorm) {
+  var base = buildEntradaEmailHtml_P(nombreEsc, orden, docUrl, evid, statusNorm);
+  var extra =
+    '<div style="background:#fff4cc;border:1px solid #ffe08a;padding:14px;border-radius:8px;margin:16px 0;">' +
+    '<p style="margin:0;font-size:13px;color:#2b0a3d;text-align:center;"><strong>Retiro en tienda</strong><br/>' +
+    'Ricardo Lyon 1688, Providencia · Lun–Vie 10:30–19:30, Sáb 10:00–14:45<br/>' +
+    'Pagos: débito, crédito o efectivo.</p></div>';
+  return base.replace(
+    '<div style="background:#ede4ff; border:1px solid #d6c7ff; padding:16px; border-radius:10px; margin:20px 0;">',
+    extra +
+      '<div style="background:#ede4ff; border:1px solid #d6c7ff; padding:16px; border-radius:10px; margin:20px 0;">'
+  );
+}
+
+function buildEmailForVariant_(key, nombreEsc, num, docUrl, evid, ordenStatusRaw) {
   var mapSubject = {
     ENTRADA_E: 'SoyMomo — Informe ingreso (canal E) ' + num,
     ENTRADA_P: 'SoyMomo — Informe ingreso (canal P) ' + num,
@@ -116,25 +260,23 @@ function buildEmailForVariant_(key, nombreEsc, num, docUrl, evid) {
     SALIDA_P: 'SoyMomo — Retiro / salida ST (P) ' + num,
     SALIDA_S: 'SoyMomo — Retiro / salida ST (S) ' + num,
   };
+  var subject = mapSubject[key] || mapSubject['ENTRADA_P'];
+  var stNorm = normalizeOrdenStatusForProgress_(ordenStatusRaw);
+
+  if (key === 'ENTRADA_P' || key === 'ENTRADA_E' || key === 'ENTRADA_S') {
+    var htmlBody;
+    if (key === 'ENTRADA_E') htmlBody = buildEntradaEmailHtml_E(nombreEsc, num, docUrl, evid, stNorm);
+    else if (key === 'ENTRADA_S') htmlBody = buildEntradaEmailHtml_S(nombreEsc, num, docUrl, evid, stNorm);
+    else htmlBody = buildEntradaEmailHtml_P(nombreEsc, num, docUrl, evid, stNorm);
+    return { subject: subject, html: htmlBody };
+  }
+
   var mapIntro = {
-    ENTRADA_E:
-      'Información de tu ingreso a Servicio Técnico (sin garantía · canal <strong>E</strong>), orden <strong>' +
-      num +
-      '</strong>.',
-    ENTRADA_P:
-      'Información de tu ingreso a Servicio Técnico (garantía · canal <strong>P</strong>), orden <strong>' +
-      num +
-      '</strong>.',
-    ENTRADA_S:
-      'Información de tu ingreso a Servicio Técnico (recepción presencial · canal <strong>S</strong>), orden <strong>' +
-      num +
-      '</strong>.',
     SALIDA_E: 'Actualización sobre retiro o cierre de tu orden (canal <strong>E</strong>), <strong>' + num + '</strong>.',
     SALIDA_P: 'Actualización sobre retiro o cierre de tu orden (canal <strong>P</strong>), <strong>' + num + '</strong>.',
     SALIDA_S: 'Actualización sobre retiro o cierre de tu orden (canal <strong>S</strong>), <strong>' + num + '</strong>.',
   };
-  var subject = mapSubject[key] || mapSubject['ENTRADA_P'];
-  var intro = mapIntro[key] || mapIntro['ENTRADA_P'];
+  var intro = mapIntro[key] || mapIntro['SALIDA_P'];
   var html =
     '<p>Hola ' +
     nombreEsc +
@@ -211,7 +353,14 @@ function doPost(e) {
 
       var nombreEsc = orden.nombre ? String(orden.nombre).replace(/</g, '') : '';
       var vKey = emailVariantKey_(flujoCorreo, orden.canal);
-      var mail = buildEmailForVariant_(vKey, nombreEsc, num, docUrl, evid);
+      var ordenStatusRaw =
+        body.orden_status ||
+        body.ordenStatus ||
+        orden.orden_status ||
+        orden.estado ||
+        orden.status ||
+        'en revisión';
+      var mail = buildEmailForVariant_(vKey, nombreEsc, num, docUrl, evid, ordenStatusRaw);
 
       GmailApp.sendEmail(to, mail.subject, 'Abre el informe desde el enlace del correo HTML.', { htmlBody: mail.html });
       return jsonOut_({ ok: true, informe_url: docUrl });
