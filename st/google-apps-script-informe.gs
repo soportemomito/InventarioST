@@ -32,6 +32,24 @@
  *      https://www.googleapis.com/auth/documents (o copia st/appsscript.json con oauthScopes).
  *   2) Ejecuta una vez cualquier función del editor (p. ej. doGet) y acepta el consentimiento.
  *   3) Implementar → Nueva implementación de la aplicación web (para que la /exec use la nueva versión).
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CHECKLIST EN ORDEN (solo este archivo + Drive/Gmail)
+ * ───────────────────────────────────────────────────────────────────────────
+ * 1) Abre el proyecto Apps Script (ideal: el vinculado a tu Sheet de registro ST).
+ * 2) Pega o fusiona TODO este .gs (doGet, doPost, helpers). Guarda (Ctrl+S).
+ * 3) Ámbitos OAuth: Proyecto → ⚙ Ajustes → Ámbitos, o sube manifest appsscript.json
+ *    del repo (debe incluir …/auth/documents, drive, gmail si envías correos).
+ * 4) En el editor: elige función doGet → Ejecutar → acepta permisos (cuenta que
+ *    será "Ejecutar como" en la Web App).
+ * 5) Cada plantilla Google Doc (IDs en TEMPLATE_BY_CANAL, SALIDA_ST_TEMPLATE_ID):
+ *    compártela con esa misma cuenta (Editor) o que el Doc sea suyo.
+ * 6) Implementar → Aplicación web → Nueva implementación → Ejecutar como: Yo →
+ *    Acceso: según tu política (a veces "Cualquiera" para CORS desde el dash).
+ * 7) Copia la URL que termina en /exec al panel ST (INFORME_SCRIPT_URL / modal).
+ * 8) En cada plantilla Doc, el texto debe ser exactamente <<Orden>>, <<Nombre>>, …
+ *    (ver applyPlaceholders_). Si cambias un marcador, añade replaceText aquí.
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 function jsonOut_(obj) {
@@ -66,17 +84,26 @@ function templateFor_(canal) {
 }
 
 /**
- * Plantillas de **orden de salida** (mismo folder que entrada; puedes sustituir templateId por Docs dedicados).
- * Si usas la misma plantilla que entrada, al menos el nombre del archivo distingue el informe.
+ * Plantilla única de **orden de salida ST** (Doc con marcadores <<…>>).
+ * Coloca en el documento exactamente estos tokens (o añade más y replícalos aquí):
+ *   <<Falla_final>> <<Tipo_falla>> <<Valor_reparacion>> <<Tecnico_nombre>>
+ *   <<Repuesto_1>> <<Repuesto_2>> <<Repuesto_3>> <<Motivo_ST>> <<Revision>>
+ *   (además de los de entrada: <<Solución>>, <<Observaciones>>, etc.)
+ * ID: Formato salida ST (compartir el Doc con la cuenta que ejecuta el script).
+ */
+var SALIDA_ST_TEMPLATE_ID = '1D2kw7U-Qz5kwy6vMrtX_A3EvA6W7RrRN1qcGlimzGk4';
+
+/**
+ * Carpeta de salida por canal (misma lógica que informes de entrada).
  */
 var SALIDA_TEMPLATE_BY_CANAL = {
   E: {
-    templateId: '1fcwUlvbcFSwDonKNCWlbjkISxPhpECOCbc78dhUOx9A',
+    templateId: SALIDA_ST_TEMPLATE_ID,
     folderId: '1RGITbdAModR4aOIDNtfEor949CPLEv4B',
     namePrefix: 'Informe Salida ST',
   },
   P: {
-    templateId: '1DlI3IA_E5nXtLKv370ULVUDSPpIl-j9GcqdYcfv4m5s',
+    templateId: SALIDA_ST_TEMPLATE_ID,
     folderId: '1Ni9vY9JcJYCmf22MUJlj93aI6Z5Ecp4L',
     namePrefix: 'Informe Salida Recepción ST',
   },
@@ -119,6 +146,16 @@ function applyPlaceholders_(body, d) {
   body.replaceText('<<Presupuesto>>', String(d.presupuesto != null ? d.presupuesto : ''));
   body.replaceText('<<RUT>>', String(d.rut != null ? d.rut : ''));
   body.replaceText('<<Evidencias_salida>>', String(d.evidencias_salida != null ? d.evidencias_salida : ''));
+  /* Salida ST (técnico) — añade estos marcadores en la plantilla de salida */
+  body.replaceText('<<Falla_final>>', String(d.falla_final != null ? d.falla_final : ''));
+  body.replaceText('<<Tipo_falla>>', String(d.tipo_falla != null ? d.tipo_falla : ''));
+  body.replaceText('<<Valor_reparacion>>', String(d.valor_reparacion != null ? d.valor_reparacion : ''));
+  body.replaceText('<<Tecnico_nombre>>', String(d.tecnico_nombre != null ? d.tecnico_nombre : ''));
+  body.replaceText('<<Repuesto_1>>', String(d.repuesto_1 != null ? d.repuesto_1 : ''));
+  body.replaceText('<<Repuesto_2>>', String(d.repuesto_2 != null ? d.repuesto_2 : ''));
+  body.replaceText('<<Repuesto_3>>', String(d.repuesto_3 != null ? d.repuesto_3 : ''));
+  body.replaceText('<<Motivo_ST>>', String(d.motivo_st != null ? d.motivo_st : ''));
+  body.replaceText('<<Revision>>', String(d.revision != null ? d.revision : ''));
 }
 
 /**
