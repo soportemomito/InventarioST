@@ -139,6 +139,7 @@ function aprobarValidacion(id, payload) {
     plazo_dias_habiles: payload.plazo_dias_habiles || null,
     plazo_otro: payload.plazo_otro || null,
     obs2: payload.obs2 || null,
+    obs_internas: payload.obs_internas || null,
     mica: !!payload.mica,
     carga: !!payload.carga,
     pantalla: !!payload.pantalla,
