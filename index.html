@@ -1387,8 +1387,11 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('auth-wall').style.display         = 'none';
   document.getElementById('landing').style.display           = 'none';
 
-  const continueMod = new URLSearchParams(window.location.search).get('continue');
+  const _qs = new URLSearchParams(window.location.search);
+  const continueMod = _qs.get('continue');
   const goInventarioOnly = continueMod === 'inv' || continueMod === 'inventario';
+  const openInvDirect =
+    goInventarioOnly && (_qs.get('open') === 'inv' || _qs.get('open') === '1');
   if (!goInventarioOnly) {
     history.replaceState({}, '', window.location.pathname);
     try {
@@ -1400,7 +1403,6 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   history.replaceState({}, '', window.location.pathname);
-  document.getElementById('module-selector').style.display = 'flex';
 
   // Rellenar módulo selector
   const _modAv = document.getElementById('mod-avatar');
@@ -1441,6 +1443,14 @@ onAuthStateChanged(auth, async (user) => {
     globalMin = cfgSnap.data().globalMin;
     document.getElementById('global-min').value = globalMin;
   }
+
+  // Desde ST: ?continue=inventario&open=inv → entrar directo al inventario (sin selector)
+  if (openInvDirect) {
+    await switchModule('inventario');
+    return;
+  }
+
+  document.getElementById('module-selector').style.display = 'flex';
 
   // NO iniciamos listeners aquí — se inician al entrar a cada módulo
 });
