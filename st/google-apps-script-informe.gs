@@ -91,39 +91,65 @@ function applyPlaceholders_(body, d) {
 }
 
 /**
- * Asunto y párrafo intro según el bloque del dash (entradas / recepcion / salidas).
- * Sustituye por tus plantillas HTML completas cuando las pegues aquí.
+ * Variantes de correo: flujo (entrada | salida) × canal (E | P | S).
+ * Reemplaza el HTML de cada rama con tus bodymailE, bodymailP, bodymail recepción (S) y salidas.
  */
-function subjectAndIntroForCorreo_(tipo, num) {
-  var t = String(tipo || '').toLowerCase();
-  if (t === 'entradas') {
-    return {
-      subject: 'SoyMomo — Informe ingreso (entradas) ' + num,
-      intro:
-        'Información de tu ingreso a Servicio Técnico (entrada sin garantía), orden <strong>' +
-        num +
-        '</strong>.',
-    };
-  }
-  if (t === 'recepcion') {
-    return {
-      subject: 'SoyMomo — Informe ingreso (recepción) ' + num,
-      intro:
-        'Información de tu ingreso a Servicio Técnico (recepción garantía/presencial), orden <strong>' +
-        num +
-        '</strong>.',
-    };
-  }
-  if (t === 'salidas') {
-    return {
-      subject: 'SoyMomo — Retiro / salida ST ' + num,
-      intro: 'Actualización sobre tu orden en Servicio Técnico, orden <strong>' + num + '</strong>.',
-    };
-  }
-  return {
-    subject: 'SoyMomo — Informe ingreso ' + num,
-    intro: 'Información de tu ingreso a Servicio Técnico (orden <strong>' + num + '</strong>).',
+function normalizeCanalMail_(c) {
+  var x = String(c || 'P').toUpperCase();
+  if (x === 'E' || x === 'P' || x === 'S') return x;
+  return 'P';
+}
+
+function emailVariantKey_(flujo, canal) {
+  var f = String(flujo || 'entrada').toLowerCase();
+  if (f !== 'salida') f = 'entrada';
+  var c = normalizeCanalMail_(canal);
+  return f.toUpperCase() + '_' + c;
+}
+
+function buildEmailForVariant_(key, nombreEsc, num, docUrl, evid) {
+  var mapSubject = {
+    ENTRADA_E: 'SoyMomo — Informe ingreso (canal E) ' + num,
+    ENTRADA_P: 'SoyMomo — Informe ingreso (canal P) ' + num,
+    ENTRADA_S: 'SoyMomo — Informe ingreso (recepción S) ' + num,
+    SALIDA_E: 'SoyMomo — Retiro / salida ST (E) ' + num,
+    SALIDA_P: 'SoyMomo — Retiro / salida ST (P) ' + num,
+    SALIDA_S: 'SoyMomo — Retiro / salida ST (S) ' + num,
   };
+  var mapIntro = {
+    ENTRADA_E:
+      'Información de tu ingreso a Servicio Técnico (sin garantía · canal <strong>E</strong>), orden <strong>' +
+      num +
+      '</strong>.',
+    ENTRADA_P:
+      'Información de tu ingreso a Servicio Técnico (garantía · canal <strong>P</strong>), orden <strong>' +
+      num +
+      '</strong>.',
+    ENTRADA_S:
+      'Información de tu ingreso a Servicio Técnico (recepción presencial · canal <strong>S</strong>), orden <strong>' +
+      num +
+      '</strong>.',
+    SALIDA_E: 'Actualización sobre retiro o cierre de tu orden (canal <strong>E</strong>), <strong>' + num + '</strong>.',
+    SALIDA_P: 'Actualización sobre retiro o cierre de tu orden (canal <strong>P</strong>), <strong>' + num + '</strong>.',
+    SALIDA_S: 'Actualización sobre retiro o cierre de tu orden (canal <strong>S</strong>), <strong>' + num + '</strong>.',
+  };
+  var subject = mapSubject[key] || mapSubject['ENTRADA_P'];
+  var intro = mapIntro[key] || mapIntro['ENTRADA_P'];
+  var html =
+    '<p>Hola ' +
+    nombreEsc +
+    ',</p>' +
+    '<p>' +
+    intro +
+    '</p>' +
+    '<p><a href="' +
+    docUrl +
+    '">Abrir informe (Google Docs)</a></p>';
+  if (evid) {
+    html += '<p><a href="' + evid + '">Enlace de evidencias</a></p>';
+  }
+  html += '<p>Saludos,<br/>SoyMomo</p>';
+  return { subject: subject, html: html };
 }
 
 function generarDocDesdeOrden_(orden) {
@@ -164,9 +190,14 @@ function doPost(e) {
       var to = String(orden.correo || '').trim();
       if (!to) return jsonOut_({ error: 'Falta correo del cliente' });
       var num = String(orden.orden || '');
-      var tipoCorreo = String(body.tipo_correo || body.tipoCorreo || '').trim();
-      var copy = subjectAndIntroForCorreo_(tipoCorreo, num);
-      var subject = copy.subject;
+      var flujoCorreo = String(body.flujo_correo || body.flujoCorreo || '').toLowerCase();
+      if (!flujoCorreo) {
+        var legacyTipo = String(body.tipo_correo || body.tipoCorreo || '').toLowerCase();
+        if (legacyTipo === 'salidas') flujoCorreo = 'salida';
+        else flujoCorreo = 'entrada';
+      }
+      if (flujoCorreo !== 'salida') flujoCorreo = 'entrada';
+
       var docUrl = String(body.informe_url || body.informeUrl || '').trim();
       var evid = String(body.evidencias_url || body.evidenciasUrl || '').trim();
 
@@ -179,22 +210,10 @@ function doPost(e) {
       }
 
       var nombreEsc = orden.nombre ? String(orden.nombre).replace(/</g, '') : '';
-      var html =
-        '<p>Hola ' +
-        nombreEsc +
-        ',</p>' +
-        '<p>' +
-        copy.intro +
-        '</p>' +
-        '<p><a href="' +
-        docUrl +
-        '">Abrir informe (Google Docs)</a></p>';
-      if (evid) {
-        html += '<p><a href="' + evid + '">Enlace de evidencias</a></p>';
-      }
-      html += '<p>Saludos,<br/>SoyMomo</p>';
+      var vKey = emailVariantKey_(flujoCorreo, orden.canal);
+      var mail = buildEmailForVariant_(vKey, nombreEsc, num, docUrl, evid);
 
-      GmailApp.sendEmail(to, subject, 'Abre el informe desde el enlace del correo HTML.', { htmlBody: html });
+      GmailApp.sendEmail(to, mail.subject, 'Abre el informe desde el enlace del correo HTML.', { htmlBody: mail.html });
       return jsonOut_({ ok: true, informe_url: docUrl });
     }
 
