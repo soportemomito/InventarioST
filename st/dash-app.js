@@ -12,6 +12,7 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   limit,
@@ -34,7 +35,14 @@ const firebaseConfig = {
 
 const COL_V = 'st_validaciones';
 const COL_O = 'st_ordenes';
+const COL_USERS = 'users';
 const META_SERIAL = 'st_meta';
+
+function normalizeEmailSt(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
 
 /** Sufijo mínimo del correlativo por canal (S arranca en 10000). */
 const ORDEN_SUFFIX_MIN = { P: 1, E: 1, S: 10000 };
@@ -131,7 +139,7 @@ const SHEETS_EXEC_URL_E =
 
 /** Web App st/google-apps-script-informe.gs (Implementar → URL /exec) */
 const INFORME_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbz3Mz5_sc9jDpZlkDg13xw4qpgWQNJfi2_tjN3K9j2Uf1tRUfWGD7cjI5NmmgX9mE8c/exec';
+  'https://script.google.com/macros/s/AKfycbzj5p20Jq0GGXEVFf4OMiEHri_wyiI0eftg7hLPLGZ7M5B4j0q1aQoRFLT7GytAvrrw/exec';
 
 /** Opcional: localStorage.setItem('st_informe_script_url','https://…/exec') */
 const LS_INFORME_URL = 'st_informe_script_url';
@@ -358,9 +366,9 @@ async function checkAuth() {
     .map((w) => w[0] || '')
     .join('')
     .toUpperCase();
-  const nm = document.getElementById('stInvUserbarName') || document.getElementById('stUserbarName');
-  const img = document.getElementById('stInvUserbarImg');
-  const ini = document.getElementById('stInvUserbarInit');
+  const nm = document.getElementById('stTopUserName');
+  const img = document.getElementById('stTopAvatarImg');
+  const ini = document.getElementById('stTopAvatarInit');
   const photo = auth.currentUser?.photoURL;
   if (nm) nm.textContent = AGENT.name;
   if (img && ini) {
@@ -376,8 +384,6 @@ async function checkAuth() {
       ini.textContent = initials;
     }
   }
-  const av = document.getElementById('stUserbarAvatar');
-  if (av) av.textContent = initials;
   stAdminFromFirestore = false;
   try {
     const uid = auth.currentUser?.uid;
@@ -391,10 +397,9 @@ async function checkAuth() {
   } catch (_) {
     /* sin permiso o offline: solo lista de correos */
   }
-  const admL = document.getElementById('stUserbarAdminLink');
-  const admBadge = document.getElementById('stUserbarAdminBadge');
-  if (admL) admL.style.display = isStAdminUser() ? 'inline-flex' : 'none';
+  const admBadge = document.getElementById('stTopAdminBadge');
   if (admBadge) admBadge.style.display = isStAdminUser() ? 'inline-block' : 'none';
+  updateStAdminChrome();
   try {
     await withTimeout(
       getCountFromServer(query(collection(db, COL_V), limit(1))),
@@ -437,6 +442,7 @@ const VIEW_TITLES = {
   validacion: 'Proceso de validación',
   ordenes: 'Órdenes',
   tecnico: 'Técnico',
+  st_admin: 'Admin · acceso',
   mailst: 'Envío correos',
   cambios: 'Cambios garantía ST',
 };
@@ -463,6 +469,7 @@ function switchView(name) {
       loadTecnicoOrdenes();
       correoStRenderLogTable('salida_tec');
     }
+    if (name === 'st_admin') loadStAdminPanel();
   } catch (e) {
     console.error('switchView', name, e);
     toast('Error al cambiar de vista: ' + (e.message || e), 'error');
@@ -508,6 +515,10 @@ function bindStShellUi() {
   document.getElementById('stSidebarBackdrop')?.addEventListener('click', stCloseMobileNav);
   document.getElementById('stTopNuevaOrden')?.addEventListener('click', () => abrirNuevaOrden());
   document.getElementById('topbarSearch')?.addEventListener('input', debouncedSearch);
+  document.getElementById('stTopAdminBtn')?.addEventListener('click', () => {
+    stCloseMobileNav();
+    switchView('st_admin');
+  });
 }
 
 /** Si inventario está en otro dominio, usa localStorage.soymomo_inventario_url para el enlace del menú. */
@@ -520,10 +531,115 @@ function setInventarioLinkHref() {
   const indexHref = base.startsWith('http') ? `${base.replace(/\/$/, '')}/${path}` : `../${path}`;
   const sep = indexHref.includes('?') ? '&' : '?';
   const invHref = `${indexHref}${sep}continue=inventario`;
-  const admHref = `${indexHref}${sep}continue=admin`;
   document.getElementById('stNavInventario')?.setAttribute('href', invHref);
-  document.getElementById('stUserbarInvLink')?.setAttribute('href', invHref);
-  document.getElementById('stUserbarAdminLink')?.setAttribute('href', admHref);
+  document.getElementById('stTopInvLink')?.setAttribute('href', invHref);
+}
+
+function userRecordIsAdminSt(u) {
+  if (!u) return false;
+  if (String(u.role || '').toLowerCase() === 'admin') return true;
+  return ST_ADMIN_EMAILS.has(normalizeEmailSt(u.email));
+}
+
+async function loadStAdminPanel() {
+  const pend = document.getElementById('stAdminPendingList');
+  const appr = document.getElementById('stAdminApprovedList');
+  if (!pend || !appr) return;
+  if (!isStAdminUser()) {
+    pend.innerHTML =
+      '<p style="color:#dc2626;font-size:13px">No tienes permisos de administrador.</p>';
+    appr.innerHTML = '';
+    return;
+  }
+  try {
+    const snap = await getDocs(collection(db, COL_USERS));
+    const users = snap.docs.map((d) => d.data());
+    const pending = users.filter((u) => u.status === 'pending');
+    const approved = users.filter((u) => u.status === 'approved');
+    pend.innerHTML = pending.length
+      ? pending
+          .map(
+            (u) => `
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
+          <div style="min-width:0;">
+            <div style="font-weight:600;font-size:13px">${escapeAttr(u.name || u.email)}</div>
+            <div style="font-size:11px;color:#6b7280">${escapeAttr(u.email || '')}</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button type="button" class="btn btn-green btn-sm" onclick="stAdminApproveUser('${escapeAttr(u.uid)}')">Aprobar</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="stAdminApproveUserAndAdmin('${escapeAttr(
+              u.uid
+            )}')" title="Aprueba y asigna admin">Aprobar + admin</button>
+            <button type="button" class="btn btn-ghost btn-sm" style="color:#b91c1c;border-color:#fecaca" onclick="stAdminDenyUser('${escapeAttr(
+              u.uid
+            )}')">Denegar</button>
+          </div>
+        </div>`
+          )
+          .join('')
+      : '<p style="color:#9ca3af;font-size:13px">Sin solicitudes pendientes ✓</p>';
+    appr.innerHTML = approved.length
+      ? `<table style="width:100%;font-size:13px;border-collapse:collapse;"><thead><tr style="text-align:left;border-bottom:1px solid #e5e7eb;"><th style="padding:8px;">Nombre</th><th style="padding:8px;">Correo</th><th style="padding:8px;">Rol</th><th style="padding:8px;">Acciones</th></tr></thead><tbody>${approved
+          .map((u) => {
+            const isAdm = userRecordIsAdminSt(u);
+            const roleCell = isAdm
+              ? '<span class="badge" style="background:#ede9fe;color:#5b21b6">Administrador</span>'
+              : '<span style="color:#6b7280">Usuario</span>';
+            const actions = isAdm
+              ? '<span style="font-size:11px;color:#9ca3af">Quitar admin en Firebase</span>'
+              : `<button type="button" class="btn btn-ghost btn-sm" onclick="stAdminGrantRole('${escapeAttr(
+                  u.uid
+                )}')">Hacer admin</button> <button type="button" class="btn btn-ghost btn-sm" style="color:#b91c1c" onclick="stAdminDenyUser('${escapeAttr(
+                  u.uid
+                )}')">Revocar</button>`;
+            return `<tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:8px;font-weight:500">${escapeAttr(u.name || '—')}</td>
+              <td style="padding:8px;font-size:12px;color:#6b7280">${escapeAttr(u.email || '')}</td>
+              <td style="padding:8px;">${roleCell}</td>
+              <td style="padding:8px;white-space:nowrap">${actions}</td>
+            </tr>`;
+          })
+          .join('')}</tbody></table>`
+      : '<p style="color:#9ca3af;font-size:13px">Sin usuarios aprobados aún.</p>';
+  } catch (e) {
+    pend.innerHTML = `<p style="color:#dc2626">${escapeAttr(e.message)}</p>`;
+  }
+}
+
+async function stAdminApproveUser(uid) {
+  await updateDoc(doc(db, COL_USERS, uid), { status: 'approved', approvedAt: serverTimestamp() });
+  await loadStAdminPanel();
+}
+
+async function stAdminApproveUserAndAdmin(uid) {
+  if (!isStAdminUser()) return;
+  if (!confirm('¿Aprobar y dar rol administrador?')) return;
+  await updateDoc(doc(db, COL_USERS, uid), {
+    status: 'approved',
+    approvedAt: serverTimestamp(),
+    role: 'admin',
+  });
+  await loadStAdminPanel();
+}
+
+async function stAdminGrantRole(uid) {
+  if (!isStAdminUser()) return;
+  if (!confirm('¿Dar rol admin? Quitarlo solo desde Firebase.')) return;
+  await updateDoc(doc(db, COL_USERS, uid), { role: 'admin' });
+  await loadStAdminPanel();
+}
+
+async function stAdminDenyUser(uid) {
+  if (!confirm('¿Denegar o revocar acceso a este usuario?')) return;
+  await updateDoc(doc(db, COL_USERS, uid), { status: 'denied', deniedAt: serverTimestamp() });
+  await loadStAdminPanel();
+}
+
+function updateStAdminChrome() {
+  const show = isStAdminUser();
+  document.getElementById('stNavAdminItem')?.classList.toggle('hidden', !show);
+  const btn = document.getElementById('stTopAdminBtn');
+  if (btn) btn.style.display = show ? 'inline-flex' : 'none';
 }
 
 const ESTADO_BADGE = {
@@ -583,6 +699,13 @@ function ynAcc_(o, key) {
   return o[key] ? 'Sí' : 'No';
 }
 
+function formatMoneyCLPInforme(val) {
+  if (val == null || val === '') return '—';
+  const n = Number(val);
+  if (!Number.isFinite(n)) return String(val);
+  return '$' + n.toLocaleString('es-CL');
+}
+
 /** Payload para Apps Script (marcadores <<…>> del Doc). */
 function buildInformePayloadFromOrden(o) {
   const boleta =
@@ -633,6 +756,15 @@ function buildInformePayloadFromOrden(o) {
     observaciones2: o.obs2 || '—',
     presupuesto: pres,
     evidencias_salida: evidSal,
+    falla_final: o.falla_final || '—',
+    tipo_falla: o.tipo_falla_salida || '—',
+    valor_reparacion: formatMoneyCLPInforme(o.valor_reparacion),
+    tecnico_nombre: o.tecnico_nombre || o.agente || '—',
+    repuesto_1: o.repuesto_utilizado_1 || '—',
+    repuesto_2: o.repuesto_utilizado_2 || '—',
+    repuesto_3: o.repuesto_utilizado_3 || '—',
+    motivo_st: o.motivo_st || o.obs || '—',
+    revision: o.salida_revision || '—',
   };
 }
 
@@ -651,7 +783,14 @@ async function postInformeScript(bodyObj) {
   } catch {
     throw new Error(text.slice(0, 200) || 'Respuesta no JSON del script');
   }
-  if (!res.ok || j.error) throw new Error(j.error || 'Error del script');
+  if (!res.ok || j.error) {
+    let err = String(j.error || 'Error del script');
+    if (/DocumentApp|openById|auth\/documents/i.test(err)) {
+      err +=
+        ' Revisa: en el proyecto Apps Script, ámbito https://www.googleapis.com/auth/documents, ejecuta una función una vez (autorizar), Implementar → nueva versión de la Web App, y que la plantilla Doc esté compartida con la cuenta que ejecuta el script.';
+    }
+    throw new Error(err);
+  }
   return j;
 }
 
@@ -1233,7 +1372,7 @@ function debouncedSearch() {
 
 async function loadOrdenes() {
   const tbody = document.getElementById('ordenesTbody');
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="8"><span class="spinner spinner-dark"></span></td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="9"><span class="spinner spinner-dark"></span></td></tr>';
   const q = (document.getElementById('ordenSearch')?.value || '').trim().toLowerCase();
   const estado = document.getElementById('ordenEstado')?.value || '';
   const canal = document.getElementById('ordenCanal')?.value || '';
@@ -1263,7 +1402,7 @@ async function loadOrdenes() {
     const page = rows.slice(ordenesOffset, ordenesOffset + PAGE_SIZE);
     if (!page.length) {
       tbody.innerHTML =
-        '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:32px;">Sin resultados</td></tr>';
+        '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:32px;">Sin resultados</td></tr>';
       renderPager();
       return;
     }
@@ -1284,13 +1423,16 @@ async function loadOrdenes() {
         <td>
           <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();abrirOrden('${o.id}')" title="Ver detalle">→</button>
         </td>
+        <td>
+          <button type="button" class="btn btn-ghost btn-sm" style="color:#b91c1c" onclick="event.stopPropagation();eliminarOrdenST('${o.id}')" title="Eliminar orden">Eliminar</button>
+        </td>
       </tr>
     `
       )
       .join('');
     renderPager();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#dc2626;padding:24px;">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#dc2626;padding:24px;">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -1446,28 +1588,74 @@ function renderOrdenModal(o) {
             const urlsTxt = Array.isArray(o.salida_evidencias_urls)
               ? o.salida_evidencias_urls.filter(Boolean).join('\n')
               : '';
+            const tipoFallaDatalist = FALLAS1.map((f) => `<option value="${escapeAttr(f)}"/>`).join('');
+            const vr =
+              o.valor_reparacion != null && o.valor_reparacion !== ''
+                ? String(Number(o.valor_reparacion))
+                : '';
+            const motivoDef = o.motivo_st || o.obs || '';
+            const tecNom = o.tecnico_nombre || AGENT?.name || '';
             return `
     <div class="form-section" style="border:1px solid #d6c7ff;border-radius:10px;padding:16px;background:#faf8ff;">
       <div class="form-section-title">🔧 Servicio técnico · Salida</div>
-      <p style="font-size:12px;color:#5a3b6e;margin-bottom:12px;line-height:1.5;">Al abrir desde <strong>Técnico</strong>, si la orden estaba <strong>Ingresado</strong>, pasa a <strong>En revisión</strong>. Genera el informe de salida (Google Docs), adjunta evidencias por URL o subiendo archivos, luego <strong>Marcar listo</strong> deja el estado en <strong>Listo</strong> (revisado en los correos).</p>
-      <div class="form-group">
-        <label>Informe de salida · texto &lt;&lt;Solución&gt;&gt; en el Doc</label>
-        <textarea class="form-control" id="tecSalidaSolucion" rows="4" placeholder="Diagnóstico, trabajo realizado…">${escapeTextarea(o.solucion || '')}</textarea>
+      <p style="font-size:12px;color:#5a3b6e;margin-bottom:12px;line-height:1.5;">Desde <strong>Técnico</strong>, si la orden estaba <strong>Ingresado</strong>, pasa a <strong>En revisión</strong>. Completa los campos (coinciden con tu Excel / plantilla Doc), guarda borrador, genera el Doc de salida y luego <strong>Listo</strong>. Los repuestos 1–3 se registran aquí; el descuento automático de inventario se puede enlazar en una fase posterior.</p>
+      <datalist id="tecTipoFallaDl">${tipoFallaDatalist}</datalist>
+      <div class="form-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+        <div class="form-group">
+          <label>Falla final</label>
+          <input class="form-control" id="tec_falla_final" value="${escapeAttr(o.falla_final || '')}" placeholder="Diagnóstico final"/>
+        </div>
+        <div class="form-group">
+          <label>Tipo de falla</label>
+          <input class="form-control" id="tec_tipo_falla" list="tecTipoFallaDl" value="${escapeAttr(o.tipo_falla_salida || '')}" placeholder="Elegir o escribir"/>
+        </div>
+        <div class="form-group">
+          <label>Valor reparación (CLP)</label>
+          <input class="form-control" id="tec_valor_reparacion" inputmode="numeric" value="${escapeAttr(vr)}" placeholder="Ej. 45000"/>
+        </div>
+        <div class="form-group">
+          <label>Técnico (nombre)</label>
+          <input class="form-control" id="tec_tecnico_nombre" value="${escapeAttr(tecNom)}"/>
+        </div>
+        <div class="form-group">
+          <label>Repuesto utilizado 1</label>
+          <input class="form-control" id="tec_repuesto_1" value="${escapeAttr(o.repuesto_utilizado_1 || '')}" placeholder="Código o descripción"/>
+        </div>
+        <div class="form-group">
+          <label>Repuesto utilizado 2</label>
+          <input class="form-control" id="tec_repuesto_2" value="${escapeAttr(o.repuesto_utilizado_2 || '')}"/>
+        </div>
+        <div class="form-group">
+          <label>Repuesto utilizado 3</label>
+          <input class="form-control" id="tec_repuesto_3" value="${escapeAttr(o.repuesto_utilizado_3 || '')}"/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <label>Motivo ST (se sugiere desde observaciones del cliente; editable)</label>
+        <textarea class="form-control" id="tec_motivo_st" rows="2" placeholder="Lo declarado por el cliente…">${escapeTextarea(motivoDef)}</textarea>
       </div>
       <div class="form-group">
-        <label>URLs de evidencias (una por línea; se envían al cliente si envías correo salida)</label>
-        <textarea class="form-control" id="tecSalidaUrls" rows="3" placeholder="https://…">${escapeTextarea(urlsTxt)}</textarea>
+        <label>Revisión</label>
+        <textarea class="form-control" id="tec_revision" rows="2" placeholder="Notas de revisión técnica">${escapeTextarea(o.salida_revision || '')}</textarea>
       </div>
       <div class="form-group">
-        <label>Subir fotos o video (Firebase Storage · requiere <code style="font-size:11px;">storage.rules</code> desplegadas)</label>
+        <label>Solución · marcador &lt;&lt;Solución&gt;&gt; en el Doc</label>
+        <textarea class="form-control" id="tecSalidaSolucion" rows="3" placeholder="Trabajo realizado, cierre…">${escapeTextarea(o.solucion || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>URLs de evidencias (una por línea)</label>
+        <textarea class="form-control" id="tecSalidaUrls" rows="2" placeholder="https://…">${escapeTextarea(urlsTxt)}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Subir evidencias (Storage <code style="font-size:11px;">st_tecnico/</code>)</label>
         <input type="file" class="form-control" id="tecSalidaFiles" multiple accept="image/*,video/*"/>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="subirEvidenciasTecnico('${o.id}')">Subir seleccionados</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
         <button type="button" class="btn btn-primary btn-sm" onclick="guardarBorradorSalidaTecnico('${o.id}')">Guardar borrador</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="generarInformeSalida('${o.id}')">📄 Generar Doc salida</button>
-        <button type="button" class="btn btn-green btn-sm" onclick="finalizarSalidaTecnico('${o.id}')">Marcar listo (revisado)</button>
-        <button type="button" class="btn btn-amber btn-sm" onclick="enviarCorreoSalidaCliente('${o.id}')">✉ Enviar correo salida</button>
+        <button type="button" class="btn btn-green btn-sm" onclick="finalizarSalidaTecnico('${o.id}')">Marcar listo</button>
+        <button type="button" class="btn btn-amber btn-sm" onclick="enviarCorreoSalidaCliente('${o.id}')">✉ Correo salida</button>
       </div>
       <div style="margin-top:12px;font-size:12px;line-height:1.6;">
         ${
@@ -1497,9 +1685,10 @@ function renderOrdenModal(o) {
   `;
 
   document.getElementById('ordenModalFooter').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal('ordenModal')">Cerrar</button>
-    <button class="btn btn-ghost btn-sm" onclick="generarInforme('${o.id}')">📄 Generar informe</button>
-    ${o.informe_url ? `<a href="${escapeAttr(o.informe_url)}" target="_blank" class="btn btn-green btn-sm">📥 Ver informe</a>` : ''}
+    <button type="button" class="btn btn-ghost btn-sm" style="color:#b91c1c;border-color:#fecaca;margin-right:auto" onclick="eliminarOrdenST('${o.id}')">Eliminar orden</button>
+    <button type="button" class="btn btn-ghost" onclick="closeModal('ordenModal')">Cerrar</button>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="generarInforme('${o.id}')">📄 Generar informe entrada</button>
+    ${o.informe_url ? `<a href="${escapeAttr(o.informe_url)}" target="_blank" class="btn btn-green btn-sm">📥 Ver informe entrada</a>` : ''}
   `;
 }
 
@@ -1889,13 +2078,40 @@ function parseSalidaUrlsFromDom() {
     .filter((u) => /^https?:\/\//i.test(u));
 }
 
+function readSalidaTecnicoPatchFromDom() {
+  const g = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const t = el.value != null ? String(el.value).trim() : '';
+    return t ? t : null;
+  };
+  return {
+    solucion: (document.getElementById('tecSalidaSolucion')?.value || '').trim() || null,
+    falla_final: g('tec_falla_final'),
+    tipo_falla_salida: g('tec_tipo_falla'),
+    valor_reparacion: parsePresupuestoCLP(document.getElementById('tec_valor_reparacion')?.value),
+    tecnico_nombre: g('tec_tecnico_nombre'),
+    repuesto_utilizado_1: g('tec_repuesto_1'),
+    repuesto_utilizado_2: g('tec_repuesto_2'),
+    repuesto_utilizado_3: g('tec_repuesto_3'),
+    motivo_st: g('tec_motivo_st'),
+    salida_revision: g('tec_revision'),
+  };
+}
+
 async function guardarBorradorSalidaTecnico(ordenId) {
-  const solEl = document.getElementById('tecSalidaSolucion');
-  const sol = solEl ? solEl.value.trim() : undefined;
   const urls = parseSalidaUrlsFromDom();
+  let prevUrls = [];
   try {
-    const patch = { salida_evidencias_urls: urls };
-    if (sol !== undefined) patch.solucion = sol || null;
+    const d0 = await getDoc(doc(db, COL_O, ordenId));
+    if (d0.exists()) {
+      const x = d0.data().salida_evidencias_urls;
+      if (Array.isArray(x)) prevUrls = x.filter(Boolean);
+    }
+  } catch (_) {}
+  const mergedUrls = [...new Set([...prevUrls, ...urls])];
+  try {
+    const patch = { salida_evidencias_urls: mergedUrls, ...readSalidaTecnicoPatchFromDom() };
     await updateDoc(doc(db, COL_O, ordenId), patch);
     toast('Borrador guardado', 'success');
     const d = await getDoc(doc(db, COL_O, ordenId));
@@ -2010,13 +2226,35 @@ async function subirEvidenciasTecnico(ordenId) {
   }
 }
 
+async function eliminarOrdenST(ordenId) {
+  try {
+    const d = await getDoc(doc(db, COL_O, ordenId));
+    if (!d.exists()) {
+      toast('Orden no encontrada', 'warning');
+      return;
+    }
+    const o = normalizeOrden(d.id, d.data());
+    const num = String(o.num_orden || ordenId);
+    if (!confirm(`¿Eliminar la orden ${num}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm('Confirmar eliminación definitiva.')) return;
+    await deleteDoc(doc(db, COL_O, ordenId));
+    toast('Orden eliminada', 'success');
+    closeModal('ordenModal');
+    loadOrdenes();
+    loadTecnicoOrdenes();
+    loadDashboard();
+  } catch (e) {
+    toast(e.message || 'Error al eliminar', 'error');
+  }
+}
+
 async function loadTecnicoOrdenes() {
   const tbody = document.getElementById('tecnicoOrdenesTbody');
   if (!tbody) return;
   const sel = document.getElementById('tecnicoFiltroEstado');
   const filtro = sel ? sel.value : 'activas';
   tbody.innerHTML =
-    '<tr class="loading-row"><td colspan="7"><span class="spinner spinner-dark"></span></td></tr>';
+    '<tr class="loading-row"><td colspan="8"><span class="spinner spinner-dark"></span></td></tr>';
   try {
     const snap = await getDocs(query(collection(db, COL_O), orderBy('fecha', 'desc'), limit(200)));
     let rows = snap.docs.map((d) => normalizeOrden(d.id, d.data()));
@@ -2028,7 +2266,7 @@ async function loadTecnicoOrdenes() {
     /* filtro === 'todos': sin filtrar */
     if (!rows.length) {
       tbody.innerHTML =
-        '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6b7280;">Sin órdenes en este filtro.</td></tr>';
+        '<tr><td colspan="8" style="text-align:center;padding:24px;color:#6b7280;">Sin órdenes en este filtro.</td></tr>';
       return;
     }
     tbody.innerHTML = rows
@@ -2042,11 +2280,12 @@ async function loadTecnicoOrdenes() {
         <td>${estadoBadge(o.estado)}</td>
         <td>${canalPill(o.canal)}</td>
         <td><button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();abrirOrdenTecnico('${o.id}')">Abrir</button></td>
+        <td><button type="button" class="btn btn-ghost btn-sm" style="color:#b91c1c" onclick="event.stopPropagation();eliminarOrdenST('${o.id}')">Eliminar</button></td>
       </tr>`
       )
       .join('');
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#dc2626;padding:24px;">${escapeAttr(e.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#dc2626;padding:24px;">${escapeAttr(e.message)}</td></tr>`;
   }
 }
 
@@ -2664,8 +2903,22 @@ function debouncedRenderCambiosST() {
   cambiosFilterDebounce = setTimeout(() => renderCambiosSTTable(), 200);
 }
 
+function cambiosStRowIsEmpty(r, headers) {
+  if (!headers.length) return true;
+  return headers.every((h) => !String(r[h] ?? '').trim());
+}
+
+function cambiosStNorm(s) {
+  return String(s ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 /**
- * Renderiza tabla con encabezados de la hoja y aplica clases por estado / entregado.
+ * Tabla Cambios ST: últimas filas arriba; sin filas totalmente vacías.
+ * Verde si la primera columna indica LISTO. Rojo si la primera columna es NO o «Entregado a operaciones» = NO.
  */
 function renderCambiosSTTable() {
   const thead = document.getElementById('cambiosThead');
@@ -2673,9 +2926,9 @@ function renderCambiosSTTable() {
   if (!thead || !tbody) return;
   const { headers, rows } = cambiosStCache;
   const q = (document.getElementById('cambiosFilter')?.value || '').trim().toLowerCase();
-  let list = rows;
+  let list = (rows || []).filter((r) => !cambiosStRowIsEmpty(r, headers));
   if (q) {
-    list = rows.filter((r) => {
+    list = list.filter((r) => {
       const ord = String(r['N ORDEN'] || r['N° ORDEN'] || r['N orden'] || '').toLowerCase();
       const tec = String(r['TECNICO'] || r['TÉCNICO'] || '').toLowerCase();
       return ord.includes(q) || tec.includes(q);
@@ -2698,14 +2951,25 @@ function renderCambiosSTTable() {
   const listRev = [...list].reverse();
   tbody.innerHTML = listRev
     .map((r) => {
-      const est = String(r['ESTADO DEL DISPOSITIVO'] || '').toLowerCase();
-      const ent = String(r['ENTREGADO A OPERACIONES'] || '').toLowerCase();
+      const h0 = headers[0];
+      const firstRaw = String(r[h0] ?? '').trim();
+      const firstN = cambiosStNorm(firstRaw);
+      const entN = cambiosStNorm(r['ENTREGADO A OPERACIONES'] ?? '');
+
+      const colNo = firstN === 'no' || entN === 'no';
+      const colListo =
+        firstN === 'listo' ||
+        (firstN.length > 0 && /\blisto\b/.test(firstN)) ||
+        /^listo\b/i.test(firstRaw.trim());
+
+      const estN = cambiosStNorm(r['ESTADO DEL DISPOSITIVO'] || '');
       let cls = '';
-      if (est.includes('listo')) cls += ' cambios-listo';
-      if (est.includes('irreparable')) cls += ' cambios-irr';
-      else if (est.includes('reparable')) cls += ' cambios-rep';
-      if (ent === 'sí' || ent === 'si') cls += ' cambios-ent-si';
-      else if (ent === 'no') cls += ' cambios-ent-no';
+      if (colNo) cls = 'cambios-col-no';
+      else if (colListo) cls = 'cambios-listo';
+      else if (estN.includes('irreparable')) cls = 'cambios-irr';
+
+      if ((entN === 'si' || entN === 'sí') && !colNo) cls += ' cambios-ent-si';
+
       return (
         `<tr class="${cls.trim()}">` +
         headers.map((h) => `<td title="${escapeAttr(r[h] || '')}">${escapeHtml(r[h] || '')}</td>`).join('') +
@@ -2882,6 +3146,12 @@ Object.assign(window, {
   abrirModalCambiosSt,
   submitCambiosStForm,
   salir,
+  eliminarOrdenST,
+  loadStAdminPanel,
+  stAdminApproveUser,
+  stAdminApproveUserAndAdmin,
+  stAdminGrantRole,
+  stAdminDenyUser,
 });
 
 (async () => {
