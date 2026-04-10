@@ -1104,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div id="page-admin" class="page">
     <div class="admin-section">
       <h3>⚙ Panel de administración</h3>
-      <p style="font-size:13px;color:#856404;margin-bottom:12px">Aprueba o rechaza usuarios que solicitaron acceso.</p>
+      <p style="font-size:13px;color:#856404;margin-bottom:12px">Aprueba o rechaza solicitudes. Los administradores pueden <strong>dar rol admin</strong> a un usuario aprobado o al aprobar; quitar ese rol solo desde Firebase o código.</p>
       <div id="pending-users-list"><div class="loading-cell">Cargando solicitudes...</div></div>
     </div>
     <div class="section">
@@ -1175,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
     'addMovement','confirmReset','doReset','showPage','openModal','closeModal',
     'exportInvExcel','exportMvExcel','exportChartsExcel','exportChartPng',
     'exportInvPdf','exportMvPdf','exportReportPdf','renderMvTable',
-    'approveUser','denyUser','switchModule',
+    'approveUser','approveUserAndAdmin','grantAdminRole','denyUser','switchModule',
     'switchModule'
   ];
   fns.forEach(function(name) {
@@ -1441,6 +1441,32 @@ onAuthStateChanged(auth, async (user) => {
   if (cfgSnap.exists() && cfgSnap.data().globalMin) {
     globalMin = cfgSnap.data().globalMin;
     document.getElementById('global-min').value = globalMin;
+  }
+
+  const cont = new URLSearchParams(window.location.search).get('continue');
+  if (cont === 'inventario' || cont === 'stock') {
+    history.replaceState({}, '', window.location.pathname);
+    document.getElementById('module-selector').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    if (!unsubProducts && !unsubMovements) startListeners();
+    showPage('inventario', null);
+    return;
+  }
+  if (cont === 'admin') {
+    history.replaceState({}, '', window.location.pathname);
+    if (isAdmin) {
+      document.getElementById('module-selector').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      if (!unsubProducts && !unsubMovements) startListeners();
+      showPage('admin', null);
+      return;
+    }
+    /* Sin rol admin: entra al inventario en lugar del panel admin. */
+    document.getElementById('module-selector').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    if (!unsubProducts && !unsubMovements) startListeners();
+    showPage('inventario', null);
+    return;
   }
 
   document.getElementById('module-selector').style.display = 'flex';
@@ -1897,6 +1923,12 @@ window.doReset = async () => {
 // ════════════════════════════════════════════════════════
 //  PANEL ADMIN
 // ════════════════════════════════════════════════════════
+function userRecordIsAdmin(u) {
+  if (!u) return false;
+  if (String(u.role || '').toLowerCase() === 'admin') return true;
+  return ADMIN_EMAILS_SET.has(normalizeEmail(u.email));
+}
+
 async function loadAdminPanel() {
   if (!isAdmin) {
     document.getElementById('pending-users-list').innerHTML =
@@ -1916,9 +1948,11 @@ async function loadAdminPanel() {
             <div style="font-weight:600;font-size:13px">${u.name || u.email}</div>
             <div style="font-size:11px;color:#aaa">${u.email}</div>
           </div>
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">
             <button class="act-btn" style="background:#e8f5e9;color:#2e7d32;border-color:#c8e6c9"
               onclick="approveUser('${u.uid}')">✓ Aprobar</button>
+            <button class="act-btn" style="background:#ede9fe;color:#5b21b6;border-color:#c4b5fd"
+              onclick="approveUserAndAdmin('${u.uid}')" title="Aprueba y asigna rol administrador">✓ Aprobar + admin</button>
             <button class="act-btn danger" onclick="denyUser('${u.uid}')">✗ Denegar</button>
           </div>
         </div>`).join('')
@@ -1927,14 +1961,26 @@ async function loadAdminPanel() {
   const al = document.getElementById('approved-users-list');
   al.innerHTML = approved.length
     ? `<table>
-        <thead><tr><th>Nombre</th><th>Correo</th><th>Acción</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr></thead>
         <tbody>
-          ${approved.map(u => `
+          ${approved.map(u => {
+            const isAdm = userRecordIsAdmin(u);
+            const roleCell = isAdm
+              ? '<span style="font-size:12px;font-weight:600;color:#5b21b6">Administrador</span>'
+              : '<span style="font-size:12px;color:#666">Usuario</span>';
+            const actions = isAdm
+              ? '<span style="font-size:11px;color:#888">Quitar admin solo en Firebase</span>'
+              : `<button class="act-btn" style="background:#ede9fe;color:#5b21b6;border-color:#c4b5fd;margin-right:6px"
+                  onclick="grantAdminRole('${u.uid}')">Hacer admin</button>
+                 <button class="act-btn danger" onclick="denyUser('${u.uid}')">Revocar acceso</button>`;
+            return `
             <tr>
               <td style="font-weight:500">${u.name || '—'}</td>
               <td style="color:#888;font-size:12px">${u.email}</td>
-              <td><button class="act-btn danger" onclick="denyUser('${u.uid}')">Revocar acceso</button></td>
-            </tr>`).join('')}
+              <td>${roleCell}</td>
+              <td style="white-space:nowrap">${actions}</td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>`
     : '<p style="color:#aaa;font-size:13px">Sin usuarios aprobados aún.</p>';
@@ -1944,6 +1990,25 @@ window.approveUser = async (uid) => {
   await updateDoc(doc(db, 'users', uid), { status: 'approved', approvedAt: serverTimestamp() });
   loadAdminPanel();
 };
+
+window.approveUserAndAdmin = async (uid) => {
+  if (!isAdmin) return;
+  if (!confirm('¿Aprobar este usuario y asignarle rol de administrador?')) return;
+  await updateDoc(doc(db, 'users', uid), {
+    status: 'approved',
+    approvedAt: serverTimestamp(),
+    role: 'admin',
+  });
+  loadAdminPanel();
+};
+
+window.grantAdminRole = async (uid) => {
+  if (!isAdmin) return;
+  if (!confirm('¿Dar rol de administrador a este usuario? No podrás quitarlo desde este panel.')) return;
+  await updateDoc(doc(db, 'users', uid), { role: 'admin' });
+  loadAdminPanel();
+};
+
 window.denyUser = async (uid) => {
   await updateDoc(doc(db, 'users', uid), { status: 'denied', deniedAt: serverTimestamp() });
   loadAdminPanel();
