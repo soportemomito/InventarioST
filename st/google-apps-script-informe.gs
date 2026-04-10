@@ -25,6 +25,13 @@
  *
  * Configuración: Implementar → Aplicación web — Ejecutar como: yo | Acceso: quien corresponda.
  * URL …/exec → INFORME_SCRIPT_URL o modal del dash.
+ *
+ * ── Permiso DocumentApp.openById / Google Docs ──
+ * Si aparece "No cuentas con el permiso… auth/documents":
+ *   1) En el proyecto Apps Script: ⚙ Ajustes del proyecto → Ámbitos OAuth → añade
+ *      https://www.googleapis.com/auth/documents (o copia st/appsscript.json con oauthScopes).
+ *   2) Ejecuta una vez cualquier función del editor (p. ej. doGet) y acepta el consentimiento.
+ *   3) Implementar → Nueva implementación de la aplicación web (para que la /exec use la nueva versión).
  */
 
 function jsonOut_(obj) {
@@ -58,6 +65,29 @@ function templateFor_(canal) {
   return TEMPLATE_BY_CANAL.P;
 }
 
+/**
+ * Plantillas de **orden de salida** (mismo folder que entrada; puedes sustituir templateId por Docs dedicados).
+ * Si usas la misma plantilla que entrada, al menos el nombre del archivo distingue el informe.
+ */
+var SALIDA_TEMPLATE_BY_CANAL = {
+  E: {
+    templateId: '1fcwUlvbcFSwDonKNCWlbjkISxPhpECOCbc78dhUOx9A',
+    folderId: '1RGITbdAModR4aOIDNtfEor949CPLEv4B',
+    namePrefix: 'Informe Salida ST',
+  },
+  P: {
+    templateId: '1DlI3IA_E5nXtLKv370ULVUDSPpIl-j9GcqdYcfv4m5s',
+    folderId: '1Ni9vY9JcJYCmf22MUJlj93aI6Z5Ecp4L',
+    namePrefix: 'Informe Salida Recepción ST',
+  },
+};
+
+function salidaTemplateFor_(canal) {
+  var c = String(canal || 'P').toUpperCase();
+  if (c === 'E') return SALIDA_TEMPLATE_BY_CANAL.E;
+  return SALIDA_TEMPLATE_BY_CANAL.P;
+}
+
 function applyPlaceholders_(body, d) {
   body.replaceText('<<Orden>>', String(d.orden != null ? d.orden : ''));
   body.replaceText('<<Fecha>>', String(d.ingresoST != null ? d.ingresoST : ''));
@@ -88,6 +118,7 @@ function applyPlaceholders_(body, d) {
   body.replaceText('<<Observaciones2>>', String(d.observaciones2 != null ? d.observaciones2 : ''));
   body.replaceText('<<Presupuesto>>', String(d.presupuesto != null ? d.presupuesto : ''));
   body.replaceText('<<RUT>>', String(d.rut != null ? d.rut : ''));
+  body.replaceText('<<Evidencias_salida>>', String(d.evidencias_salida != null ? d.evidencias_salida : ''));
 }
 
 /**
@@ -237,6 +268,90 @@ function buildEntradaEmailHtml_E(nombreEsc, orden, docUrl, evid, statusNorm) {
   );
 }
 
+function buildSalidaEmailHtml_P(nombreEsc, orden, docUrl, evid, statusNorm) {
+  var prog = buildEntradaProgressHtml_(statusNorm);
+  var bodyMain =
+    'Tu equipo ha sido revisado. Adjunto al cuerpo de este mensaje encontrarás el enlace al <strong>informe de salida</strong> con el detalle del servicio técnico.';
+  return (
+    '<div style="background:#6d28e9; padding:30px 10px; font-family: Arial, sans-serif;">' +
+    '<div style="max-width:600px; margin:auto; background:#f5edff; border-radius:12px; padding:30px;">' +
+    '<div style="text-align:center; margin-bottom:20px;"><img src="' +
+    LOGO_ENTRADA_PNG_ +
+    '" alt="SoyMomo" width="220" style="max-width:100%;height:auto;"/></div>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:22px 0;">' +
+    '<h2 style="text-align:center; margin:0 0 10px 0; color:#2b0a3d;">Informe de salida · Servicio técnico</h2>' +
+    '<p style="text-align:center; color:#5a3b6e; font-size:14px; margin-bottom:18px;">Estado de tu orden</p>' +
+    prog +
+    '<div style="text-align:center;margin:18px 0;">' +
+    '<span style="display:inline-block;background:#ede4ff;border:1px solid #d6c7ff;color:#2b0a3d;font-size:15px;font-weight:700;padding:12px 22px;border-radius:10px;">N° de Orden: ' +
+    orden +
+    '</span></div>' +
+    '<p style="font-size:14px; color:#2b0a3d;">Hola <strong>' +
+    nombreEsc +
+    '</strong>,</p>' +
+    '<p style="font-size:14px; color:#2b0a3d; line-height:1.65;">' +
+    bodyMain +
+    '</p>' +
+    '<div style="text-align:center; margin:22px 0;">' +
+    '<a href="' +
+    docUrl +
+    '" target="_blank" style="background:#7c3aed; color:#ffffff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:bold; font-size:15px; display:inline-block;">Ver informe de salida</a></div>' +
+    (evid ? '<p style="text-align:center;font-size:13px;"><a href="' + evid + '" style="color:#6d28e9;">Material adicional (fotos / video)</a></p>' : '') +
+    '<p style="font-size:13px;color:#5a3b6e;">Equipo SoyMomo — ¡Saludos cordiales!<br/><strong>Servicio Técnico SoyMomo</strong></p>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:24px 0;">' +
+    '<p style="font-size:12px; color:#6b4c7a; text-align:center; margin:0;">Servicio Técnico SoyMomo</p>' +
+    '</div></div>'
+  );
+}
+
+function buildSalidaEmailHtml_E(nombreEsc, orden, docUrl, evid, statusNorm) {
+  var prog = buildEntradaProgressHtml_(statusNorm);
+  var bodyMain =
+    'Tu equipo ha sido revisado. En el informe de salida encontrarás el detalle del servicio y, si aplica, las instrucciones para el retorno del dispositivo.';
+  return (
+    '<div style="background:#6d28e9; padding:30px 10px; font-family: Arial, sans-serif;">' +
+    '<div style="max-width:600px; margin:auto; background:#f5edff; border-radius:12px; padding:30px;">' +
+    '<div style="text-align:center; margin-bottom:20px;"><img src="' +
+    LOGO_ENTRADA_PNG_ +
+    '" alt="SoyMomo" width="220" style="max-width:100%;height:auto;"/></div>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:22px 0;">' +
+    '<h2 style="text-align:center; margin:0 0 10px 0; color:#2b0a3d;">Informe de salida · Canal envío</h2>' +
+    '<p style="text-align:center; color:#5a3b6e; font-size:14px; margin-bottom:18px;">Estado de tu orden</p>' +
+    prog +
+    '<div style="text-align:center;margin:18px 0;">' +
+    '<span style="display:inline-block;background:#ede4ff;border:1px solid #d6c7ff;color:#2b0a3d;font-size:15px;font-weight:700;padding:12px 22px;border-radius:10px;">N° de Orden: ' +
+    orden +
+    '</span></div>' +
+    '<p style="font-size:14px; color:#2b0a3d;">Hola <strong>' +
+    nombreEsc +
+    '</strong>,</p>' +
+    '<p style="font-size:14px; color:#2b0a3d; line-height:1.65;">' +
+    bodyMain +
+    '</p>' +
+    '<div style="text-align:center; margin:22px 0;">' +
+    '<a href="' +
+    docUrl +
+    '" target="_blank" style="background:#7c3aed; color:#ffffff; text-decoration:none; padding:14px 28px; border-radius:10px; font-weight:bold; font-size:15px; display:inline-block;">Ver informe de salida</a></div>' +
+    (evid ? '<p style="text-align:center;font-size:13px;"><a href="' + evid + '" style="color:#6d28e9;">Material adicional (fotos / video)</a></p>' : '') +
+    '<p style="font-size:13px;color:#5a3b6e;">Equipo SoyMomo — ¡Saludos cordiales!<br/><strong>Servicio Técnico SoyMomo</strong></p>' +
+    '<hr style="border:none; border-top:1px solid #d6c7ff; margin:24px 0;">' +
+    '<p style="font-size:12px; color:#6b4c7a; text-align:center; margin:0;">Servicio Técnico SoyMomo</p>' +
+    '</div></div>'
+  );
+}
+
+function buildSalidaEmailHtml_S(nombreEsc, orden, docUrl, evid, statusNorm) {
+  var base = buildSalidaEmailHtml_P(nombreEsc, orden, docUrl, evid, statusNorm);
+  var extra =
+    '<div style="background:#fff4cc;border:1px solid #ffe08a;padding:14px;border-radius:8px;margin:16px 0;">' +
+    '<p style="margin:0;font-size:13px;color:#2b0a3d;text-align:center;"><strong>Retiro en tienda</strong><br/>' +
+    'Ricardo Lyon 1688, Providencia · Lun–Vie 10:30–19:30, Sáb 10:00–14:45</p></div>';
+  return base.replace(
+    '<p style="font-size:14px; color:#2b0a3d; line-height:1.65;">',
+    extra + '<p style="font-size:14px; color:#2b0a3d; line-height:1.65;">'
+  );
+}
+
 function buildEntradaEmailHtml_S(nombreEsc, orden, docUrl, evid, statusNorm) {
   var base = buildEntradaEmailHtml_P(nombreEsc, orden, docUrl, evid, statusNorm);
   var extra =
@@ -269,6 +384,14 @@ function buildEmailForVariant_(key, nombreEsc, num, docUrl, evid, ordenStatusRaw
     else if (key === 'ENTRADA_S') htmlBody = buildEntradaEmailHtml_S(nombreEsc, num, docUrl, evid, stNorm);
     else htmlBody = buildEntradaEmailHtml_P(nombreEsc, num, docUrl, evid, stNorm);
     return { subject: subject, html: htmlBody };
+  }
+
+  if (key === 'SALIDA_P' || key === 'SALIDA_E' || key === 'SALIDA_S') {
+    var htmlSal;
+    if (key === 'SALIDA_E') htmlSal = buildSalidaEmailHtml_E(nombreEsc, num, docUrl, evid, stNorm);
+    else if (key === 'SALIDA_S') htmlSal = buildSalidaEmailHtml_S(nombreEsc, num, docUrl, evid, stNorm);
+    else htmlSal = buildSalidaEmailHtml_P(nombreEsc, num, docUrl, evid, stNorm);
+    return { subject: subject, html: htmlSal };
   }
 
   var mapIntro = {
@@ -304,12 +427,22 @@ function generarDocDesdeOrden_(orden) {
   return copy.getUrl();
 }
 
+function generarDocSalidaDesdeOrden_(orden) {
+  var cfg = salidaTemplateFor_(orden.canal);
+  var folder = DriveApp.getFolderById(cfg.folderId);
+  var copy = DriveApp.getFileById(cfg.templateId).makeCopy(cfg.namePrefix + ' ' + orden.orden, folder);
+  var doc = DocumentApp.openById(copy.getId());
+  applyPlaceholders_(doc.getBody(), orden);
+  doc.saveAndClose();
+  return copy.getUrl();
+}
+
 /** Abrir la URL /exec en el navegador hace GET; sin esto aparece "doGet not found". El dash usa POST. */
 function doGet() {
   var html =
     '<!DOCTYPE html><html><head><meta charset="utf-8"><title>ST informe · Web App</title></head><body style="font-family:system-ui,sans-serif;padding:24px;max-width:520px;line-height:1.5;">' +
     '<h2 style="margin:0 0 12px;">Web App activa</h2>' +
-    '<p>Esta dirección está bien publicada. El panel Servicio Técnico la usa con <strong>POST</strong> (acciones <code>generar</code> y <code>enviar</code>), no al abrirla aquí en el navegador.</p>' +
+    '<p>Esta dirección está bien publicada. El panel Servicio Técnico la usa con <strong>POST</strong> (acciones <code>generar</code>, <code>generar_salida</code> y <code>enviar</code>), no al abrirla aquí en el navegador.</p>' +
     '<p style="color:#666;font-size:14px;">URL en constante <code>INFORME_SCRIPT_URL</code> de <code>st/dash-app.js</code>.</p>' +
     '</body></html>';
   return HtmlService.createHtmlOutput(html).setTitle('ST informe');
@@ -326,6 +459,12 @@ function doPost(e) {
       if (!orden.orden) return jsonOut_({ error: 'Falta orden (num_orden)' });
       var url = generarDocDesdeOrden_(orden);
       return jsonOut_({ ok: true, url: url });
+    }
+
+    if (action === 'generar_salida') {
+      if (!orden.orden) return jsonOut_({ error: 'Falta orden (num_orden)' });
+      var urlSal = generarDocSalidaDesdeOrden_(orden);
+      return jsonOut_({ ok: true, url: urlSal });
     }
 
     if (action === 'enviar') {
@@ -345,7 +484,7 @@ function doPost(e) {
 
       if (!docUrl) {
         try {
-          docUrl = generarDocDesdeOrden_(orden);
+          docUrl = flujoCorreo === 'salida' ? generarDocSalidaDesdeOrden_(orden) : generarDocDesdeOrden_(orden);
         } catch (err) {
           return jsonOut_({ error: 'No hay informe_url y no se pudo generar: ' + String(err.message || err) });
         }
@@ -366,7 +505,7 @@ function doPost(e) {
       return jsonOut_({ ok: true, informe_url: docUrl });
     }
 
-    return jsonOut_({ error: 'action inválida (usa generar o enviar)' });
+    return jsonOut_({ error: 'action inválida (usa generar, generar_salida o enviar)' });
   } catch (err) {
     return jsonOut_({ error: String(err.message || err) });
   }
