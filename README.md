@@ -1,167 +1,132 @@
-# InventarioST + Servicio Tecnico
+# InventarioST + Technical Service (ST)
 
-Aplicacion web interna de SoyMomo para:
+Internal web app for **SoyMomo** to manage spare-parts inventory, stock movements, and a **Technical Service** module (operations dashboard and public intake form).
 
-- Gestion de inventario de repuestos.
-- Control de movimientos de stock.
-- Acceso al modulo de Servicio Tecnico (dashboard y formulario de ingreso).
+---
 
-## Estado actual
+## What this application does
 
-- `index.html` contiene el panel principal de inventario con autenticacion Firebase.
-- Desde `index.html` se puede entrar al modulo ST.
-- Modulo ST integrado en:
-  - `st/dash.html` (dashboard operativo de ST)
-  - `st/ingreso.html` (formulario de ingreso de equipos)
+### Inventory (`index.html`)
 
-## Estructura del proyecto
+- After **Google sign-in**, users with `users/{uid}.status === 'approved'` can open the inventory UI (products, movements, low-stock alerts, admin user approval).
+- Stock and history live in **Firestore** (`products`, `movements`, `users`, `config/settings`).
+- Optional **EmailJS** configuration in `index.html` can send low-stock notifications (client-side).
 
-- `index.html`: modulo Inventario + selector de modulos.
-- `st/dash.html`: dashboard de Servicio Tecnico.
-- `st/ingreso.html`: formulario de ingreso para clientes/recepcion.
-- `README.md`: documentacion principal.
+### Technical Service (`st/`)
 
-## Firebase: inventario vs servicio tecnico
+- **`st/dash.html` + `st/dash-app.js`**: authenticated dashboard for validations, work orders, Google Docs report generation, email sending (via Apps Script), and **Cambios ST** (rows backed by a Google Sheet via a Web App).
+- **`st/ingreso.html`**: public intake form (no Firebase Auth). Writes to **`st_validaciones`** and increments sequence counters in **`st_meta`** (`seq_P`, `seq_E`, `seq_S`) for intake numbers like `P1`, `E2`, `S3`.
 
-En **Firestore** conviven dos usos distintos del mismo proyecto (`soymomo-inventario`):
+### Post-login navigation
 
-| Colecciones | Origen | Contenido tipico |
-|-------------|--------|------------------|
-| `products`, `movements`, `users` | `index.html` (inventario) | Stock, movimientos, usuarios aprobados |
-| `st_validaciones`, `st_ordenes` | `st/ingreso.html` y `st/dash.html` | Ingresos a validar y ordenes de ST |
+- **Default:** approved users are redirected **straight to the ST dashboard** (`./st/dash.html` or an external ST URL if configured). The purple **module selector** (Inventory vs ST) is **skipped**.
+- **To show the selector** (choose Inventory or ST), open the app with  
+  **`?continue=inv`** or **`?continue=inventario`** (e.g. `index.html?continue=inv`).
+- If redirect to ST fails, the code falls back to showing the module selector.
 
-**Si en la consola solo ves `movements` / `products` / `users`:** es normal. Las colecciones **`st_validaciones`** y **`st_ordenes`** **no aparecen hasta que exista al menos un documento** (Firestore no lista colecciones vacías). Se crean cuando:
+---
 
-1. Alguien envia el formulario en **`st/ingreso.html`** → se escribe en **`st_validaciones`**.
-2. En el **dashboard** creas o apruebas una orden → **`st_ordenes`** (y se actualiza validacion).
+## Implementation stack
 
-**El numero de solicitud del Google Sheet (ej. 444246)** no se sube solo a Firestore al pulsar **Cargar** en el dash: eso solo **rellena el formulario** desde Sheets. En Firestore veras datos ST cuando exista validacion/orden asociada a ese flujo.
+| Layer | Technology |
+|--------|------------|
+| UI | Static **HTML**, **CSS**, **vanilla JavaScript** (no React/Vue build step) |
+| Auth & database | **Firebase Authentication** (Google provider), **Cloud Firestore** |
+| ST ↔ Sheets / Gmail / Docs | **Google Apps Script** projects deployed as **Web Apps** (`…/exec` URLs) |
+| Hosting | Typical **static hosting** (e.g. **Vercel**); `index.html` at site root, ST at `/st/dash.html`, `/st/ingreso.html` |
+| Optional alerts | **EmailJS** REST API from the browser (inventory low-stock) |
 
-### Formulario `st/ingreso.html` y errores de permisos / Auth
+### Repository layout (main entry points)
 
-El ingreso hace **`addDoc` sin iniciar sesión** y asigna **N° de ingreso** (`P1`, `E2`…) vía transacción en **`st_meta/seq_P`**, **`seq_E`**, **`seq_S`**. En **Firestore → Reglas** copia **`st/firestore-rules-st.txt`** (incluye `numero_seguimiento` en `st_validaciones` y reglas de incremento +1 en esos docs). Así se evita «Missing or insufficient permissions» y **`auth/admin-restricted-operation`** (ese aparecía si se usaba `signInAnonymously` con Anónimo deshabilitado).
+| Path | Role |
+|------|------|
+| `index.html` | Login, inventory app, module selector when `?continue=inv` |
+| `st/dash.html` | ST operations UI |
+| `st/dash-app.js` | ST logic, Firestore queries, `fetch` to Apps Script Web Apps |
+| `st/ingreso.html` | Public ST intake form |
+| `firestore.rules` | **Canonical** Firestore rules (inventory + ST); deploy in Firebase Console or `firebase deploy --only firestore:rules` |
+| `firebase.json`, `.firebaserc` | Optional CLI deploy for rules (project id in `.firebaserc`) |
+| `st/firestore-rules-st.txt` | ST-only `match` blocks (for merging into an existing rules file) |
+| `st/google-apps-script-informe.gs` | Web App: `doPost` for Docs + mail from the dash; **add** to the same Apps Script project as sheet-based scripts (do not delete legacy sheet functions unless intended) |
+| `st/google-apps-script-cambios-st.gs` | Web App: read/append **Cambios ST** sheet |
+| `st/google-apps-script-solicitud-lookup.gs` | Web Apps (per spreadsheet) for **P/E “Cargar”** solicitation lookup |
+| `st/appsscript.json` | Example **OAuth scopes** manifest for the informe project (enable manifest in Apps Script settings and merge scopes) |
 
-Lectura/actualización de validaciones y todo lo del dash sigue con **`request.auth != null`**.
+### Config URLs in `st/dash-app.js` (and overrides)
 
-## Flujo principal
+- **`SHEETS_EXEC_URL_P` / `SHEETS_EXEC_URL_E`**: solicitation lookup Web Apps.
+- **`INFORME_SCRIPT_URL`**: informe / email Web App; can be overridden with `localStorage` key `st_informe_script_url`.
+- **`CAMBIOS_ST_SCRIPT_URL`**: Cambios ST Web App; can be overridden with `st_cambios_st_script_url`.
+- **External ST host:** `localStorage` `soymomo_st_dash_url` (or `__soymomoSetStDashUrl`) when inventory and ST are on different origins.
 
-1. Usuario inicia sesion en `index.html`.
-2. Selecciona modulo:
-   - Inventario
-   - Servicio Tecnico
-3. En ST:
-   - Se pueden gestionar ordenes.
-   - Se pueden crear ordenes manuales.
-   - En canales `P` y `E` se puede cargar por numero de solicitud.
+---
 
-## Google Sheets (Apps Script) + «Cargar» en nueva orden
+## Firestore data model (same Firebase project)
 
-En `st/dash-app.js`, al pulsar **Cargar** con canal **P** o **E**, primero se consulta el Web App de Apps Script (URLs `.../exec` definidas en constantes `SHEETS_EXEC_URL_P` / `SHEETS_EXEC_URL_E`) y, si no hay datos o falla, se busca en **Firestore**.
+| Collections / docs | Used by | Purpose |
+|--------------------|---------|---------|
+| `products`, `movements`, `users`, `config/settings` | `index.html` | Inventory |
+| `st_validaciones` | `st/ingreso.html`, `st/dash.html` | Intake submissions; staff review |
+| `st_ordenes` | `st/dash.html` | Work orders |
+| `st_meta/ordenes` | `st/dash-app.js` | Order counters by channel (P/E/S) |
+| `st_meta/seq_P`, `seq_E`, `seq_S` | `st/ingreso.html` | Public +1 sequence for intake numbers (rules allow unauthenticated increment) |
+| `st_salidas`, `st_email_log`, `st_usuarios` | Rules reserved | Progressive ST features |
 
-- Para cambiar de hoja o de despliegue, edita esas constantes en `st/dash-app.js`.
-- Si el navegador bloquea `fetch` por **CORS** hacia `script.google.com`, habrá que usar JSONP o un proxy server-side.
+Empty collections **do not appear** in the Firebase console until at least one document exists.
 
-Plantilla de Apps Script: **`st/google-apps-script-solicitud-lookup.gs`** (`FIELD_BY_HEADER_P` / `FIELD_BY_HEADER_E` según `CANAL`). **P** incluye enlace del **comprobante** (columna de archivo del formulario). No se mapean teléfono, dirección, observaciones sueltas, transporte, orden ST ni OT. **E** conserva segundo dispositivo en texto auxiliar. **Implementar → nueva versión** en cada libro.
+**Important:** Sheet “solicitud” numbers loaded with **Cargar** in the dash **fill the form** from Google Sheets; they are not automatically written to Firestore until you create/save an order through the app flow.
 
-**Informe Google Docs + correo (dash):** en el **mismo** Google Sheet, **Extensiones → Apps Script**, pega **`st/google-apps-script-informe.gs`**, **Implementar → Aplicación web**. La URL `/exec` va en **`INFORME_SCRIPT_URL`** (`st/dash-app.js`) o en **Herramientas → Config. informe Docs**. No usa secreto compartido (restringe en la implementación quién puede llamar la Web App). **Generar informe** / **Enviar correo** usan `doPost`; plantillas y carpetas iguales que en Sheets.
+---
 
-**Si el dash muestra error tipo `Sheets: No hay columna de N° solicitud en fila 1`:** suele ser fila 1 sin encabezados reconocibles; con la plantilla nueva se usa la columna C como respaldo. Si tu layout no es C, edita `INDICE_FALLBACK_COL_NUM_SOLICITUD` en Apps Script (0 = A, 2 = C).
+## Security rules
 
-## Cambios recientes (integracion ST)
+- Publish **`firestore.rules`** (root) to **Firebase Console → Firestore → Rules** (or use Firebase CLI).
+- The public form uses **`addDoc` without Auth**; rules must allow controlled **`create`** on `st_validaciones` and controlled updates on `st_meta` sequence docs. Do **not** rely on `signInAnonymously` for intake if Anonymous sign-in is disabled in Firebase.
 
-- Habilitado acceso directo a ST desde `index.html`.
-- Agregado folder `st/` al repo con `dash.html` e `ingreso.html`.
-- Actualizado formulario de ingreso:
-  - Se elimino telefono.
-  - Catalogos de producto/modelo ajustados a operacion real.
-  - Mercados: incluye `Otro` (con campo extra) y `No recuerdo`.
-  - Colores: incluye `Otro` (con campo extra).
-- Nueva orden manual (`st/dash.html`) ahora incluye:
-  - `numero_solicitud`
-  - soporte de origen/color "Otro"
-  - canal `S` contemplado para recepcion.
+---
 
-## Servicio Tecnico y Firebase (Firestore)
+## Google Apps Script deployment notes
 
-El panel ST (`st/dash.html` + `st/dash-app.js`) y el formulario `st/ingreso.html` usan **el mismo proyecto Firebase** que el inventario. Los datos viven en Firestore:
+1. **Informe / Gmail / Docs:** merge **`st/appsscript.json`** scopes into the project manifest; add **`google-apps-script-informe.gs`** as an extra file if you keep sheet-only functions (e.g. bulk `enviarCorreos`). Deploy **Web App**; single global **`doPost`** entry point.
+2. **Cambios ST:** deploy from the spreadsheet project (or any project with access to that file); set **`CAMBIOS_ST_SCRIPT_URL`** (or `localStorage`).
+3. **P/E lookup:** deploy **new version** per spreadsheet; set **`SHEETS_EXEC_URL_P` / `SHEETS_EXEC_URL_E`**.
 
-- `st_validaciones` — solicitudes del formulario de ingreso.
-- `st_ordenes` — ordenes creadas desde el dash.
-- `st_meta/ordenes` — contadores por canal (P/E/S) para numeros de orden.
+If `fetch` to `script.google.com` is blocked by CORS in some environments, use a server-side proxy or JSONP (rare for standard Web App GET/POST from browser).
 
-En **Firebase Console → Firestore → Reglas** debes permitir lectura/escritura autenticada para tecnicos y, si el formulario publico escribe sin login, una regla controlada de `create` en `st_validaciones`.
+---
 
-## Dos URLs en Vercel (inventario + ST)
+## Two-site setup (inventory + ST on different URLs)
 
-Si el inventario esta en una URL (ej. `https://inventario-xxx.vercel.app`) y el ST en otra (ej. `https://st-yyy.vercel.app/st/dash.html`):
+1. Add both domains under **Firebase Authentication → Authorized domains**.
+2. From the inventory origin, set the ST dashboard URL, e.g.  
+   `localStorage.setItem('soymomo_st_dash_url', 'https://your-st-host/st/dash.html')`  
+   or `__soymomoSetStDashUrl(...)`.
+3. Redirect passes `#st_token=…&inv=…`; ST stores token in `sessionStorage` and return URL in `soymomo_inventario_url` where applicable.
 
-1. **Firebase Authentication → Configuracion → Dominios autorizados**: agrega **ambos** dominios `*.vercel.app` (o tus dominios custom).
-2. En el navegador, en la app de **inventario**, guarda la URL del dash ST (una sola vez por equipo/navegador):
+Single deployment: relative `./st/dash.html` is enough; external URL not required.
 
-   ```js
-   localStorage.setItem('soymomo_st_dash_url', 'https://st-yyy.vercel.app/st/dash.html');
-   ```
+---
 
-   Tambien puedes usar la consola del inventario:
+## Local development
 
-   ```js
-   __soymomoSetStDashUrl('https://st-yyy.vercel.app/st/dash.html');
-   ```
+Serve the folder with any static server (Live Server, `npx serve`, etc.) and open `index.html`. Opening files via `file://` may break Auth or module loading in some browsers.
 
-3. Al elegir **Servicio Tecnico**, el inventario redirige al ST con `#st_token=...&inv=...`. El dash guarda el token en `sessionStorage` y la URL de retorno al inventario en `localStorage` (`soymomo_inventario_url`), asi **Salir** o sesion caducada pueden volver al login del inventario.
-4. Si abres el ST **sin** pasar por inventario, configura a mano:
+---
 
-   ```js
-   localStorage.setItem('soymomo_inventario_url', 'https://inventario-xxx.vercel.app');
-   ```
+## Requirements
 
-5. Tras login, forzar ir al ST: `https://inventario-xxx.vercel.app/index.html?continue=st`
+- Modern browser (Chrome, Edge, Firefox).
+- Firebase project with **Authentication** + **Firestore** and published rules aligned with this repo.
+- Deployed Apps Script Web Apps for features that call Google Sheets, Docs, or Gmail from the dash.
 
-**Mismo sitio** (todo en un solo deploy): no hace falta `soymomo_st_dash_url`; se usa `./st/dash.html` y el token solo en `sessionStorage`.
+---
 
-## Modulo «Cambios garantia ST» (piloto)
+## Suggested follow-ups (product)
 
-En `st/dash.html` hay una vista **Cambios garantia ST** con tabla almacenada en **localStorage del navegador** (pruebas piloto). Permite agregar filas, marcar listo, ver vista previa del HTML del correo (mismo criterio que tu script de Sheets) y eliminar filas. La integracion real con envio Gmail/Sheets sera en backend.
+- Normalize ST states across the UI.
+- Finalize email templates by order prefix (`P*`, `E*`, `S*`, etc.).
+- Unify a single data model for ST intake/outbound if you grow beyond Firestore + Sheets.
 
-## Requisitos
+---
 
-- Navegador moderno (Chrome, Edge, Firefox).
-- Acceso a internet.
-- Proyecto Firebase (Auth + Firestore) con reglas acordes a `st_*`.
-
-## Despliegue (Vercel)
-
-1. **Opcion A — un solo proyecto**: despliega el repo como sitio estatico; `index.html` en la raiz y rutas `/st/dash.html`, `/st/ingreso.html`.
-2. **Opcion B — dos proyectos**: inventario en un deployment y ST (carpeta `st/` o copia minima) en otro; configura `soymomo_st_dash_url` en el inventario como arriba.
-
-## Piloto del formulario de ingreso
-
-- Abrir `st/ingreso.html?canal=P` o `?canal=E`.
-- Los envios crean documentos en `st_validaciones` (Firestore).
-- Modulo Cambios ST en el dash sigue usando solo localStorage del navegador.
-
-## Ejecucion local
-
-Como el proyecto usa HTML estatico, puedes abrir `index.html` directamente, pero para una integracion estable se recomienda servirlo con un servidor local.
-
-Ejemplo con VS Code Live Server o cualquier servidor estatico:
-
-- Abrir carpeta del proyecto.
-- Levantar servidor local.
-- Abrir `index.html`.
-
-## Notas de arquitectura
-
-- Inventario hoy opera con Firebase.
-- ST se preparo para no depender de Google Sheets como base principal.
-- Se considera futura interoperabilidad con Supabase/Firebase para unificar datos entre dashboards.
-
-## Pendientes sugeridos
-
-- Unificar estados ST a: `Ingresado`, `En revision`, `Revisado`.
-- Definir reglas finales de correo por prefijo de orden:
-  - `P*` plantilla P
-  - `E*` plantilla E
-  - `S*` flujo recepcion
-  - otros prefijos sin correo externo
-- Centralizar modelo de datos unico para entrada/salida ST.
+*Spanish documentation previously lived in this file; this README is now maintained in **English** as the primary project description.*
